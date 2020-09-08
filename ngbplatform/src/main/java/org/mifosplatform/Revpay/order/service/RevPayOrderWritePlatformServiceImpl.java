@@ -64,12 +64,12 @@ public class RevPayOrderWritePlatformServiceImpl implements RevPayOrderWritePlat
 			PaymentGateway.setStatus("intiated");
 			PaymentGateway.setPaymentDate(new Date());
 			PaymentGateway.setSource("REVPAY");
-			PaymentGateway.setReffernceId(command.stringValueOfParameterName("refId"));
+			PaymentGateway.setReffernceId(command.stringValueOfParameterName("clientId"));
 			paymentGatewayRepository.save(PaymentGateway);
 
 			revorder = new JSONObject();
 			revorder.put("revorder", PaymentGateway);
-			revorder.put("callbackUrl", "http://45.63.98.216:9091/ngbplatform/api/v1/revpay/orderlock");
+			revorder.put("callbackUrl", "https://41.217.20.98:8877/ngbplatform/api/v1/revpay/orderlock");
 
 		} catch (Exception e) {
 			e.printStackTrace();

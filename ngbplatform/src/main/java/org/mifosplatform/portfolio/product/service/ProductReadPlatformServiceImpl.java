@@ -46,7 +46,7 @@ public class ProductReadPlatformServiceImpl implements ProductReadPlatformServic
 		final StringBuilder sqlBuilder = new StringBuilder(200);
         sqlBuilder.append("select ");
         sqlBuilder.append(productMapper.schema());
-        //sqlBuilder.append(" where p.id IS NOT NULL and p.is_deleted = 'N'");
+        sqlBuilder.append(" where p.id IS NOT NULL and p.is_deleted = 'N'");
         
         String sqlSearch = searchProduct.getSqlSearch();
         String extraCriteria = null;

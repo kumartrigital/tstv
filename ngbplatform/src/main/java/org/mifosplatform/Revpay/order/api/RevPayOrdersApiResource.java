@@ -136,7 +136,7 @@ public class RevPayOrdersApiResource {
 		paymentGatewayRepository.save(revpayOrder);
 		URI indexPath = null;
 		try {
-			indexPath = new URI("https://www.facebook.com/");
+			indexPath = new URI("https://41.217.20.98:8877/#/");
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
