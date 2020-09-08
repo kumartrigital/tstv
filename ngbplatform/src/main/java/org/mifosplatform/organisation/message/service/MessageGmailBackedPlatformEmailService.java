@@ -210,7 +210,8 @@ public class MessageGmailBackedPlatformEmailService implements MessagePlatformEm
 	public String sendToUserMobile(String message, Long id, String messageTo, String messageBody) {
 		
 		try {
-			String output = "Failure", senderName = null, senderMessage = null, contentType = null, areaCode = null,ApiKey =null ,ClientId =null;
+			String output = "Failure", senderName = null, senderMessage = null, contentType = null, areaCode = null,userName =null 
+					,passWord =null, sender =null;
 			
 			Configuration configuration = this.repository.findOneByName(ConfigurationConstants.CONFIG_PROPERTY_SMS);
 			
@@ -228,9 +229,12 @@ public class MessageGmailBackedPlatformEmailService implements MessagePlatformEm
 			if(object.has("senderName")) senderName = object.getString("senderName");
 			if(object.has("senderMessage")) senderMessage = object.getString("senderMessage");
 			if(object.has("areaCode")) areaCode = object.getString("areaCode");
-			if(object.has("ApiKey")) ApiKey = object.getString("ApiKey");
-			if(object.has("ClientId")) ClientId = object.getString("ClientId");
+			if(object.has("username")) userName = object.getString("username");
+			if(object.has("password")) passWord = object.getString("password");
+			if(object.has("sender")) sender = object.getString("sender");
 
+
+		
 
 			
 			if(null!=method && method.equalsIgnoreCase("POST")){
@@ -264,8 +268,8 @@ public class MessageGmailBackedPlatformEmailService implements MessagePlatformEm
 				
 				String encodedMessage = URLEncoder.encode(messageBody);
 					
-				String url = urlString + "&Message=" + messageBody + "&MobileNumbers=" + messageTo + "&ApiKey="
-						+ApiKey + "&ClientId="+ClientId;
+				String url = urlString + "&username=" + userName + "&password=" + passWord + "&sender="
+						+sender + "&recipient="+messageTo+ "&message"+messageBody;
 
 				System.out.println(url);
 
