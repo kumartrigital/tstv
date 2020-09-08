@@ -37,7 +37,7 @@ public interface SheduleJobWritePlatformService {
 
 	void process(Long id);
 
-	void processNotify(Long id);
+	void processNotify();
 
 	void processingEscalations();
 

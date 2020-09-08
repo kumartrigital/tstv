@@ -662,7 +662,7 @@ public class SelfCareWritePlatformServiceImp implements SelfCareWritePlatformSer
 				}
 			 }
 			 this.messageDataRepository.save(billingMessage);
-			 this.sheduleJobWritePlatformService.processNotify(billingMessage.getId());
+			 //this.sheduleJobWritePlatformService.processNotify(billingMessage.getId());
 			 Map<String,Object> outputMap = new HashMap<String, Object>();
 			 outputMap.put("otp", otp);
 			 outputMap.put("generatedKey", generatedKey);

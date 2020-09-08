@@ -49,7 +49,10 @@ import org.mifosplatform.organisation.message.data.BillingMessageDataForProcessi
 import org.mifosplatform.organisation.message.domain.BillingMessage;
 import org.mifosplatform.organisation.message.domain.BillingMessageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * 
@@ -207,7 +210,7 @@ public class MessageGmailBackedPlatformEmailService implements MessagePlatformEm
 	public String sendToUserMobile(String message, Long id, String messageTo, String messageBody) {
 		
 		try {
-			String output = "Failure", senderName = null, senderMessage = null, contentType = null, areaCode = null;
+			String output = "Failure", senderName = null, senderMessage = null, contentType = null, areaCode = null,ApiKey =null ,ClientId =null;
 			
 			Configuration configuration = this.repository.findOneByName(ConfigurationConstants.CONFIG_PROPERTY_SMS);
 			
@@ -218,13 +221,17 @@ public class MessageGmailBackedPlatformEmailService implements MessagePlatformEm
 			JSONObject object = new JSONObject(configuration.getValue());
 			
 			String urlString = object.getString("url");
-			urlString = urlString+message;
-			String method = object.getString("method"); 
+			String method = object.getString("method");
+			//urlString = urlString+message;
 			
 			if(object.has("contentType")) contentType = object.getString("contentType");
 			if(object.has("senderName")) senderName = object.getString("senderName");
 			if(object.has("senderMessage")) senderMessage = object.getString("senderMessage");
 			if(object.has("areaCode")) areaCode = object.getString("areaCode");
+			if(object.has("ApiKey")) ApiKey = object.getString("ApiKey");
+			if(object.has("ClientId")) ClientId = object.getString("ClientId");
+
+
 			
 			if(null!=method && method.equalsIgnoreCase("POST")){
 
@@ -256,25 +263,36 @@ public class MessageGmailBackedPlatformEmailService implements MessagePlatformEm
 			} else if (null!=method && method.equalsIgnoreCase("GET")) {
 				
 				String encodedMessage = URLEncoder.encode(messageBody);
+					
+				String url = urlString + "&Message=" + messageBody + "&MobileNumbers=" + messageTo + "&ApiKey="
+						+ApiKey + "&ClientId="+ClientId;
+
+				System.out.println(url);
+
+				RestTemplate restTemplate = new RestTemplate();
+				ResponseEntity<String> result = restTemplate.exchange(url, HttpMethod.GET, null, String.class);
+				System.out.println(result);
 				
 				//String url = "http://202.62.67.34/smpp.sms?username=obs&password=9989275041&from=RADIUS&to=" + messageTo + "&text=" + encodedMessage;
-				String url = urlString + "&to=" + messageTo + "&text=" + encodedMessage;
-				
-				HttpGet get = new HttpGet(url);
-				
-				HttpResponse response = client.execute(get);
-				
-				InputStream is = response.getEntity().getContent();
-				BufferedReader br = new BufferedReader(new InputStreamReader(is));
-				String result = "";
-				String line = null;
-				while ((line = br.readLine()) != null) {
-				result += line;
-				}
-				System.out.println(result);
+				/*
+				 * String url = urlString + "&to=" + messageTo + "&text=" + encodedMessage;
+				 * 
+				 * HttpGet get = new HttpGet(url);
+				 * 
+				 * HttpResponse response = client.execute(get);
+				 * 
+				 * InputStream is = response.getEntity().getContent(); BufferedReader br = new
+				 * BufferedReader(new InputStreamReader(is)); String result = ""; String line =
+				 * null; while ((line = br.readLine()) != null) { result += line; }
+				 * 	System.out.println(result);
 				if(result.contains(messageTo)) output = "SUCCESS";
 			}
+				 */
+				if (result.getStatusCode().value() == 200) {
+					output = "SUCCESS";
+				}
 			
+			}
 			if (null != output && output.equalsIgnoreCase("SUCCESS")) {
 				BillingMessage billingMessage = this.messageDataRepository.findOne(id);
 				if (billingMessage.getStatus().contentEquals("N")) {
