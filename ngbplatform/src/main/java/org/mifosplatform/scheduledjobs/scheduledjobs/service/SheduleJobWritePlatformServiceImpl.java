@@ -962,9 +962,10 @@ public class SheduleJobWritePlatformServiceImpl implements SheduleJobWritePlatfo
 
 	@Override
 	@CronTarget(jobName = JobName.PUSH_NOTIFICATION)
-	public void processNotify(Long id) {
+	public void processNotify() {
 
 		try {
+			Long id  = null;
 			System.out.println("Processing Notify Details.......");
 			List<BillingMessageDataForProcessing> billingMessageDataForProcessings = this.billingMesssageReadPlatformService
 					.retrieveMessageDataForProcessing(id);
@@ -2341,7 +2342,7 @@ public class SheduleJobWritePlatformServiceImpl implements SheduleJobWritePlatfo
 										ticketEscalationMessageDetails,
 										BillingMessageTemplateConstants.MESSAGE_TEMPLATE_MESSAGE_TYPE, null);
 								this.billingMessageRepository.save(billingMessage);
-								this.processNotify(billingMessage.getId());
+								//this.processNotify(billingMessage.getId());
 							} else {
 								throw new BillingMessageTemplateNotFoundException(
 										BillingMessageTemplateConstants.MESSAGE_TEMPLATE_NOTIFY_TICKET_ESCALATION);
