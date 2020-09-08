@@ -8,4 +8,7 @@ public class NoMoreRecordsFoundToExportException extends AbstractPlatformResourc
 	 public NoMoreRecordsFoundToExportException() {
 	        super("error.msg.voucher.not.found", "No Voucher found to export or already exported");
 	    }
+	 public NoMoreRecordsFoundToExportException(String message) {
+			super("error.msg.quatity.not.found", message);
+		}
 }

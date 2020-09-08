@@ -181,7 +181,7 @@ public List<MRNDetailsData> getVoucherRequest(Long officeId) {
 		 
 		 this.context.authenticatedUser();
 		 final ItemSaleByItemTypeMapper mapper=new ItemSaleByItemTypeMapper();
-		 final String sql="select distinct "+mapper.schema()+" from b_itemsale its left join m_office mo on its.purchase_by="+officeId+", b_item_master im where its.item_id = im.id " + 
+		 final String sql="select distinct "+mapper.schema()+" from b_itemsale its  join m_office mo on its.purchase_by="+officeId+", b_item_master im where its.item_id = im.id " + 
 		 		"and im.item_class = 4 ";
 		 
 		 return this.jdbcTemplate.query(sql,mapper,new Object[]{});

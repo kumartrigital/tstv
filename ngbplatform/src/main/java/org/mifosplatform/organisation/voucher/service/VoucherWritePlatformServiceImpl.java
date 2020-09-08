@@ -499,12 +499,21 @@ public class VoucherWritePlatformServiceImpl implements VoucherWritePlatformServ
 			if (itemSale.getStatus().equalsIgnoreCase("Completed")) {
 				throw new ItemSaleAlreadyDoneException(saleRefNo);
 			}
-			if (itemSale.getPurchaseBy() != toOffice) {
+			if (!itemSale.getPurchaseBy().toString().equals(toOffice.toString())) {
+				/*
+				 * if (itemSale.getPurchaseBy() != toOffice) { throw new
+				 * ItemSaleNotRegisteredException(toOffice); }
+				 */
 				throw new ItemSaleNotRegisteredException(toOffice);
 			}
-			if (itemSale.getPurchaseFrom() != fromOffice) {
+			if (!itemSale.getPurchaseFrom().toString().equals(fromOffice.toString())) {
+				/*
+				 * if (itemSale.getPurchaseBy() != toOffice) { throw new
+				 * ItemSaleNotRegisteredException(toOffice); }
+				 */
 				throw new ItemSaleNotRegisteredException(fromOffice);
 			}
+
 
 			BigDecimal pinValue = itemSale.getUnitPrice();
 			Long orderdQuantity = itemSale.getOrderQuantity();
@@ -542,10 +551,17 @@ public class VoucherWritePlatformServiceImpl implements VoucherWritePlatformServ
 		Long quantity = command.longValueOfParameterNamed("quantity");
 		java.util.List<VoucherData> voucherData = voucherReadPlatformService.retrieveVocherDetailsBySaleRefId(saleRefId,
 				quantity);
+		int voucherDateSize = voucherData.size();
 
+		if (voucherDateSize < quantity) {
+			throw new NoMoreRecordsFoundToExportException(
+					"Avaliable quatity :" + voucherDateSize + " Request quatity :" + quantity);
+
+		}
+		
 		// ByteArrayInputStream bis = exportVoucherAsPdf((ArrayList<VoucherData>)
 		// voucherData);
-		if (voucherData != null) {
+		if (voucherData.size()!=0) {
 			SimpleDateFormat formatter = new SimpleDateFormat("yyMMddhhmmssMs");
 			Date date = new Date();
 			String dateTime = formatter.format(date).toString();
