@@ -59,18 +59,23 @@ public class RevPayOrderWritePlatformServiceImpl implements RevPayOrderWritePlat
 			PaymentGateway.setDeviceId(command.stringValueOfParameterName("stbNo"));
 			PaymentGateway.setAmountPaid(new BigDecimal(command.stringValueOfParameterName("amount")));
 			PaymentGateway.setPaymentId(getTxid());
-			PaymentGateway.setPartyId(getTxid());
-			PaymentGateway.setReceiptNo("TSTV_" + getTxid());
+			PaymentGateway.setPartyId(PaymentGateway.getPaymentId());
+			PaymentGateway.setReceiptNo("TSTV_" + PaymentGateway.getPaymentId());
 			PaymentGateway.setStatus("intiated");
 			PaymentGateway.setPaymentDate(new Date());
 			PaymentGateway.setSource("REVPAY");
 			PaymentGateway.setReffernceId(command.stringValueOfParameterName("clientId"));
-			paymentGatewayRepository.save(PaymentGateway);
-
+			PaymentGateway.setRemarks("NOTHING");
+			paymentGatewayRepository.save(PaymentGateway);			
 			revorder = new JSONObject();
-			revorder.put("revorder", PaymentGateway);
+			revorder.put("txid", PaymentGateway.getPaymentId());
+			paymentGatewayRepository.save(PaymentGateway);
+			revorder.put("revorder", "order created sucussfully");
 			revorder.put("callbackUrl", "https://41.217.20.98:8877/ngbplatform/api/v1/revpay/orderlock");
 
+			return new CommandProcessingResult(revorder);
+			
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
