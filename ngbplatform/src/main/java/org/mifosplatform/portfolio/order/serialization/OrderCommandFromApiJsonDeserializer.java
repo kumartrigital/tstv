@@ -36,7 +36,7 @@ public final class OrderCommandFromApiJsonDeserializer {
     		"paymentCode","amountPaid","paymentDate","receiptNo","promoId","startDate","isNewplan","suspensionDate","suspensionReason","catalogeId","billFrequencyCode",
     		"suspensionDescription","status","actionType","priceId","autoRenew","planId","duration","planDescription","serialnumber","allocation_type","orderId",
     		"planTypeName","plans","clientServiceId","nextBillDate","planName","planPoId","dealPoId","orderNo","clientPoId","clientServicePoId","plans","name","disconnectMultiple","fromNGB","serviceActivation","clientId","changePlanDetail",
-    		"agreementStatus","officeId","sourceData","poId","settlementPoId", "authToken", "generatedKey", "returnUrl","products","bouqueCount","nonBouqueCount","fromSelfcare","oldplanId","Newplanprepaid","oldplanprepaid"));
+    		"agreementStatus","officeId","sourceData","poId","settlementPoId", "authToken", "generatedKey", "returnUrl","products","bouqueCount","nonBouqueCount","fromSelfcare","oldplanId","Newplanprepaid","oldplanprepaid","endDate"));
     private final Set<String> retracksupportedParameters = new HashSet<String>(Arrays.asList("commandName","message","orderId","clientServiceId","type","commandDetails","clientId"));
     private final FromJsonHelper fromApiJsonHelper;
 

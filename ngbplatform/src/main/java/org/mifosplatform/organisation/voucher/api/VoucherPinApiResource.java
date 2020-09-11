@@ -40,6 +40,7 @@ import org.mifosplatform.logistics.agent.domain.ItemSaleRepository;
 import org.mifosplatform.logistics.agent.exception.ItemSaleIdNotFoundException;
 import org.mifosplatform.logistics.item.data.ItemData;
 import org.mifosplatform.logistics.item.service.ItemReadPlatformService;
+import org.mifosplatform.logistics.itemdetails.exception.ItemDetailsNotFoundException;
 import org.mifosplatform.organisation.mcodevalues.api.CodeNameConstants;
 import org.mifosplatform.organisation.mcodevalues.data.MCodeData;
 import org.mifosplatform.organisation.mcodevalues.service.MCodeReadPlatformService;
@@ -399,15 +400,18 @@ public class VoucherPinApiResource {
 			Long fromOffice = jsonObject.getLong("fromOffice");
 			ItemData itemData = this.itemReadPlatformService.retrieveSingleItemDetails(null, itemSale.getItemId(), null,
 					false);
+			if (itemData != null) {
+				if (itemData.getItemCode().equalsIgnoreCase("DAF") || itemData.getItemCode().equalsIgnoreCase("DAFT")) {
+					isProduct = true;
+					newStatuscount = this.readPlatformService.retriveQuantityByStatus("NEW", fromOffice,
+							itemSale.getUnitPrice(), isProduct);
 
-			if (itemData.getItemCode().equalsIgnoreCase("DAF") || itemData.getItemCode().equalsIgnoreCase("DAFT")) {
-				isProduct = true;
-				newStatuscount = this.readPlatformService.retriveQuantityByStatus("NEW", fromOffice,
-						itemSale.getUnitPrice(), isProduct);
-
-			} else {
-				newStatuscount = this.readPlatformService.retriveQuantityByStatus("NEW", fromOffice,
-						itemSale.getUnitPrice(), isProduct);
+				} else {
+					newStatuscount = this.readPlatformService.retriveQuantityByStatus("NEW", fromOffice,
+							itemSale.getUnitPrice(), isProduct);
+				}
+			}else {
+				throw new ItemDetailsNotFoundException(itemSale.getItemId());
 			}
 		} catch (JSONException e) {
 			e.printStackTrace();

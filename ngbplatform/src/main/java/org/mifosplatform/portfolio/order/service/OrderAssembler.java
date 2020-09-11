@@ -45,6 +45,7 @@ import org.mifosplatform.portfolio.order.domain.UserActionStatusTypeEnum;
 import org.mifosplatform.portfolio.order.exceptions.NoRegionalPriceFound;
 import org.mifosplatform.portfolio.plan.data.ServiceData;
 import org.mifosplatform.portfolio.plan.domain.Plan;
+import org.mifosplatform.portfolio.plan.domain.PlanRepository;
 import org.mifosplatform.portfolio.slabRate.data.SlabRateData;
 import org.mifosplatform.portfolio.slabRate.service.SlabRateReadPlatformService;
 import org.mifosplatform.portfolio.slabRate.service.SlabRateWritePlatformService;
@@ -71,6 +72,7 @@ public class OrderAssembler {
 	private final ClientReadPlatformService clientReadPlatformService;
 	private final SlabRateWritePlatformService slabRateWritePlatformService;
 	private final OrderRepository orderRepository;
+	private final PlanRepository planRepository;
 
 	@Autowired
 	public OrderAssembler(final OrderDetailsReadPlatformServices orderDetailsReadPlatformServices,
@@ -80,8 +82,8 @@ public class OrderAssembler {
 			final SlabRateReadPlatformService slabRateReadPlatformService,
 			final OfficeReadPlatformService officeReadPlatformService,
 			final ClientReadPlatformService clientReadPlatformService,
-			final SlabRateWritePlatformService SlabRateWritePlatformService,
-			final OrderRepository orderRepository) {
+			final SlabRateWritePlatformService SlabRateWritePlatformService, final OrderRepository orderRepository,
+			final PlanRepository planRepository) {
 
 		this.orderDetailsReadPlatformServices = orderDetailsReadPlatformServices;
 		this.contractRepository = contractRepository;
@@ -95,6 +97,7 @@ public class OrderAssembler {
 		this.clientReadPlatformService = clientReadPlatformService;
 		this.slabRateWritePlatformService = SlabRateWritePlatformService;
 		this.orderRepository = orderRepository;
+		this.planRepository = planRepository;
 
 	}
 
@@ -142,8 +145,7 @@ public class OrderAssembler {
 
 		Contract contractData = this.contractRepository.findOne(order.getContarctPeriod());
 
-		
-		LocalDateTime startDate=new LocalDateTime(order.getStartDate());		
+		LocalDateTime startDate = new LocalDateTime(order.getStartDate());
 
 		if (plan.getProvisionSystem().equalsIgnoreCase("None")) {
 			orderStatus = OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.ACTIVE).getId();
@@ -162,9 +164,14 @@ public class OrderAssembler {
 			}
 		}
 
-
 		// Calculate EndDate
-		endDate = calculateEndDate(startDate, contractData.getSubscriptionType(), contractData.getUnits());
+		/*
+		 * if (plan.getIsAdvance() == 'y' || plan.getIsAdvance() == 'Y') { endDate =
+		 * command.localDateTimeValueOfParameterNamed("endDate"); } else {
+		 */
+			endDate = calculateEndDate(startDate, contractData.getSubscriptionType(), contractData.getUnits());
+
+		//}
 
 		order = new Order(order.getClientId(), plan.getId(), orderStatus, null, order.getBillingFrequency(), startDate,
 				endDate, order.getContarctPeriod(), serviceDetails, orderprice, order.getbillAlign(),
@@ -178,6 +185,9 @@ public class OrderAssembler {
 			order.setBillingAlign(configuration.isEnabled() ? 'Y' : 'N');
 			if (configuration.isEnabled() && endDate != null) {
 				order.setEndDate(endDate.dayOfMonth().withMaximumValue());
+
+			} else {
+				order.setEndDate(endDate);
 			}
 		}
 		BigDecimal priceforHistory = BigDecimal.ZERO;
@@ -213,8 +223,8 @@ public class OrderAssembler {
 					}
 
 					price = new OrderPrice(productId, data.getChargeCode(), data.getChargingVariant(), slabPrice, null,
-							data.getChagreType(), data.getChargeDuration(), data.getDurationType(),
-							billstartDate, billEndDate, data.isTaxInclusive(), data.getChargeOwner());
+							data.getChagreType(), data.getChargeDuration(), data.getDurationType(), billstartDate,
+							billEndDate, data.isTaxInclusive(), data.getChargeOwner());
 					price.setCurrencyId(Long.valueOf(data.getCurrencyId()));
 					order.addOrderDeatils(price);
 					priceforHistory = priceforHistory.add(slabPrice);
@@ -237,8 +247,8 @@ public class OrderAssembler {
 				}
 			} else {
 				price = new OrderPrice(productId, data.getChargeCode(), data.getChargingVariant(), data.getPrice(),
-						null, data.getChagreType(), data.getChargeDuration(), data.getDurationType(),
-						billstartDate, billEndDate, data.isTaxInclusive(), data.getChargeOwner());
+						null, data.getChagreType(), data.getChargeDuration(), data.getDurationType(), billstartDate,
+						billEndDate, data.isTaxInclusive(), data.getChargeOwner());
 				price.setCurrencyId(Long.valueOf(data.getCurrencyId()));
 				order.addOrderDeatils(price);
 				priceforHistory = priceforHistory.add(data.getPrice());
@@ -266,14 +276,14 @@ public class OrderAssembler {
 		// This method is used to check the client has balance to activate prepaid
 		// service
 		Long count1 = this.orderRepository.findOrdersCount(clientId);
-		if (count1!= 0) {
-		if (plan.getIsPrepaid() == 'Y' || plan.getIsPrepaid() == 'y'||plan.getIsAdvance()=='y'||plan.getIsAdvance()=='Y') {
+		if (count1 != 0) {
+			if (plan.getIsPrepaid() == 'Y' || plan.getIsPrepaid() == 'y' || plan.getIsAdvance() == 'y'
+					|| plan.getIsAdvance() == 'Y') {
 
-			this.slabRateWritePlatformService.prepaidService(clientId, totalOrderPrice);
+				this.slabRateWritePlatformService.prepaidService(clientId, totalOrderPrice);
 
+			}
 		}
-		}
-
 
 		if (command.hasParameter("products")) {
 			for (JsonElement productDetail : productDetails) {
@@ -296,7 +306,6 @@ public class OrderAssembler {
 
 			}
 		}
-
 
 		return order;
 

@@ -269,7 +269,7 @@ public class MessageGmailBackedPlatformEmailService implements MessagePlatformEm
 				String encodedMessage = URLEncoder.encode(messageBody);
 					
 				String url = urlString + "&username=" + userName + "&password=" + passWord + "&sender="
-						+sender + "&recipient="+messageTo+ "&message"+messageBody;
+						+sender + "&recipient=+23"+messageTo+ "&message"+messageBody;
 
 				System.out.println(url);
 
