@@ -2,35 +2,31 @@ package org.mifosplatform.Revpay.order.api;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.apache.http.HttpResponse;
 import org.json.simple.JSONObject;
-import org.kohsuke.rngom.digested.DListPattern;
 import org.mifosplatform.Revpay.order.domain.RevPayOrderRepository;
 import org.mifosplatform.Revpay.order.domain.RevpayOrder;
 import org.mifosplatform.Revpay.order.service.RevPayOrderWritePlatformService;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
+import org.mifosplatform.finance.payments.api.PaymentsApiResource;
 import org.mifosplatform.finance.payments.service.PaymentWritePlatformService;
 import org.mifosplatform.finance.paymentsgateway.domain.PaymentGateway;
 import org.mifosplatform.finance.paymentsgateway.domain.PaymentGatewayRepository;
 import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
-import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
@@ -38,10 +34,7 @@ import org.mifosplatform.portfolio.order.service.OrderWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.google.gson.JsonElement;
 import com.sun.jersey.spi.resource.Singleton;
-
-import antlr.StringUtils;
 
 @Singleton
 @Component
@@ -59,6 +52,7 @@ public class RevPayOrdersApiResource {
 	private final OrderWritePlatformService orderWritePlatformService;
 	private final PaymentGatewayRepository paymentGatewayRepository;
 	private final PaymentWritePlatformService PaymentWritePlatformService;
+	private final PaymentsApiResource paymentsApiResource;
 
 	@Autowired
 	public RevPayOrdersApiResource(final DefaultToApiJsonSerializer<RevpayOrder> apiJsonSerializer,
@@ -68,7 +62,8 @@ public class RevPayOrdersApiResource {
 			final RevPayOrderRepository revPayOrderRepository, final FromJsonHelper fromApiJsonHelper,
 			final OrderWritePlatformService orderWritePlatformService,
 			final PaymentGatewayRepository paymentGatewayRepository,
-			final PaymentWritePlatformService PaymentWritePlatformService) {
+			final PaymentWritePlatformService PaymentWritePlatformService,
+			final PaymentsApiResource paymentsApiResource) {
 
 		this.toApiJsonSerializer = apiJsonSerializer;
 		this.apiRequestParameterHelper = apiRequestParameterHelper;
@@ -79,6 +74,7 @@ public class RevPayOrdersApiResource {
 		this.orderWritePlatformService = orderWritePlatformService;
 		this.paymentGatewayRepository = paymentGatewayRepository;
 		this.PaymentWritePlatformService = PaymentWritePlatformService;
+		this.paymentsApiResource = paymentsApiResource;
 
 	}
 
@@ -100,9 +96,11 @@ public class RevPayOrdersApiResource {
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@SuppressWarnings("unchecked")
-	public Response CallBackRavePayOrder(@PathParam("txref") Long txref, @PathParam("flwref") String flwref) {
+	public Response CallBackRavePayOrder(@QueryParam("txref") Long txref, @QueryParam("flwref") String flwref) {
 		String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
 
+		String locale = "en";
+		String dateFormat = "dd MMMM yyyy";
 		PaymentGateway revpayOrder = paymentGatewayRepository.findPaymentDetailsByPaymentId(txref.toString());
 		if (status.equals("success")) {
 
@@ -116,19 +114,26 @@ public class RevPayOrdersApiResource {
 			paymentJson.put("paymentCode", 27);
 			paymentJson.put("receiptNo", revpayOrder.getReceiptNo());// need to
 			paymentJson.put("remarks", "nothing");
-			paymentJson.put("amountPaid", revpayOrder.getAmountPaid());// need to change
+			paymentJson.put("amountPaid", revpayOrder.getAmountPaid());// need to
 			paymentJson.put("paymentType", "Online Payment");
-			paymentJson.put("locale", "en");
-			paymentJson.put("dateFormat", "dd MMMM yyyy");
+			paymentJson.put("locale", locale);
+			paymentJson.put("dateFormat", dateFormat);
 			paymentJson.put("paymentSource", null);
-			paymentJson.put("paymentDate", "false");
+			SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
 
-			final JsonElement paymentElement = fromApiJsonHelper.parse(paymentJson.toString());
+			paymentJson.put("paymentDate", formatter.format(revpayOrder.getPaymentDate()));
+			/*
+			 * final JsonElement paymentElement =
+			 * fromApiJsonHelper.parse(paymentJson.toString());
+			 * 
+			 * JsonCommand paymentCommandJson = new JsonCommand(null,
+			 * paymentElement.toString(), paymentElement, fromApiJsonHelper, null, null,
+			 * null, null, null, null, null, null, null, null, null, null);
+			 * 
+			 * PaymentWritePlatformService.createPayment(paymentCommandJson);
+			 */
 
-			JsonCommand paymentCommandJson = new JsonCommand(null, paymentElement.toString(), paymentElement,
-					fromApiJsonHelper, null, null, null, null, null, null, null, null, null, null, null, null);
-
-			PaymentWritePlatformService.createPayment(paymentCommandJson);
+			paymentsApiResource.createPayment(Long.parseLong(revpayOrder.getReffernceId()), paymentJson.toString());
 
 		} else {
 			revpayOrder.setStatus("Failed");

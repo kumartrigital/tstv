@@ -135,12 +135,15 @@ public class SalesCatalogeReadPlatformServiceImpl implements SalesCatalogeReadPl
 	public List<PlanData> retrieveSelectedPlans(Long salescatalogeId) {
 		try{
 			PlanMapper planMapper = new PlanMapper();
-			String sql = "SELECT DISTINCT "+planMapper.schema()+" WHERE sd.is_deleted = 'N' and p.is_deleted = 'N' AND sd.cataloge_id = ?";
+
+			String sql = "SELECT DISTINCT "+planMapper.schema()+" WHERE sd.is_deleted = 'N' AND p.is_deleted = 'N' AND sd.cataloge_id = ?";
+
 			return jdbcTemplate.query(sql, planMapper,new Object[]{salescatalogeId});
 		}catch(EmptyResultDataAccessException ex){
 			return null;
 		}	
 	}
+	
     
 	private static final class PlanMapper implements RowMapper<PlanData>{
 		

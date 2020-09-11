@@ -565,7 +565,7 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 			planDataJson.put("locale", locale);
 			planDataJson.put("dateFormat", dateFormat);
 			planDataJson.put("planCode", planData1.getId());
-			planDataJson.put("contractPeriod", planData1.getContractPeriodId());
+			planDataJson.put("contractPeriod", 1);
 			planDataJson.put("paytermCode", planData1.getChargeCycle());
 			planDataJson.put("isNewplan", isNewplan);
 			planDataJson.put("billAlign", false);
@@ -878,7 +878,7 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 			} else {
 				throw new NoSuchElementException("Please Create City");
 			}
-			
+
 			clientcreation.put("address", addressArray);
 			if (nationalId != null && !nationalId.equalsIgnoreCase("")) {
 				clientcreation.put("externalId", nationalId);
@@ -965,7 +965,7 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 					if (deviceAgreementType.equalsIgnoreCase(ConfigurationConstants.CONFIR_PROPERTY_SALE)) {
 
 						device = command.stringValueOfParameterNamed("device");
-						
+
 						ItemDetails detail = itemDetailsRepository.getInventoryItemDetailBySerialNum(device);
 
 						if (detail == null) {
@@ -1186,7 +1186,6 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 					.withEntityId(resultClient.getClientId()) //
 					.with(changes) //
 					.build();
-	
 
 		} catch (DataIntegrityViolationException dve) {
 			handleDataIntegrityIssues(command, dve);
