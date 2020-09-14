@@ -1,11 +1,13 @@
 package org.mifosplatform.portfolio.plan.service;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
 import org.joda.time.LocalDate;
+import org.mifosplatform.billing.planprice.data.PriceData;
 import org.mifosplatform.billing.planprice.service.PriceReadPlatformService;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
@@ -462,7 +464,7 @@ public class PlanReadPlatformServiceImpl implements PlanReadPlatformService {
 	public List<PlanData> retrievePlanDataForDropdown() {
 		try {
 			PlanMapperForDropDown planMapper = new PlanMapperForDropDown();
-			String sql = "SELECT DISTINCT " + planMapper.schema() + " WHERE p.is_deleted = 'N'";
+			String sql = "SELECT DISTINCT " + planMapper.schema() + " WHERE p.is_deleted = 'N' and c.is_deleted = 'n'";
 			return jdbcTemplate.query(sql, planMapper, new Object[] {});
 		} catch (EmptyResultDataAccessException ex) {
 			return null;
@@ -472,8 +474,9 @@ public class PlanReadPlatformServiceImpl implements PlanReadPlatformService {
 	private static final class PlanMapperForDropDown implements RowMapper<PlanData> {
 
 		public String schema() {
-			return "p.id AS id,p.plan_code AS planCode,p.plan_description AS planDescription, p.plan_poid as planPoid, d.deal_poid as dealPoid"
-					+ " FROM b_plan_master p join b_plan_detail d on p.id=d.plan_id";
+			return "p.id AS id,p.plan_code AS planCode,p.plan_description AS planDescription,c.price as planPrice,"
+					+ " p.plan_poid as planPoid, d.deal_poid as dealPoid"
+					+ " FROM b_plan_master p join b_plan_detail d on p.id=d.plan_id join b_plan_pricing c on c.plan_id=p.id";
 
 		}
 
@@ -484,7 +487,8 @@ public class PlanReadPlatformServiceImpl implements PlanReadPlatformService {
 			final String planDescription = rs.getString("planDescription");
 			final String planPoid = rs.getString("planPoid");
 			final String dealPoid = rs.getString("dealPoid");
-			return new PlanData(id, planCode, planDescription, planPoid, dealPoid, null);
+			final BigDecimal price = rs.getBigDecimal("planPrice");
+			return new PlanData(id, planCode, planDescription, planPoid, dealPoid,null, price);
 		}
 
 	}
@@ -524,7 +528,7 @@ public class PlanReadPlatformServiceImpl implements PlanReadPlatformService {
 			 * +salesPlanCategoryId+" and scm.is_deleted = 'N') ");
 			 */
 			sql.append(
-					"SELECT DISTINCT s.id AS id, s.plan_code AS planCode, s.plan_description as planDescription, s.is_prepaid AS isPrepaid, s.plan_poid AS planpoid,");
+					"SELECT DISTINCT s.id AS id, s.plan_code AS planCode, s.plan_description as planDescription, s.is_prepaid AS isPrepaid, s.plan_poid AS planpoid,p.price as planPrice,");
 			sql.append(
 					"(select distinct(deal_poid) from b_plan_detail x where s.id=x.plan_id) AS dealpoid,co.code_value AS planTypeName,(select billfrequency_code from b_charge_codes bcc where bcc.charge_code=p.charge_code) AS chargeCycle,");
 			sql.append(
@@ -576,9 +580,10 @@ public class PlanReadPlatformServiceImpl implements PlanReadPlatformService {
 			Long dealPoId = rs.getLong("dealPoid");
 			String chargeCycle = rs.getString("chargeCycle");
 			Long contractPeriodId = rs.getLong("contractPeriodId");
+			BigDecimal price = rs.getBigDecimal("planPrice");
 			List<ServiceData> services = priceReadPlatformService.retrieveServiceDetails(id);
 			return new PlanCodeData(id, planCode, services, isPrepaid, planDescription, planPoId, dealPoId,
-					planTypeName, null, null, chargeCycle, contractPeriodId);
+					planTypeName, null, null, chargeCycle, contractPeriodId,price);
 
 		}
 
