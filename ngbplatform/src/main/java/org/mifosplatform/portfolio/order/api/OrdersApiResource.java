@@ -272,7 +272,7 @@ public class OrdersApiResource {
 		orderDetailsData = new OrderData(priceDatas, historyDatas, orderDetailsData, services, discountDatas, null);
 		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper
 				.process(uriInfo.getQueryParameters());
-		return this.toApiJsonSerializer.serialize(settings, orderDetailsData, RESPONSE_DATA_PARAMETERS);
+		return this.toApiJsonSerializer.serializetime(settings, orderDetailsData, RESPONSE_DATA_PARAMETERS);
 	}
 
 	@PUT
