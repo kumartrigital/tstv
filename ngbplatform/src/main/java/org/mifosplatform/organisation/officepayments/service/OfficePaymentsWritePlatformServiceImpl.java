@@ -109,7 +109,7 @@ public class OfficePaymentsWritePlatformServiceImpl implements OfficePaymentsWri
 				this.journalvoucherDetailsRepository.saveAndFlush(journalVoucherDetails);
 			}
 
-			Configuration isPaywizard = configurationRepository
+/*			Configuration isPaywizard = configurationRepository
 					.findOneByName(ConfigurationConstants.PAYWIZARD_INTEGRATION);
 
 			if (null != isPaywizard && isPaywizard.isEnabled()) {
@@ -141,7 +141,7 @@ public class OfficePaymentsWritePlatformServiceImpl implements OfficePaymentsWri
 					}
 					this.officeBalanceRepository.saveAndFlush(officeBalances);
 				}
-			} else {
+			} else {*/
 				/* office payment's Balance update in office balance table*/
 				if(collectionBy != null){
 					OfficeBalance officeBalance =this.officeBalanceRepository.findOneByOfficeId(collectionBy);
@@ -170,7 +170,7 @@ public class OfficePaymentsWritePlatformServiceImpl implements OfficePaymentsWri
 					}
 					this.officeBalanceRepository.saveAndFlush(officeBalances);
 				}
-			}
+		//}
 
 			return new CommandProcessingResultBuilder().withCommandId(command.commandId())
 					.withEntityId(officePayments.getId()).withOfficeId(command.entityId()).build();

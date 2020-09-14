@@ -1,5 +1,6 @@
 package org.mifosplatform.portfolio.plan.data;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -56,9 +57,6 @@ public class PlanData {
 	private Set<ProductData> productsDatas;
 	private List<PlanTypeEnum> PlanTypeEnum;
 	private List<SearchTypeEnum> SearchTypeEnum;
-	
-	
-
 	private int planCount;
 	private boolean ordersFlag;
 	private Collection<MCodeData> planTypeData;
@@ -92,6 +90,7 @@ public class PlanData {
 	private String channelCategory;
 	private String chargeCycle;
 	private Long contractPeriodId;
+	private BigDecimal price;
 	
 	private String isAdvance;
 
@@ -201,6 +200,23 @@ public class PlanData {
 		if(dealPoid!=null)
 			this.dealPoid=Long.parseLong(dealPoid);*/
 	}
+	public PlanData(final Long id, final String planCode, final String planDescription, String planPoid, final String dealPoid,final String isPrepaid,final BigDecimal price) {
+		this.id = id;
+		this.planCode = planCode;
+		this.planDescription = planDescription;
+		if(planPoid !=null)
+		this.planPoid=Long.valueOf(planPoid);
+		if(dealPoid !=null)
+			this.dealPoid=Long.valueOf(dealPoid);
+		this.isPrepaid = isPrepaid;
+		this.price = price;	
+		/*if(planPoid!=null)
+			this.planPoid=Long.parseLong(planPoid);
+		if(dealPoid!=null)
+			this.dealPoid=Long.parseLong(dealPoid);*/
+	}
+	
+	
 	public PlanData(final Long id){
 		this.id=id;
 	}
@@ -872,5 +888,13 @@ public class PlanData {
 	
 	public Long getContractPeriodId() {
 		return contractPeriodId;
+	}
+
+	public BigDecimal getPrice() {
+		return price;
+	}
+
+	public void setPrice(BigDecimal price) {
+		this.price = price;
 	}
 }
