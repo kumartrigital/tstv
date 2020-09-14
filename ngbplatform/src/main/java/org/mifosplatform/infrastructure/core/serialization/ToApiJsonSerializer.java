@@ -11,6 +11,8 @@ import java.util.Set;
 import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.infrastructure.jobs.data.JobDetailHistoryData;
 
+import com.google.gson.Gson;
+
 public interface ToApiJsonSerializer<T> {
 
     String serialize(Object object);
@@ -29,5 +31,12 @@ public interface ToApiJsonSerializer<T> {
 	String serializeWithTime(Object object);
 
 	String serializeWithTimePretty(boolean prettyOn, Object object);
+	
+    String serializetime(ApiRequestJsonSerializationSettings settings, T single, Set<String> supportedResponseParameters);
+
+	String serializeDateTime(Object object);
+
+	
+	
 	
 }

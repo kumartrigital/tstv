@@ -58,6 +58,11 @@ public final class DefaultToApiJsonSerializer<T> implements ToApiJsonSerializer<
 	}
 
 	@Override
+	public String serializeDateTime(final Object object) {
+		return this.excludeNothingWithPrettyPrintingTimeOff.serialize(object);
+	}
+
+	@Override
 	public String serializePretty(boolean prettyOn, final Object object) {
 		String json = "";
 
@@ -123,6 +128,28 @@ public final class DefaultToApiJsonSerializer<T> implements ToApiJsonSerializer<
 		} else {
 			if (settings.isPrettyPrint()) {
 				json = this.excludeNothingWithPrettyPrintingOn.serialize(dataObject);
+			} else {
+				json = serialize(dataObject);
+			}
+		}
+		return json;
+	}
+
+	@Override
+	public String serializetime(final ApiRequestJsonSerializationSettings settings, final T singleObject,
+			final Set<String> supportedResponseParameters) {
+		final Gson delegatedSerializer = findAppropriateSerializer(settings, supportedResponseParameters);
+		return serializetimeWithSettings(delegatedSerializer, settings, singleObject);
+	}
+
+	private String serializetimeWithSettings(final Gson gson, final ApiRequestJsonSerializationSettings settings,
+			final Object dataObject) {
+		String json = null;
+		if (gson != null) {
+			json = helper.serializedJsonFrom(gson, dataObject);
+		} else {
+			if (settings.isPrettyPrint()) {
+				json = this.excludeNothingWithPrettyPrintingTimeOn.serializeWithTime(dataObject);
 			} else {
 				json = serialize(dataObject);
 			}
