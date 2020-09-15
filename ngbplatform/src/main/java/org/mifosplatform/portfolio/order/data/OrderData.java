@@ -7,12 +7,14 @@ import java.util.List;
 import java.util.Random;
 
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.mifosplatform.billing.payterms.data.PaytermData;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.mifosplatform.infrastructure.core.service.DateTimeUtils;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.organisation.mcodevalues.data.MCodeData;
 import org.mifosplatform.organisation.office.data.OfficeData;
@@ -36,17 +38,17 @@ public class OrderData {
 	private String variant;
 	private String status;
 	private Long period;
-	private LocalDate planStartDate;
-	private LocalDate planEndDate;
-	private LocalDate startDate;
-	private LocalDate currentDate;
-	private LocalDate endDate;
+	private LocalDateTime planStartDate;
+	private LocalDateTime planEndDate;
+	private LocalDateTime startDate;
+	private LocalDateTime currentDate;
+	private LocalDateTime endDate;
 	private String billingFrequency;
 	private List<PlanCodeData> plandata;
 	private List<PaytermData> paytermdata;
 	private List<SubscriptionData> subscriptiondata;
 	private List<OrderPriceData> orderPriceData;
-	private LocalDate activeDate;
+	private LocalDateTime activeDate;
 	private String contractPeriod;
 //	private boolean flag;
 	private Collection<MCodeData> disconnectDetails;
@@ -60,7 +62,7 @@ public class OrderData {
 	private String provisioningSys;
 	private List<OrderLineData> orderServices;
 	private List<OrderDiscountData> orderDiscountDatas;
-	private LocalDate invoiceTilldate;
+	private LocalDateTime invoiceTilldate;
 	private Collection<MCodeData> reasons;
 	private Collection<MCodeData> extensionPeriodDatas;
 	private String groupName;
@@ -112,7 +114,7 @@ public class OrderData {
 			this.service_code = null;
 			this.startDate = data.getStartDate();
 		}
-		this.startDate = DateUtils.getLocalDateOfTenant();
+		this.startDate = DateTimeUtils.getLocalDateTimeOfTenant();
 		this.variant = null;
 		this.chargeCode = null;
 		this.paytermdata = paytermData;
@@ -138,7 +140,7 @@ public class OrderData {
 			this.service_code = null;
 			this.startDate = data.getStartDate();
 		}
-		this.startDate = DateUtils.getLocalDateOfTenant();
+		this.startDate = DateTimeUtils.getLocalDateTimeOfTenant();
 		this.variant = null;
 		this.chargeCode = null;
 		this.paytermdata = paytermData;
@@ -150,9 +152,9 @@ public class OrderData {
 		this.defaultPlanDatas = defaultPlanDatas;
 	}
 
-	public OrderData(Long id, Long planId, String plancode, Long planType, String status, LocalDate startDate,
-			LocalDate endDate, double price, String contractPeriod, String isprepaid, String allowtopup,
-			String userAction, String provisioningSys, String orderNo, LocalDate invoiceTillDate, LocalDate activaDate,
+	public OrderData(Long id, Long planId, String plancode, Long planType, String status, LocalDateTime startDate,
+			LocalDateTime endDate, double price, String contractPeriod, String isprepaid, String allowtopup,
+			String userAction, String provisioningSys, String orderNo, LocalDateTime invoiceTillDate, LocalDateTime activaDate,
 			String groupName, String autoRenew, Long clientServiceId, String planName, Long planPoid, Long dealPoId) {
 		this.id = id;
 		this.pdid = planId;
@@ -161,7 +163,7 @@ public class OrderData {
 		this.status = status;
 		this.period = null;
 		this.startDate = startDate;
-		this.currentDate = DateUtils.getLocalDateOfTenant();
+		this.currentDate = DateTimeUtils.getLocalDateTimeOfTenant();
 		this.endDate = endDate;
 		this.orderPriceId = null;
 		this.service_code = null;
@@ -215,7 +217,7 @@ public class OrderData {
 	 */
 
 	public OrderData(Long orderId, String planCode, String planDescription, String billingFreq, String contractPeriod,
-			Double price, LocalDate endDate) {
+			Double price, LocalDateTime endDate) {
 
 		this.id = orderId;
 		this.planCode = planCode;
@@ -295,8 +297,8 @@ public class OrderData {
 	}
 
 	public OrderData(Long orderId, Long clientId, Long clientServiceId, Long planId, String orderNo, String orderStatus,
-			String planName, Long planType, String planDescription, LocalDate startDate, LocalDate endDate,
-			LocalDate activeDate, LocalDate orderstartDate, LocalDate orderEndDate) {
+			String planName, Long planType, String planDescription, LocalDateTime startDate, LocalDateTime endDate,
+			LocalDateTime activeDate, LocalDateTime orderstartDate, LocalDateTime orderEndDate) {
 		this.id = orderId;
 		this.clientId = clientId;
 		this.clientServiceId = clientServiceId;
@@ -362,15 +364,15 @@ public class OrderData {
 		return planDescription;
 	}
 
-	public LocalDate getCurrentDate() {
+	public LocalDateTime getCurrentDate() {
 		return currentDate;
 	}
 
-	public LocalDate getActiveDate() {
+	public LocalDateTime getActiveDate() {
 		return activeDate;
 	}
 
-	public void setActiveDate(LocalDate activeDate) {
+	public void setActiveDate(LocalDateTime activeDate) {
 		this.activeDate = activeDate;
 	}
 
@@ -426,7 +428,7 @@ public class OrderData {
 		return orderDiscountDatas;
 	}
 
-	public LocalDate getInvoiceTilldate() {
+	public LocalDateTime getInvoiceTilldate() {
 		return invoiceTilldate;
 	}
 
@@ -454,11 +456,11 @@ public class OrderData {
 		return service_code;
 	}
 
-	public LocalDate getEndDate() {
+	public LocalDateTime getEndDate() {
 		return endDate;
 	}
 
-	public void setEndDate(LocalDate endDate) {
+	public void setEndDate(LocalDateTime endDate) {
 		this.endDate = endDate;
 	}
 
@@ -474,11 +476,11 @@ public class OrderData {
 		return period;
 	}
 
-	public LocalDate getStartDate() {
+	public LocalDateTime getStartDate() {
 		return startDate;
 	}
 
-	public void setStartDate(LocalDate startDate) {
+	public void setStartDate(LocalDateTime startDate) {
 		this.startDate = startDate;
 	}
 
