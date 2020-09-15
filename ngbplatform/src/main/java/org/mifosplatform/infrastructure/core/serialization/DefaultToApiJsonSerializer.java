@@ -151,7 +151,7 @@ public final class DefaultToApiJsonSerializer<T> implements ToApiJsonSerializer<
 			if (settings.isPrettyPrint()) {
 				json = this.excludeNothingWithPrettyPrintingTimeOn.serializeWithTime(dataObject);
 			} else {
-				json = serialize(dataObject);
+				json = serializeDateTime(dataObject);
 			}
 		}
 		return json;

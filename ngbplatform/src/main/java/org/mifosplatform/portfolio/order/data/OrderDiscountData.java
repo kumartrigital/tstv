@@ -3,6 +3,7 @@ package org.mifosplatform.portfolio.order.data;
 import java.math.BigDecimal;
 
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 
 public class OrderDiscountData {
 	
@@ -12,11 +13,11 @@ public class OrderDiscountData {
 	private final String discountdescription;
 	private final String discountType;
 	private final BigDecimal discountAmount;
-	private final LocalDate discountstartDate;
-	private final LocalDate discountEndDate;
+	private final LocalDateTime discountstartDate;
+	private final LocalDateTime discountEndDate;
 
 	public OrderDiscountData(Long id, Long priceId, String discountCode,String discountdescription, 
-			BigDecimal discountAmount,String discountType, LocalDate startDate, LocalDate endDate) {
+			BigDecimal discountAmount,String discountType, LocalDateTime startDate, LocalDateTime endDate) {
 		
 		this.id=id;
 		this.priceId=priceId;
@@ -52,11 +53,11 @@ public class OrderDiscountData {
 		return discountAmount;
 	}
 
-	public LocalDate getDiscountstartDate() {
+	public LocalDateTime getDiscountstartDate() {
 		return discountstartDate;
 	}
 
-	public LocalDate getDiscountEndDate() {
+	public LocalDateTime getDiscountEndDate() {
 		return discountEndDate;
 	}
 
