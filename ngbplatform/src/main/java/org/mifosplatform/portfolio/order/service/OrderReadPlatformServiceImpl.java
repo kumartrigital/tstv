@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.joda.time.LocalDate;
-import org.joda.time.LocalDateTime;
 import org.mifosplatform.billing.payterms.data.PaytermData;
 import org.mifosplatform.billing.planprice.service.PriceReadPlatformService;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
@@ -472,10 +471,10 @@ public class OrderReadPlatformServiceImpl implements OrderReadPlatformService
 			String billingAlign = rs.getString("billingAlign");
 			String billingFrequency = rs.getString("billingFrequency");
 			BigDecimal price = rs.getBigDecimal("price");
-			LocalDateTime billStartDate = JdbcSupport.getLocalDateTime(rs, "billStartDate");
-			LocalDateTime billEndDate = JdbcSupport.getLocalDateTime(rs, "billEndDate");
-			LocalDateTime nextBillDate = JdbcSupport.getLocalDateTime(rs, "nextBillableDay");
-			LocalDateTime invoiceTillDate = JdbcSupport.getLocalDateTime(rs, "invoiceTillDate");
+			LocalDate billStartDate = JdbcSupport.getLocalDate(rs, "billStartDate");
+			LocalDate billEndDate = JdbcSupport.getLocalDate(rs, "billEndDate");
+			LocalDate nextBillDate = JdbcSupport.getLocalDate(rs, "nextBillableDay");
+			LocalDate invoiceTillDate = JdbcSupport.getLocalDate(rs, "invoiceTillDate");
 			String chargeOwner = rs.getString("chargeOwner");
 
 			return new OrderPriceData(id, orderId, clientId, productDescription, chargeDescription, chargeDuration,
@@ -549,10 +548,10 @@ public class OrderReadPlatformServiceImpl implements OrderReadPlatformService
 			final String plancode = rs.getString("plan_code");
 			final String contractPeriod = rs.getString("contractPeriod");
 			final int statusId = rs.getInt("order_status");
-			LocalDateTime startDate = JdbcSupport.getLocalDateTime(rs, "start_date");
-			LocalDateTime activaDate = JdbcSupport.getLocalDateTime(rs, "activeDate");
-			LocalDateTime endDate = JdbcSupport.getLocalDateTime(rs, "end_date");
-			LocalDateTime invoiceTillDate = JdbcSupport.getLocalDateTime(rs, "invoiceTillDate");
+			LocalDate startDate = JdbcSupport.getLocalDate(rs, "start_date");
+			LocalDate activaDate = JdbcSupport.getLocalDate(rs, "activeDate");
+			LocalDate endDate = JdbcSupport.getLocalDate(rs, "end_date");
+			LocalDate invoiceTillDate = JdbcSupport.getLocalDate(rs, "invoiceTillDate");
 			final double price = rs.getDouble("price");
 			final String isprepaid = rs.getString("isprepaid");
 			final String allowtopup = rs.getString("allowTopUp");
@@ -610,9 +609,9 @@ public class OrderReadPlatformServiceImpl implements OrderReadPlatformService
 		public OrderHistoryData mapRow(final ResultSet rs, final int rowNum) throws SQLException {
 
 			final Long id = rs.getLong("id");
-			final LocalDateTime transDate = JdbcSupport.getLocalDateTime(rs, "transDate");
-			final LocalDateTime actualDate = JdbcSupport.getLocalDateTime(rs, "actualDate");
-			final LocalDateTime provisionongDate = JdbcSupport.getLocalDateTime(rs, "actualDate");
+			final LocalDate transDate = JdbcSupport.getLocalDate(rs, "transDate");
+			final LocalDate actualDate = JdbcSupport.getLocalDate(rs, "actualDate");
+			final LocalDate provisionongDate = JdbcSupport.getLocalDate(rs, "actualDate");
 			final String transactionType = rs.getString("transactionType");
 			final Long PrepareRequsetId = rs.getLong("PrepareRequsetId");
 			final String userName = rs.getString("userName");
@@ -663,7 +662,7 @@ public class OrderReadPlatformServiceImpl implements OrderReadPlatformService
 			final String planDescription = rs.getString("planDescription");
 			final String billingFreq = rs.getString("billingFreq");
 			final String contractPeriod = rs.getString("contractPeriod");
-			final LocalDateTime endDate = JdbcSupport.getLocalDateTime(rs, "endDate");
+			final LocalDate endDate = JdbcSupport.getLocalDate(rs, "endDate");
 			final Double price = rs.getDouble("price");
 
 			return new OrderData(orderId, planCode, planDescription, billingFreq, contractPeriod, price, endDate);
@@ -803,8 +802,8 @@ public class OrderReadPlatformServiceImpl implements OrderReadPlatformService
 			final String discountCode = rs.getString("discountCode");
 			final String discountdescription = rs.getString("discountdescription");
 			final String discountType = rs.getString("discountType");
-			final LocalDateTime startDate = JdbcSupport.getLocalDateTime(rs, "startDate");
-			final LocalDateTime endDate = JdbcSupport.getLocalDateTime(rs, "endDate");
+			final LocalDate startDate = JdbcSupport.getLocalDate(rs, "startDate");
+			final LocalDate endDate = JdbcSupport.getLocalDate(rs, "endDate");
 			final BigDecimal discountAmount = rs.getBigDecimal("discountAmount");
 			return new OrderDiscountData(id, priceId, discountCode, discountdescription, discountAmount, discountType,
 					startDate, endDate);
@@ -1170,11 +1169,11 @@ public class OrderReadPlatformServiceImpl implements OrderReadPlatformService
 			String planCode = rs.getString("planCode");
 			String planDescription = rs.getString("planDescription");
 			Long planType = rs.getLong("planType");
-			LocalDateTime planStartDate = JdbcSupport.getLocalDateTime(rs, "startDate");
-			LocalDateTime planEndDate = JdbcSupport.getLocalDateTime(rs, "endDate");
-			LocalDateTime orderActiveDate = JdbcSupport.getLocalDateTime(rs, "activeDate");
-			LocalDateTime orderStartDate = JdbcSupport.getLocalDateTime(rs, "orderStartDate");
-			LocalDateTime orderEndDate = JdbcSupport.getLocalDateTime(rs, "orderendDate");
+			LocalDate planStartDate = JdbcSupport.getLocalDate(rs, "startDate");
+			LocalDate planEndDate = JdbcSupport.getLocalDate(rs, "endDate");
+			LocalDate orderActiveDate = JdbcSupport.getLocalDate(rs, "activeDate");
+			LocalDate orderStartDate = JdbcSupport.getLocalDate(rs, "orderStartDate");
+			LocalDate orderEndDate = JdbcSupport.getLocalDate(rs, "orderendDate");
 
 			OrderData orderData = new OrderData(orderId, clientId, clientServiceId, planId, orderNo, orderStatus,
 					planCode, planType, planDescription, planStartDate, planEndDate, orderActiveDate, orderStartDate,

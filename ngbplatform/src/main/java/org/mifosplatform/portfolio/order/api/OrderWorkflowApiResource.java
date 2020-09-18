@@ -77,6 +77,6 @@ public class OrderWorkflowApiResource {
         final Collection<MCodeData> statusDatas =   codeReadPlatformService.getCodeValue(CodeNameConstants.SERVICE_CUSTOME_STATUS);
         final List<TicketTeamMappingData> ticketmappingDatas = this.ticketmappingReadPlatformService.retrieveTicketTeamForDropdown();
         orderWorkflowData.addDropdowns(statusDatas, ticketmappingDatas);
-        return this.toApiJsonSerializer.serializeWithTime(orderWorkflowData);
+        return this.toApiJsonSerializer.serialize(orderWorkflowData);
     }
 }

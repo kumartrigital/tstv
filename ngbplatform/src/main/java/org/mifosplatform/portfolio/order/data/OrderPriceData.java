@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import org.joda.time.LocalDateTime;
+import org.joda.time.LocalDate;
 
 public class OrderPriceData {
 
@@ -16,17 +16,18 @@ public class OrderPriceData {
 	private final String durationType;
 	private final BigDecimal price;
 	private final Long productId;
+
 	private String chargeCode;
 	private String chargeType;
-	private LocalDateTime invoiceTillDate;
+	private LocalDate invoiceTillDate;
 	private Long createdBy;
 	private Date createdDate;
 	private Date lastModifiedDate;
 	private Long lastModifiedBy;
 	private Long clientId;
-	private LocalDateTime billStartDate;
-	private LocalDateTime billEndDate;
-	private LocalDateTime nextBillDate;
+	private LocalDate billStartDate;
+	private LocalDate billEndDate;
+	private LocalDate nextBillDate;
 	private String billingCycle;
 	private String billingFrequency;
 	private String chargeDescription;
@@ -34,106 +35,131 @@ public class OrderPriceData {
 	private String productDescription;
 	private String chargeOwner;
 
-	public OrderPriceData(Long id, Long orderId, Long clientId, String serviceDescription, String chargeDescription,
-			String chargeDuration, String durationtype, BigDecimal price, LocalDateTime billStartDate,
-			LocalDateTime billEndDate, LocalDateTime nextBillDate, LocalDateTime invoiceTillDate, String billingAlign,
-			String billingFrequency, String productDescription, String chargeOwner) {
 
-		this.id = id;
-		this.orderId = orderId;
-		this.clientId = clientId;
-		this.serviceDescription = serviceDescription;
-		this.chargeDescription = chargeDescription;
-		this.chargeDuration = chargeDuration;
-		this.durationType = durationtype;
-		this.price = price;
-		this.billStartDate = billStartDate;
-		this.billEndDate = billEndDate;
-		this.nextBillDate = nextBillDate;
-		this.serviceId = null;
-		this.invoiceTillDate = invoiceTillDate;
-		this.billingFrequency = billingFrequency;
-		this.billingCycle = billingAlign != null ? this.getbillingCycle(billingAlign) : null;
+	public OrderPriceData(Long id,Long orderId,Long clientId,String serviceDescription, String chargeDescription, String chargeDuration,
+			String durationtype, BigDecimal price, LocalDate billStartDate, LocalDate billEndDate, LocalDate nextBillDate,
+			LocalDate invoiceTillDate, String billingAlign, String billingFrequency,String productDescription, String chargeOwner) {
+
+		this.id=id;
+		this.orderId=orderId;
+		this.clientId=clientId;
+		this.serviceDescription=serviceDescription;
+		this.chargeDescription=chargeDescription;
+		this.chargeDuration=chargeDuration;
+		this.durationType=durationtype;
+		this.price=price;
+		this.billStartDate=billStartDate;
+		this.billEndDate=billEndDate;
+		this.nextBillDate=nextBillDate;
+		this.serviceId=null;
+		this.invoiceTillDate=invoiceTillDate;
+		this.billingFrequency=billingFrequency;
+		this.billingCycle= billingAlign!=null?this.getbillingCycle(billingAlign):null;
 		this.productDescription = productDescription;
 		this.productId = null;
 		this.chargeOwner = chargeOwner;
 
+
 	}
+
+
 
 	private String getbillingCycle(String billingAlign) {
-		String day = null;
-		if (this.billingFrequency.equalsIgnoreCase("Weekly")) {
-			if (billingAlign.equalsIgnoreCase("y")) {
+		 String day = null;
+			if(this.billingFrequency.equalsIgnoreCase("Weekly")){
+				if(billingAlign.equalsIgnoreCase("y")){
 				return "Every Monday";
-			} else {
-				SimpleDateFormat f = new SimpleDateFormat("EEEE");
-				day = "Every " + f.format(billStartDate.toDate());
+		     }else {
+			SimpleDateFormat f = new SimpleDateFormat("EEEE");
+		      day="Every "+f.format(billStartDate.toDate());
+		     return day;
+		    }
+	     }else if(this.billingFrequency.equalsIgnoreCase("Monthly")){
+			if(billingAlign.equalsIgnoreCase("y")){
+				day="1st day of the Month";
 				return day;
 			}
-		} else if (this.billingFrequency.equalsIgnoreCase("Monthly")) {
-			if (billingAlign.equalsIgnoreCase("y")) {
-				day = "1st day of the Month";
-				return day;
-			} else {
-				Calendar cal = Calendar.getInstance();
-				cal.setTime(billStartDate.toDate());
-				if (cal.get(5) == 2) {
-					day = "Every " + cal.get(Calendar.DAY_OF_MONTH) + "nd of the Month";
-				} else if (cal.get(5) == 3) {
-					day = "Every " + cal.get(Calendar.DAY_OF_MONTH) + "rd of the Month";
-				} else {
-
-					day = "Every " + cal.get(Calendar.DAY_OF_MONTH) + "th of the Month";
-				}
-				return day;
+			else{
+				 Calendar cal = Calendar.getInstance();
+				    cal.setTime(billStartDate.toDate());
+				 if(cal.get(5) == 2 ){
+					 day = "Every "+cal.get(Calendar.DAY_OF_MONTH)+"nd of the Month";
+				 }else if(cal.get(5) == 3){
+					 day = "Every "+cal.get(Calendar.DAY_OF_MONTH)+"rd of the Month";
+				 }
+				 else{
+					 
+				     day = "Every "+cal.get(Calendar.DAY_OF_MONTH)+"th of the Month";
+				 }
+				    return day;
 			}
 		}
-		return day;
-
+			return day;
+		
+		
+		
 	}
 
-	public OrderPriceData(Long id, Long orderId, Long serviceId, String chargeCode, String chargeType,
-			String chargeDuration, String durationType, Date invoiceTillDate, BigDecimal price, Long createdbyId,
-			Date createdDate, Date lastModefiedDate, Long lastModefiedId, Long productId, String chargeOwner) {
-		this.id = id;
-		this.orderId = orderId;
-		this.serviceId = serviceId;
-		this.chargeCode = chargeCode;
-		this.chargeType = chargeType;
-		this.chargeDuration = chargeDuration;
-		this.durationType = durationType;
-		this.price = price;
+
+
+	public OrderPriceData(Long id, Long orderId, Long serviceId,String chargeCode, String chargeType, String chargeDuration,
+			String durationType, Date invoiceTillDate, BigDecimal price,Long createdbyId, Date createdDate, Date lastModefiedDate,
+			Long lastModefiedId,Long productId, String chargeOwner) {
+		this.id=id;
+		this.orderId=orderId;
+		this.serviceId=serviceId;
+		this.chargeCode=chargeCode;
+		this.chargeType=chargeType;
+		this.chargeDuration=chargeDuration;
+		this.durationType=durationType;
+		this.price=price;
 		this.productId = productId;
 		this.chargeOwner = chargeOwner;
 	}
+
+
 
 	public String getChargeOwner() {
 		return chargeOwner;
 	}
 
+
+
 	public void setChargeOwner(String chargeOwner) {
 		this.chargeOwner = chargeOwner;
 	}
+
+
 
 	public Long getClientId() {
 		return clientId;
 	}
 
-	public LocalDateTime getBillStartDate() {
+
+
+	public LocalDate getBillStartDate() {
 		return billStartDate;
 	}
 
-	public LocalDateTime getBillEndDate() {
+
+
+	public LocalDate getBillEndDate() {
 		return billEndDate;
 	}
 
-	public LocalDateTime getNextBillDate() {
+
+
+	public LocalDate getNextBillDate() {
 		return nextBillDate;
 	}
+
+
 
 	public String getBillingCycle() {
 		return billingCycle;
 	}
+
+
 
 	public String getBillingFrequency() {
 		return billingFrequency;
@@ -171,7 +197,7 @@ public class OrderPriceData {
 		return price;
 	}
 
-	public LocalDateTime getInvoiceTillDate() {
+	public LocalDate getInvoiceTillDate() {
 		return invoiceTillDate;
 	}
 
@@ -206,7 +232,7 @@ public class OrderPriceData {
 	public void setServiceDescription(String serviceDescription) {
 		this.serviceDescription = serviceDescription;
 	}
-
+	
 	public String getProductDescription() {
 		return productDescription;
 	}
@@ -218,5 +244,5 @@ public class OrderPriceData {
 	public Long getProductId() {
 		return productId;
 	}
-
+	
 }
