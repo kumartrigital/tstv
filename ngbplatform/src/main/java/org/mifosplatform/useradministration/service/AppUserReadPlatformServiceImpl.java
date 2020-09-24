@@ -12,14 +12,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.mifosplatform.crm.clientprospect.service.SearchSqlQuery;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
+import org.mifosplatform.infrastructure.core.service.Page;
+import org.mifosplatform.infrastructure.core.service.PaginationHelper;
 import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.office.data.OfficeData;
 import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
-import org.mifosplatform.organisation.salescataloge.data.SalesCatalogeData;
-import org.mifosplatform.organisation.usercataloge.data.UserCatalogeData;
-import org.mifosplatform.portfolio.order.data.OrderData;
 import org.mifosplatform.useradministration.data.AppUserData;
 import org.mifosplatform.useradministration.data.RoleData;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -41,11 +41,13 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
     private final OfficeReadPlatformService officeReadPlatformService;
     private final RoleReadPlatformService roleReadPlatformService;
     private final AppUserRepository appUserRepository;
+    private final PaginationHelper<AppUserData> paginationHelper = new PaginationHelper<AppUserData>();
 
     @Autowired
     public AppUserReadPlatformServiceImpl(final PlatformSecurityContext context, final TenantAwareRoutingDataSource dataSource,
             final OfficeReadPlatformService officeReadPlatformService, final RoleReadPlatformService roleReadPlatformService,
-            final AppUserRepository appUserRepository) {
+            final AppUserRepository appUserRepository
+            ) {
         this.context = context;
         this.officeReadPlatformService = officeReadPlatformService;
         this.roleReadPlatformService = roleReadPlatformService;
@@ -69,6 +71,51 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
         final String sql = "select " + mapper.schema();
 
         return this.jdbcTemplate.query(sql, mapper, new Object[] { hierarchySearchString });
+    }
+    @Override
+    @Cacheable(value = "users", key = "T(org.mifosplatform.infrastructure.core.service.ThreadLocalContextUtil).getTenant().getTenantIdentifier().concat(#root.target.context.authenticatedUser().getOffice().getHierarchy())")
+    public Page<AppUserData> retrieveUsers(SearchSqlQuery searchUsers) {
+
+        final AppUser currentUser = context.authenticatedUser();
+        final String hierarchy = currentUser.getOffice().getHierarchy();
+        final String hierarchySearchString = hierarchy + "%";
+
+        final AppUserMapper mapper = new AppUserMapper();
+        
+        StringBuilder sqlBuilder = new StringBuilder();
+		
+		sqlBuilder.append("SELECT ");
+		sqlBuilder.append(mapper.schema());
+        sqlBuilder.append(" and u.id IS NOT NULL ");
+		String sqlSearch = searchUsers.getSqlSearch();
+        String extraCriteria = null;
+        
+	    if (sqlSearch != null) {
+	    	sqlSearch = sqlSearch.trim();
+	    	extraCriteria = " and (u.id like '%"+sqlSearch+"%' OR" 
+	    			+ " u.username like '%"+sqlSearch+"%' OR"
+	    			+ " u.firstname like '%"+sqlSearch+"%' OR"
+	    			+ " u.lastname like '%"+sqlSearch+"%' OR"
+	    			+ " u.email like '%"+sqlSearch+"%' OR"
+	    			+ " u.office_id like '%"+sqlSearch+"%' OR"
+	    			+ " o.name like '%"+sqlSearch+"%' )";
+	    }
+	   
+	    if (null != extraCriteria) {
+            sqlBuilder.append(extraCriteria);
+        }
+	    sqlBuilder.append(" order by u.username ");
+	    
+		if (searchUsers.isLimited()) {
+			sqlBuilder.append(" limit ").append(searchUsers.getLimit());
+	    }
+
+	    if (searchUsers.isOffset()) {
+	        sqlBuilder.append(" offset ").append(searchUsers.getOffset());
+	    }
+	    
+        return this.paginationHelper.fetchPage(this.jdbcTemplate, "SELECT FOUND_ROWS()",sqlBuilder.toString(),
+	            new Object[] {hierarchySearchString}, mapper);
     }
 
     @Override
@@ -171,7 +218,7 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
         public String schema() {
             return " u.id as id, u.username as username, u.firstname as firstname, u.lastname as lastname, u.email as email,"
                     + " u.office_id as officeId, o.name as officeName from m_appuser u "
-                    + " join m_office o on o.id = u.office_id where o.hierarchy like ? and u.is_deleted=0 order by u.username";
+                    + " join m_office o on o.id = u.office_id where o.hierarchy like ? and u.is_deleted=0 ";
         }
 
     }

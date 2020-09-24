@@ -41,6 +41,7 @@ public class VoucherData {
 	private String status;
 	private Long clientId;
 	private Collection<MCodeData> reasondatas;
+	private Collection<MCodeData> valueMCodeDatas;
 	private String batchType;
 	private String promotionDescription;
 	private Long saleRefNo;
@@ -89,12 +90,14 @@ public class VoucherData {
 	 * @param offices 
 	 */
 	public VoucherData(final List<EnumOptionData> pinCategoryData,
-			final List<EnumOptionData> pinTypeData, Collection<OfficeData> offices,VoucherPinConfigValueData voucherPinConfigValueData) {
+			final List<EnumOptionData> pinTypeData, Collection<OfficeData> offices,VoucherPinConfigValueData voucherPinConfigValueData,
+			Collection<MCodeData> valueMCodeDatas) {
 		
 		this.pinCategoryData=pinCategoryData;
 		this.pinTypeData=pinTypeData;
 		this.offices = offices;
 		this.voucherPinConfigValues = voucherPinConfigValueData;
+		this.valueMCodeDatas = valueMCodeDatas;
 		
 	}
 

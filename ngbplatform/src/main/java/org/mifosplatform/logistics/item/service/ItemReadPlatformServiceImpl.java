@@ -109,6 +109,8 @@ public class ItemReadPlatformServiceImpl implements ItemReadPlatformService {
 
 		}
 
+		
+
 		public String schemaWithClientId(final Long clientId, Long itemId) {
 
 			/*
@@ -174,6 +176,65 @@ public class ItemReadPlatformServiceImpl implements ItemReadPlatformService {
 					+ " LEFT JOIN b_item_price p ON (p.item_id = a.id AND p.region_id = prm.id AND p.is_deleted = 'N') ";
 		}
 
+		@Override
+		public ItemData mapRow(ResultSet rs, int rowNum) throws SQLException {
+
+			final Long id = rs.getLong("id");
+			final String itemCode = rs.getString("itemCode");
+			final String itemDescription = rs.getString("itemDescription");
+			final Long itemClass = rs.getLong("itemClass");
+			final String itemClassName = rs.getString("itemClassName");
+			final String units = rs.getString("units");
+			final String chargeCode = rs.getString("chargeCode");
+			final BigDecimal unitPrice = rs.getBigDecimal("price");
+			final int warranty = rs.getInt("warranty");
+			final Long used = rs.getLong("used");
+			final Long available = rs.getLong("available");
+			final Long totalItems = rs.getLong("totalItems");
+			final Long reorderLevel = rs.getLong("reorderLevel");
+			final Long supplierId = JdbcSupport.getLong(rs, "supplierId");
+			final String supplierCode = rs.getString("supplierCode");
+			final String isProvisioning = rs.getString("isProvisioning");
+			final String isSelector = rs.getString("isSelector");
+			final String selectorDescription = rs.getString("selectorDescription");
+			final Long currencyId = rs.getLong("currencyId");
+			final String code = rs.getString("code");
+			final String name = rs.getString("name");
+
+			return new ItemData(id, itemCode, itemDescription, itemClass, itemClassName, units, chargeCode, warranty,
+					unitPrice, used, available, totalItems, reorderLevel, supplierId, supplierCode, isProvisioning,
+					isSelector, selectorDescription, currencyId, code, name);
+
+		}
+
+	}
+	
+	@Override
+	public List<ItemData> retrieveAllItemsSTBS() {
+
+		context.authenticatedUser();
+		STBDataMapper mapper = new STBDataMapper();
+		String sql = "select " + mapper.schema() + " where    a.is_deleted='n' and a.item_class!=4";
+		return this.jdbcTemplate.query(sql, mapper, new Object[] {});
+	}
+
+	private static final class STBDataMapper implements RowMapper<ItemData> {
+
+		public String schema() {
+			return " a.id as id,a.item_code as itemCode,a.item_description as itemDescription,a.item_class as itemClass,"
+					+ " (select e.enum_value from r_enum_value e where e.enum_id =a.item_class and e.enum_name = 'item_class') as itemClassName, "
+					+ " a.units as units,a.charge_code as chargeCode,round(a.unit_price,2) price,a.warranty as warranty,a.reorder_level as reorderLevel,a.is_selector as isSelector,a.selector_description as selectorDescription, "
+					+ " b.Used as used,b.Available as available,"
+					+ " b.Total_items as totalItems,a.supplier_id as supplierId,a.is_provisioning as isProvisioning, s.supplier_code as supplierCode, a.currency_id as currencyId,"
+					+ " mc.code as code,mc.name as name from b_item_master a "
+					+ " left join m_currency mc ON a.currency_id = mc.id "
+					+ " left join b_supplier s on s.id = a.supplier_id "
+					+ " left join ( Select item_master_id,Sum(Case When Client_id IS NULL " + "        Then 1 "
+					+ "        Else 0 " + " End) Available," + "Sum(Case When Client_id Is Not NULL "
+					+ "         Then 1 " + "        Else 0 " + " End) Used," + "Count(1) Total_items "
+					+ "From b_item_detail group by item_master_id ) b on a.id=b.item_master_id ";
+
+		}
 		@Override
 		public ItemData mapRow(ResultSet rs, int rowNum) throws SQLException {
 

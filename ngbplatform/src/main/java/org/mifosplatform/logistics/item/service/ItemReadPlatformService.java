@@ -34,4 +34,6 @@ public interface ItemReadPlatformService {
 
 	ItemData retriveSerialNum(Long clientId);
 	
+	 List<ItemData> retrieveAllItemsSTBS();
+	
 }

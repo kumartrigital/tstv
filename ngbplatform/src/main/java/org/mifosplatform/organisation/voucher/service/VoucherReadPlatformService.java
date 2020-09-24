@@ -34,7 +34,6 @@ public interface VoucherReadPlatformService {
 
 	List<VoucherData> retrivePinDetails(String pinNumber);
 
-	List<VoucherData> getAllData();
 
 //	List<VoucherData> getVocherDetailsByPurchaseNo(String purchaseNo);
 
@@ -51,7 +50,7 @@ public interface VoucherReadPlatformService {
 	Long retriveQuantityBySaleRefId(Long saleRefId);
 
 
-	List<VoucherData> retrieveVocherDetailsBySaleRefId(Long saleRefId, Long quantity);
+	List<VoucherData> retrieveVocherDetailsBySaleRefId(Long saleRefId, Integer quantity);
 
 	VoucherRequestData retrieveVocherRequestDetails(Long saleRefId);
 
@@ -74,6 +73,8 @@ public interface VoucherReadPlatformService {
 	Page<VoucherData> getAllVoucherById(SearchSqlQuery searchVoucher, String statusType, Long id);
 
 	VoucherData retriveVoucherPinDetailsWithPriceValue(String pinNumber, Long officeId, BigDecimal eventValue);
+
+	Page<VoucherData> getAllData(SearchSqlQuery searchVouchers);
 
 	
 

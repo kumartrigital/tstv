@@ -68,6 +68,16 @@ public class OfficePayments extends AbstractAuditableCustom<AppUser, Long> {
 		this.receiptNo = receiptNo;
 	}
 	
+	public Long getCollectionBy() {
+		return collectionBy;
+	}
+
+
+	public void setCollectionBy(Long collectionBy) {
+		this.collectionBy = collectionBy;
+	}
+
+
 	public OfficePayments(final Long officeId, final BigDecimal amountPaid,final LocalDate paymentDate,
 			final String remarks, final Long paymodeId, final String receiptNo, boolean isWallet,final Long collectionBy) {
 
@@ -84,7 +94,7 @@ public class OfficePayments extends AbstractAuditableCustom<AppUser, Long> {
 	}
 	
 	public OfficePayments(final Long officeId,final  BigDecimal amountPaid,final LocalDate paymentDate,final String remarks,
-			final int paymodeId, final String receiptNo,final int wallet,final Long id) {
+			final int paymodeId, final String receiptNo,final int wallet,final Long id, final Long collectionBy) {
 		
 		this.officeId = officeId;
 		this.amountPaid = amountPaid.negate();
@@ -94,6 +104,7 @@ public class OfficePayments extends AbstractAuditableCustom<AppUser, Long> {
 		if(this.receiptNo != null)
 		this.receiptNo = receiptNo+"_CP";
 		this.isWallet = isWallet;
+		this.collectionBy = collectionBy;
 		
 	}
 

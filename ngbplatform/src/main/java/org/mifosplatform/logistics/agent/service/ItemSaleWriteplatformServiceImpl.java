@@ -115,19 +115,18 @@ public class ItemSaleWriteplatformServiceImpl implements ItemSaleWriteplatformSe
 			this.itemSaleRepository.save(itemSale);
 
 			/* ItemSale invoice Balance update in office balance table */
-			if (itemSale.getPurchaseFrom() != null) {
-				OfficeBalance officeBalance = this.officeBalanceRepository
-						.findOneByOfficeId(itemSale.getPurchaseFrom());
-
-				if (officeBalance != null) {
-					officeBalance.updateBalance("CREDIT", itemSale.getItemSaleInvoice().getInvoiceAmount());
-
-				} else if (officeBalance == null) {
-					BigDecimal balance = BigDecimal.ZERO.subtract(itemSale.getItemSaleInvoice().getInvoiceAmount());
-					officeBalance = OfficeBalance.create(itemSale.getPurchaseFrom(), balance);
-				}
-				this.officeBalanceRepository.saveAndFlush(officeBalance);
-			}
+			/*
+			 * if (itemSale.getPurchaseFrom() != null) { OfficeBalance officeBalance =
+			 * this.officeBalanceRepository .findOneByOfficeId(itemSale.getPurchaseFrom());
+			 * 
+			 * if (officeBalance != null) { officeBalance.updateBalance("CREDIT",
+			 * itemSale.getItemSaleInvoice().getInvoiceAmount());
+			 * 
+			 * } else if (officeBalance == null) { BigDecimal balance =
+			 * BigDecimal.ZERO.subtract(itemSale.getItemSaleInvoice().getInvoiceAmount());
+			 * officeBalance = OfficeBalance.create(itemSale.getPurchaseFrom(), balance); }
+			 * this.officeBalanceRepository.saveAndFlush(officeBalance); }
+			 */
 
 			if (itemSale.getPurchaseBy() != null) {
 				OfficeBalance officeBalances = this.officeBalanceRepository.findOneByOfficeId(itemSale.getPurchaseBy());

@@ -19,6 +19,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
@@ -26,12 +27,13 @@ import javax.ws.rs.core.UriInfo;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
+import org.mifosplatform.crm.clientprospect.service.SearchSqlQuery;
 import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
-import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSerializer;
+import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.message.service.MessageGmailBackedPlatformEmailService;
 import org.mifosplatform.organisation.office.data.OfficeData;
@@ -88,14 +90,15 @@ public class UsersApiResource {
     @GET
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-    public String retrieveUsers(@Context final UriInfo uriInfo) {
+    public String retrieveUsers(@Context final UriInfo uriInfo , @QueryParam("sqlSearch") final String sqlSearch, @QueryParam("limit") final Integer limit,
+	         @QueryParam("offset") final Integer offset) {
 
         context.authenticatedUser().validateHasReadPermission(RESOURCENAMEFORPERMISSIONS);
-
-        final Collection<AppUserData> users = this.readPlatformService.retrieveAllUsers();
+        final SearchSqlQuery searchUsers =SearchSqlQuery.forSearch(sqlSearch, offset,limit );
+        final Page<AppUserData> users = this.readPlatformService.retrieveUsers(searchUsers);
 
         final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-        return this.toApiJsonSerializer.serialize(settings, users, RESPONSE_DATA_PARAMETERS);
+        return this.toApiJsonSerializer.serialize(users);
     }
 
     @GET

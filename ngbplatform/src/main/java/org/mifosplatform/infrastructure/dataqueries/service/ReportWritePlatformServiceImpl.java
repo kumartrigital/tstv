@@ -5,17 +5,28 @@
  */
 package org.mifosplatform.infrastructure.dataqueries.service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+import org.mifosplatform.infrastructure.dataqueries.data.ReportParameterData;
 import org.mifosplatform.infrastructure.dataqueries.domain.Report;
+import org.mifosplatform.infrastructure.dataqueries.domain.ReportParameter;
+import org.mifosplatform.infrastructure.dataqueries.domain.ReportParameterRepository;
 import org.mifosplatform.infrastructure.dataqueries.domain.ReportRepository;
 import org.mifosplatform.infrastructure.dataqueries.exception.ReportNotFoundException;
 import org.mifosplatform.infrastructure.dataqueries.serialization.ReportCommandFromApiJsonDeserializer;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
+import org.mifosplatform.portfolio.plan.domain.PlanDetails;
+import org.mifosplatform.portfolio.product.domain.Product;
+import org.mifosplatform.portfolio.service.domain.ServiceDetails;
 import org.mifosplatform.useradministration.domain.Permission;
 import org.mifosplatform.useradministration.domain.PermissionRepository;
 import org.mifosplatform.useradministration.exception.PermissionNotFoundException;
@@ -25,6 +36,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 @Service
 public class ReportWritePlatformServiceImpl implements
@@ -37,17 +53,25 @@ public class ReportWritePlatformServiceImpl implements
 	private final ReportCommandFromApiJsonDeserializer fromApiJsonDeserializer;
 	private final ReportRepository reportRepository;
 	private final PermissionRepository permissionRepository;
+	private final FromJsonHelper fromApiJsonHelper;
+	private final ReportParameterRepository reportParameterRepository;
+	private final ReadReportingService readReportingService;
 
 	@Autowired
 	public ReportWritePlatformServiceImpl(
 			final PlatformSecurityContext context,
 			final ReportCommandFromApiJsonDeserializer fromApiJsonDeserializer,
 			final ReportRepository reportRepository,
-			final PermissionRepository permissionRepository) {
+			final PermissionRepository permissionRepository,final FromJsonHelper fromApiJsonHelper,
+			final ReportParameterRepository reportParameterRepository, final ReadReportingService readReportingService) {
+		
 		this.context = context;
 		this.fromApiJsonDeserializer = fromApiJsonDeserializer;
 		this.reportRepository = reportRepository;
 		this.permissionRepository = permissionRepository;
+		this.fromApiJsonHelper = fromApiJsonHelper;
+		this.reportParameterRepository = reportParameterRepository;
+		this.readReportingService = readReportingService;
 	}
 
 	@Transactional
@@ -59,11 +83,12 @@ public class ReportWritePlatformServiceImpl implements
 
 			this.fromApiJsonDeserializer.validate(command.json());
 
-			final Report report = Report.fromJson(command);
-			final Permission permission = new Permission("report",
-					report.getReportName(), "READ");
+			Report report = Report.fromJson(command);
+			//final Permission permission = new Permission("report",report.getReportName(),"READ");
+
+		    final JsonArray reportParametersArray = command.arrayOfParameterNamed("reportParameters").getAsJsonArray();
+		    report = assembleSetOfReportParameters(reportParametersArray, report);
 			this.reportRepository.save(report);
-			this.permissionRepository.save(permission);
 
 			return new CommandProcessingResultBuilder()
 					.withCommandId(command.commandId())
@@ -88,6 +113,38 @@ public class ReportWritePlatformServiceImpl implements
 			if (report == null) {
 				throw new ReportNotFoundException(reportId);
 			}
+			
+			List<ReportParameter> reportParameter=new ArrayList<>(report.getReportParameter());
+			final JsonArray reportParametersArray = command.arrayOfParameterNamed("reportParameters").getAsJsonArray();
+	        String[] childReportParametersArray =null;
+	        childReportParametersArray=new String[reportParametersArray.size()];
+		    for(int i=0; i<reportParametersArray.size();i++){
+		    	childReportParametersArray[i] =reportParametersArray.get(i).toString();
+		     }
+			 for (String childReportParameters : childReportParametersArray) {
+				  
+				    final JsonElement element = fromApiJsonHelper.parse(childReportParameters);
+				    final Long reportParameterId = fromApiJsonHelper.extractLongNamed("reportParameterId", element);
+					final Long parameterId = fromApiJsonHelper.extractLongNamed("parameterId", element);
+					final String reportParameterName = fromApiJsonHelper.extractStringNamed("reportParameterName", element);
+					if(reportParameterId != null){
+						ReportParameter reportParameters =this.reportParameterRepository.findOne(reportParameterId);
+					if(reportParameters != null){
+						reportParameters.setParameterId(parameterId);
+						reportParameters.setReportParameterName(reportParameterName);
+						this.reportParameterRepository.saveAndFlush(reportParameters);
+						if(reportParameter.contains(reportParameters)){
+							reportParameter.remove(reportParameters);
+						}
+					 }
+					}else {
+						ReportParameter newDetails = new ReportParameter(parameterId, reportParameterName);
+						report.addDetails(newDetails);
+					}
+					
+			  }
+			report.getReportParameter().removeAll(reportParameter);
+			
 
 			final Map<String, Object> changes = report.update(command);
 			if (!changes.isEmpty()) {
@@ -119,13 +176,13 @@ public class ReportWritePlatformServiceImpl implements
 		}
 		
 
-		final Permission permission = this.permissionRepository.findOneByCode("READ" + "_" + report.getReportName());
+		/*final Permission permission = this.permissionRepository.findOneByCode("READ" + "_" + report.getReportName());
 		if (permission == null) {
 			throw new PermissionNotFoundException("READ" + "_" + report.getReportName());
-		}
+		}*/
 
 		this.reportRepository.delete(report);
-		this.permissionRepository.delete(permission);
+		//this.permissionRepository.delete(permission);
 
 		return new CommandProcessingResultBuilder().withEntityId(reportId)
 				.build();
@@ -153,4 +210,28 @@ public class ReportWritePlatformServiceImpl implements
 				"Unknown data integrity issue with resource: "
 						+ realCause.getMessage());
 	}
+	
+	private Report assembleSetOfReportParameters(JsonArray reportParametersArray, Report report) {
+
+		String[]  childReportParametersArray = null;
+		childReportParametersArray = new String[reportParametersArray.size()];
+		if(reportParametersArray.size() > 0){
+			for(int i = 0; i < reportParametersArray.size(); i++){
+				childReportParametersArray[i] = reportParametersArray.get(i).toString();
+			}
+			
+			for (final String childReportParameters : childReportParametersArray) {
+				final JsonElement element = fromApiJsonHelper.parse(childReportParameters);
+				final Long parameterId = fromApiJsonHelper.extractLongNamed("parameterId", element);
+				final String reportParameterName = fromApiJsonHelper.extractStringNamed("reportParameterName", element);
+				
+				ReportParameter reportParameter = new ReportParameter(parameterId,reportParameterName);
+				report.addDetails(reportParameter);
+				
+			}
+		}
+        
+
+        return report;
+    }
 }

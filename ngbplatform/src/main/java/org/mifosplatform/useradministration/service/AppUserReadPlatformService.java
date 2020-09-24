@@ -8,6 +8,8 @@ package org.mifosplatform.useradministration.service;
 import java.util.Collection;
 import java.util.List;
 
+import org.mifosplatform.crm.clientprospect.service.SearchSqlQuery;
+import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.useradministration.data.AppUserData;
 
 public interface AppUserReadPlatformService {
@@ -27,4 +29,6 @@ public interface AppUserReadPlatformService {
 	AppUserData retrieveUserByUsername(String username);
 	
 	AppUserData retrieveUserByEmail( String email);
+
+	Page<AppUserData> retrieveUsers(SearchSqlQuery searchUsers);
 }

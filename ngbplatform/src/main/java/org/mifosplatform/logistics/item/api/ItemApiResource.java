@@ -186,7 +186,7 @@ public class ItemApiResource {
 		if(configurationData.isEnabled()){
 			itemData = this.itemReadPlatformService.retrieveAllSupplierItems(supplierId);
 		}else{
-			itemData = this.itemReadPlatformService.retrieveAllItems();
+			itemData = this.itemReadPlatformService.retrieveAllItemsSTBS();
 		}
 		
 		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());	

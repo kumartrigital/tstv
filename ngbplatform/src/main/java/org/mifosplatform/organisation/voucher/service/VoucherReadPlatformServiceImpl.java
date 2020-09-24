@@ -9,9 +9,9 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+
 import javax.ws.rs.core.StreamingOutput;
 
-import org.joda.time.LocalDate;
 import org.json.JSONObject;
 import org.mifosplatform.crm.clientprospect.service.SearchSqlQuery;
 import org.mifosplatform.infrastructure.configuration.domain.Configuration;
@@ -28,7 +28,6 @@ import org.mifosplatform.infrastructure.dataqueries.data.ResultsetColumnHeaderDa
 import org.mifosplatform.infrastructure.dataqueries.data.ResultsetRowData;
 import org.mifosplatform.infrastructure.dataqueries.service.GenericDataService;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
-import org.mifosplatform.logistics.mrn.data.MRNDetailsData;
 import org.mifosplatform.organisation.voucher.data.ExportVoucherData;
 import org.mifosplatform.organisation.voucher.data.VoucherData;
 import org.mifosplatform.organisation.voucher.data.VoucherPinConfigValueData;
@@ -584,15 +583,56 @@ public class VoucherReadPlatformServiceImpl implements VoucherReadPlatformServic
 	}
 
 	@Override
-	public List<VoucherData> getAllData() {
+	public Page<VoucherData> getAllData(SearchSqlQuery searchVouchers) {
+
 		try {
 
 			context.authenticatedUser();
-			String sql;
 			RetrieveAllRandomMapper mapper = new RetrieveAllRandomMapper();
-			sql = "SELECT  " + mapper.schema();
+			
+           StringBuilder sqlBuilder = new StringBuilder();
+			
+			sqlBuilder.append("SELECT ");
+			sqlBuilder.append(mapper.schema());
+	        sqlBuilder.append(" where m.id IS NOT NULL ");
+			String sqlSearch = searchVouchers.getSqlSearch();
+	        String extraCriteria = null;
+	        
+		    if (sqlSearch != null) {
+		    	sqlSearch = sqlSearch.trim();
+		    	extraCriteria = " and (m.id like '%"+sqlSearch+"%' OR" 
+		    			+ " m.batch_name like '%"+sqlSearch+"%' OR"
+		    			+ " m.office_id like '%"+sqlSearch+"%' OR"
+		    			+ " m.length like '%"+sqlSearch+"%' OR"
+		    			+ " m.begin_with like '%"+sqlSearch+"%' OR"
+		    			+ " m.pin_category like '%"+sqlSearch+"%' OR"
+		    			+ " m.quantity like '%"+sqlSearch+"%' OR"
+		    			+ " m.serial_no like '%"+sqlSearch+"%' OR"
+		    			+ " m.pin_type like '%"+sqlSearch+"%' OR"
+		    			+ " m.pin_value like '%"+sqlSearch+"%' OR"
+		    			+ " m.expiry_date like '%"+sqlSearch+"%' OR"
+		    			+ " m.batch_type like '%"+sqlSearch+"%' OR"
+		    			+ " m.pin_type like '%"+sqlSearch+"%' OR"
+		    			+ " pr.promotion_description like '%"+sqlSearch+"%' OR"
+		    			+ " p.plan_code like '%"+sqlSearch+"%')";
+		    }
+		   
+		    if (null != extraCriteria) {
+	            sqlBuilder.append(extraCriteria);
+	        }
+		    sqlBuilder.append(" order by m.created_date desc ");
+		    
+			if (searchVouchers.isLimited()) {
+				sqlBuilder.append(" limit ").append(searchVouchers.getLimit());
+		    }
 
-			return this.jdbcTemplate.query(sql, mapper, new Object[] {});
+		    if (searchVouchers.isOffset()) {
+		        sqlBuilder.append(" offset ").append(searchVouchers.getOffset());
+		    }
+		    
+			return this.paginationHelper.fetchPage(this.jdbcTemplate, "SELECT FOUND_ROWS()", sqlBuilder.toString(),
+		            new Object[] {}, mapper);
+
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
@@ -637,6 +677,9 @@ public class VoucherReadPlatformServiceImpl implements VoucherReadPlatformServic
 		}
 	}
 
+
+
+		
 	/*
 	 * @Override public List<VoucherData> getVocherDetailsByPurchaseNo(String
 	 * purchaseNo) {
@@ -776,7 +819,7 @@ public class VoucherReadPlatformServiceImpl implements VoucherReadPlatformServic
 	}
 
 	@Override
-	public List<VoucherData> retrieveVocherDetailsBySaleRefId(Long saleRefId, Long quantity) {
+	public List<VoucherData> retrieveVocherDetailsBySaleRefId(Long saleRefId, Integer quantity) {
 		// TODO Auto-generated method stub
 		this.context.authenticatedUser();
 		String sql;

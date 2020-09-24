@@ -18,6 +18,7 @@ import org.mifosplatform.finance.chargeorder.data.ProcessDate;
 import org.mifosplatform.finance.chargeorder.domain.BillItem;
 import org.mifosplatform.finance.chargeorder.domain.BillItemRepository;
 import org.mifosplatform.finance.chargeorder.domain.Charge;
+import org.mifosplatform.finance.chargeorder.exception.ProcessDateGreaterThanPlanEndDateException;
 import org.mifosplatform.finance.chargeorder.exceptions.BillingOrderNoRecordsFoundException;
 import org.mifosplatform.finance.chargeorder.serialization.ChargingOrderCommandFromApiJsonDeserializer;
 import org.mifosplatform.infrastructure.configuration.domain.Configuration;
@@ -130,38 +131,67 @@ public class ChargingCustomerOrders {
 
 			for (BillingOrderData billingOrderData : billingOrderDatas) {
 
-				nextBillableDate = billingOrderData.getNextBillableDate();
-				if (prorataWithNextBillFlag && ("Y".equalsIgnoreCase(billingOrderData.getBillingAlign()))
-						&& billingOrderData.getInvoiceTillDate() == null) {
-					LocalDateTime alignEndDate = new LocalDateTime(nextBillableDate).dayOfMonth().withMaximumValue();
-					if (!processDate.toDate().after(alignEndDate.toDate()))
-						processDate = alignEndDate.plusDays(2);
-				} else {
-					processDate = initialProcessDate;
-				}
+				
+				if (billingOrderData.getBillEndDate()!=null && processDate.isAfter(billingOrderData.getBillEndDate().toLocalDateTime())) {
 
-				while (processDate.toDateTime().isAfter(nextBillableDate)
-						|| processDate.toDateTime().compareTo(nextBillableDate) == 0) {
-					System.out.println(processDate.toDateTime().isAfter(nextBillableDate));
-					System.out.println(processDate.toDateTime().compareTo(nextBillableDate) == 0);
+					JSONObject disconnectCommand = new JSONObject();
 
-					Plan plan = planRepository.findOne(billingOrderData.getPlanId());
-					if (plan.getIsAdvance() == 'y' || plan.getIsAdvance() == 'Y') {
-						groupOfAdvanceCharges = getChargeLinesForServices(billingOrderData, clientId, processDate,
-								groupOfAdvanceCharges);
+					try {
+
+						disconnectCommand.put("dateFormat", "dd MMMM yyyy");
+						SimpleDateFormat formatter = new SimpleDateFormat("dd MMMM yyyy");
+						String disconnectedDate = formatter.format(new Date());
+
+						disconnectCommand.put("disconnectionDate", disconnectedDate);
+						disconnectCommand.put("disconnectReason", "plan end date reached");
+						disconnectCommand.put("locale", "en");
+
+					} catch (Exception e1) {
+						e1.printStackTrace();
+					}
+					final JsonElement renwalCommandElement = fromApiJsonHelper.parse(disconnectCommand.toString());
+
+					JsonCommand disconnectCommandJson = new JsonCommand(null, renwalCommandElement.toString(),
+							renwalCommandElement, fromApiJsonHelper, null, null, null, null, null, null, null, null,
+							null, null, null, null);
+
+					orderWritePlatformService.disconnectOrder(disconnectCommandJson, billingOrderData.getOrderId());
+					throw new ProcessDateGreaterThanPlanEndDateException("Process Date:: "+processDate+"is greater than plan end date:: "+billingOrderData.getEndDate());
+				} // returnin
+				else {
+					nextBillableDate = billingOrderData.getNextBillableDate();
+					if (prorataWithNextBillFlag && ("Y".equalsIgnoreCase(billingOrderData.getBillingAlign()))
+							&& billingOrderData.getInvoiceTillDate() == null) {
+						LocalDateTime alignEndDate = new LocalDateTime(nextBillableDate).dayOfMonth()
+								.withMaximumValue();
+						if (!processDate.toDate().after(alignEndDate.toDate()))
+							processDate = alignEndDate.plusDays(2);
+					} else {
+						processDate = initialProcessDate;
 					}
 
-					if (!groupOfAdvanceCharges.isEmpty()
-							&& groupOfAdvanceCharges.containsKey(billingOrderData.getOrderId().toString())) {
-						List<Charge> charges = groupOfAdvanceCharges.get(billingOrderData.getOrderId().toString());
-						nextBillableDate = new DateTime(nextBillableDate.plusDays(1).toDateTime());
-					} else if (!groupOfAdvanceCharges.isEmpty()
-							&& groupOfAdvanceCharges.containsKey(billingOrderData.getChargeCode())) {
-						List<Charge> charges = groupOfAdvanceCharges.get(billingOrderData.getChargeCode());
-						nextBillableDate = new DateTime(nextBillableDate.plusDays(1).toDateTime());
+					while (processDate.toDateTime().isAfter(nextBillableDate)
+							|| processDate.toDateTime().compareTo(nextBillableDate) == 0) {
+						System.out.println(processDate.toDateTime().isAfter(nextBillableDate));
+						System.out.println(processDate.toDateTime().compareTo(nextBillableDate) == 0);
+
+						Plan plan = planRepository.findOne(billingOrderData.getPlanId());
+						if (plan.getIsAdvance() == 'y' || plan.getIsAdvance() == 'Y') {
+							groupOfAdvanceCharges = getChargeLinesForServices(billingOrderData, clientId, processDate,
+									groupOfAdvanceCharges);
+						}
+
+						if (!groupOfAdvanceCharges.isEmpty()
+								&& groupOfAdvanceCharges.containsKey(billingOrderData.getOrderId().toString())) {
+							List<Charge> charges = groupOfAdvanceCharges.get(billingOrderData.getOrderId().toString());
+							nextBillableDate = new DateTime(nextBillableDate.plusDays(1).toDateTime());
+						} else if (!groupOfAdvanceCharges.isEmpty()
+								&& groupOfAdvanceCharges.containsKey(billingOrderData.getChargeCode())) {
+							List<Charge> charges = groupOfAdvanceCharges.get(billingOrderData.getChargeCode());
+							nextBillableDate = new DateTime(nextBillableDate.plusDays(1).toDateTime());
+						}
 					}
 				}
-
 			}
 
 			if (!groupOfAdvanceCharges.isEmpty()) {
@@ -381,5 +411,4 @@ public class ChargingCustomerOrders {
 	 * getInvoice().getInvoiceAmount(), clientId,false); }
 	 */
 
-	
 }

@@ -31,6 +31,14 @@ public interface VoucherDetailsRepository extends JpaRepository<VoucherDetails, 
 			"where pd.office_id=:fromOffice and pd.status ='NEW' and pin_id in (select id from b_pin_master where pin_value= :pinValue) limit :quantity ",nativeQuery = true)
 	void updateVoucherOffice(@Param("toOffice")Long toOffice,@Param("quantity") Long quantity,@Param("saleRefNo")Long saleRefNo, @Param("fromOffice")Long fromOffice,@Param("pinValue") BigDecimal pinValue);
 
+	
+	@Transactional
+	@Modifying
+	@Query(value="update b_pin_details pd set pd.office_id = :toOffice, pd.sale_ref_no = :saleRefNo , pd.status = 'NEW' " + 
+			"where pd.office_id=:fromOffice and pd.status ='NEW' and pin_id in (select id from b_pin_master where pin_value= :pinValue) limit :quantity ",nativeQuery = true)
+	void updateVoucherOfficeForKallakPower(@Param("toOffice")Long toOffice,@Param("quantity") Long quantity,@Param("saleRefNo")Long saleRefNo, @Param("fromOffice")Long fromOffice,@Param("pinValue") BigDecimal pinValue);
+
+	
 	@Transactional
 	@Modifying
 	@Query(value="update b_pin_details pd set pd.office_id = :toOffice, pd.sale_ref_no = :saleRefNo , pd.status = 'ALLOCATED' " + 

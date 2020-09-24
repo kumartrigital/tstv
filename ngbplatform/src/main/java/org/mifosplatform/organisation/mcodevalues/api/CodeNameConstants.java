@@ -90,6 +90,7 @@ public static final String SWAP_DEVICE_REASONS="Swap Device Reasons";
 public static final String SERVICE_CUSTOME_STATUS= "Service Custom Status";
 public static final String GL_ID= "Gl Id";
 public static final boolean IS_INVIEW = true;
+public static final String VOUCHER_VALUE = "Voucher Value";
 
 
 }

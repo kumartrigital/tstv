@@ -64,21 +64,23 @@ public class ChargingOrderReadPlatformServiceImplementation implements ChargingO
 			final DateTime billStartDate = JdbcSupport.getDateTime(resultSet, "billStartDate");
 			final DateTime nextBillableDate = JdbcSupport.getDateTime(resultSet, "nextBillableDate");
 			final DateTime invoiceTillDate = JdbcSupport.getDateTime(resultSet, "invoiceTillDate");
+			final DateTime billEndDate = JdbcSupport.getDateTime(resultSet, "billEndDate");
 			final String billingAlign = resultSet.getString("billingAlign");
 			final String chargeCode = resultSet.getString("chargeCode");
 			final String chargeOwner = resultSet.getString("chargeOwner");
 			final Long planId = resultSet.getLong("planId");
+			
 			// System.out.println("chargeOwner::"+chargeOwner);
 
 			return new BillingOrderData(orderId, durationType, billStartDate, nextBillableDate, invoiceTillDate,
-					billingAlign, chargeCode, chargeOwner, planId);
+					billingAlign, chargeCode, chargeOwner,planId,billEndDate);
 		}
 
 		public String orderIdSchema() {
 
 			return " distinct os.id as orderId,os.plan_id as planId,op.duration_type as durationType, Date_format(IFNULL(op.invoice_tilldate,op.bill_start_date), '%Y-%m-%d') as billStartDate,op.chargeOwner as chargeOwner,"
 					+ "ifnull(op.next_billable_day,op.bill_start_date) as  nextBillableDate,os.billing_align as billingAlign,op.invoice_tilldate as invoiceTillDate,"
-					+ " op.charge_code AS chargeCode FROM b_orders os left outer join b_order_price op on os.id = op.order_id "
+					+ " op.charge_code AS chargeCode, op.bill_end_date as billEndDate FROM b_orders os left outer join b_order_price op on os.id = op.order_id "
 					+ " WHERE os.client_id = ? and os.order_status=1 "
 					+ " AND Date_format(IFNULL(op.next_billable_day,Date_format(IFNULL(op.bill_start_date, ?),'%Y-%m-%d')),'%Y-%m-%d') <= ? and os.is_deleted = 'N' "
 					+ " and Date_format(IFNULL(op.next_billable_day,Date_format(IFNULL(op.bill_start_date, '3099-12-12'),'%Y-%m-%d')), '%Y-%m-%d')"

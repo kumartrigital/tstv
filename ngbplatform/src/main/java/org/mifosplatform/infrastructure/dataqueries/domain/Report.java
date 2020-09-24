@@ -10,17 +10,22 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 import org.apache.commons.lang.StringUtils;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.data.ApiParameterError;
 import org.mifosplatform.infrastructure.core.data.DataValidatorBuilder;
 import org.mifosplatform.infrastructure.core.exception.PlatformApiDataValidationException;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
+import org.mifosplatform.portfolio.service.domain.ServiceDetails;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
 @Entity
@@ -60,6 +65,14 @@ public class Report extends AbstractPersistable<Long> {
      * @JoinColumn(name = "reportn_id"), inverseJoinColumns = @JoinColumn(name =
      * "parameter_id")) private List<BillItem> charges;
      */
+    
+    @LazyCollection(LazyCollectionOption.FALSE)
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "report", orphanRemoval = true)
+	private List<ReportParameter> reportParameters = new ArrayList<ReportParameter>();
+    
+    public List<ReportParameter> getReportParameter() {
+		return reportParameters;
+	}
 
     public static Report fromJson(final JsonCommand command) {
 
@@ -202,5 +215,11 @@ public class Report extends AbstractPersistable<Long> {
     public String getReportName() {
         return reportName;
     }
+
+    public void addDetails(ReportParameter reportParameter) {
+    	reportParameter.update(this);
+		this.reportParameters.add(reportParameter);
+
+	}
 
 }
