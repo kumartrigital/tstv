@@ -6,6 +6,7 @@
 package org.mifosplatform.infrastructure.dataqueries.service;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.core.Response;
@@ -17,6 +18,7 @@ import org.mifosplatform.infrastructure.dataqueries.data.GenericResultsetData;
 import org.mifosplatform.infrastructure.dataqueries.data.ReportData;
 import org.mifosplatform.infrastructure.dataqueries.data.ReportParameterData;
 import org.mifosplatform.infrastructure.dataqueries.data.ReportParameterJoinData;
+import org.mifosplatform.infrastructure.dataqueries.domain.ReportParameter;
 
 public interface ReadReportingService {
 
@@ -51,6 +53,8 @@ public interface ReadReportingService {
 
 	GenericResultsetData retrieveGenericResultset(String name, String type,
 			Map<String, String> queryParams, String schedulerName);
+
+	List<ReportParameterData> retrieveReportParams(Long reportId);
 
 	
 }

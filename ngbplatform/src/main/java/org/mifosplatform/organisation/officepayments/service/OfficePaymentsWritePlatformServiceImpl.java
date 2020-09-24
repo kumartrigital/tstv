@@ -147,7 +147,7 @@ public class OfficePaymentsWritePlatformServiceImpl implements OfficePaymentsWri
 					OfficeBalance officeBalance =this.officeBalanceRepository.findOneByOfficeId(collectionBy);
 					
 					if(officeBalance != null){
-						officeBalance.updateBalance("DEBIT",officePayments.getAmountPaid());
+						officeBalance.updateBalance("CREDIT",officePayments.getAmountPaid());
 					
 					}else if(officeBalance == null){
 						
@@ -195,6 +195,7 @@ public class OfficePaymentsWritePlatformServiceImpl implements OfficePaymentsWri
 
 	}
 
+	
 	@Override
 	public CommandProcessingResult cancelofficepayment(JsonCommand command, final Long paymentId) {
 
@@ -208,23 +209,39 @@ public class OfficePaymentsWritePlatformServiceImpl implements OfficePaymentsWri
 			final OfficePayments cancelPay = new OfficePayments(officePayments.getofficeId(),
 					officePayments.getAmountPaid(), DateUtils.getLocalDateOfTenant(), officePayments.getRemarks(),
 					officePayments.getPaymodeId(), officePayments.getReceiptNo(), officePayments.isWallet(),
-					officePayments.getId());
+					officePayments.getId(),officePayments.getCollectionBy());
 			cancelPay.cancelPayment(command);
 			this.officePaymentsRepository.save(cancelPay);
 			officePayments.cancelPayment(command);
 			this.officePaymentsRepository.save(officePayments);
-			final OfficeBalance officeBalance = officeBalanceRepository.findOneByOfficeId(officePayments.getOfficeId());
-			officeBalance.setBalanceAmount(officePayments.getAmountPaid());
-			this.officeBalanceRepository.save(officeBalance);
+			final OfficeBalance officeBalance = officeBalanceRepository.findOneByOfficeId(officePayments.getOfficeId());	
+			BigDecimal initialBalance = officeBalance.getBalanceAmount(); 
+			
+			if(officeBalance.getBalanceAmount().intValue()<0)  
+			{	
+				officeBalance.updateBalance("DEBIT",officePayments.getAmountPaid());
+				initialBalance = officeBalance.getBalanceAmount().add(initialBalance.abs());
+				officeBalance.setBalanceAmount(initialBalance);
+				this.officeBalanceRepository.saveAndFlush(officeBalance);
+
+			}else {
+				officeBalance.updateBalance("DEBIT",officePayments.getAmountPaid());	
+			    this.officeBalanceRepository.saveAndFlush(officeBalance);
+			}
+			final OfficeBalance collectedByOfficeBalance = officeBalanceRepository.findOneByOfficeId(officePayments.getCollectionBy());	
+			if(collectedByOfficeBalance != null)
+				collectedByOfficeBalance.updateBalance("DEBIT",officePayments.getAmountPaid());
+			this.officeBalanceRepository.saveAndFlush(collectedByOfficeBalance);
+
 			return new CommandProcessingResult(cancelPay.getId(), officeBalance.getofficeId());
 
 		} catch (DataIntegrityViolationException exception) {
+			System.out.println("Exception Message ::" +exception+"Get Message ::" +exception.getClass());
 			handleDataIntegrityIssues(command, exception);
 			return CommandProcessingResult.empty();
 		}
 
 	}
-
 	private void handleDataIntegrityIssues(final JsonCommand command, final DataIntegrityViolationException dve) {
 		final Throwable realCause = dve.getMostSpecificCause();
 		if (realCause.getMessage().contains("receipt_no")) {

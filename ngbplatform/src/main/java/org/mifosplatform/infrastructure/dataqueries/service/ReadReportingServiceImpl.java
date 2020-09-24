@@ -39,9 +39,11 @@ import org.mifosplatform.infrastructure.dataqueries.data.ReportParameterData;
 import org.mifosplatform.infrastructure.dataqueries.data.ReportParameterJoinData;
 import org.mifosplatform.infrastructure.dataqueries.data.ResultsetColumnHeaderData;
 import org.mifosplatform.infrastructure.dataqueries.data.ResultsetRowData;
+import org.mifosplatform.infrastructure.dataqueries.domain.ReportParameter;
 import org.mifosplatform.infrastructure.dataqueries.exception.ReportNotFoundException;
 import org.mifosplatform.infrastructure.jobs.service.JobName;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
+import org.mifosplatform.organisation.partner.data.PartnersData;
 import org.mifosplatform.useradministration.domain.AppUser;
 import org.pentaho.reporting.engine.classic.core.ClassicEngineBoot;
 import org.pentaho.reporting.engine.classic.core.MasterReport;
@@ -465,7 +467,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
                 if (reportParameters == null) {
                     reportParameters = new ArrayList<ReportParameterData>();
                 }
-                reportParameters.add(new ReportParameterData(rpJoin.getReportParameterId(), rpJoin.getReportParameterName(), rpJoin
+                reportParameters.add(new ReportParameterData(rpJoin.getReportParameterId(),rpJoin.getParameterId(), rpJoin.getReportParameterName(), rpJoin
                         .getParameterName()));
 
             } else {
@@ -489,10 +491,10 @@ public class ReadReportingServiceImpl implements ReadReportingService {
                 coreReport = rpJoin.getCoreReport();
                 useReport = rpJoin.getUseReport();
 
-                if (rpJoin.getReportParameterId() != null) {
+                if (rpJoin.getParameterId() != null) {
                     // report has at least one parameter
                     reportParameters = new ArrayList<ReportParameterData>();
-                    reportParameters.add(new ReportParameterData(rpJoin.getReportParameterId(), rpJoin.getReportParameterName(), rpJoin
+                    reportParameters.add(new ReportParameterData(rpJoin.getReportParameterId(),rpJoin.getParameterId(), rpJoin.getReportParameterName(), rpJoin
                             .getParameterName()));
                 } else {
                     reportParameters = null;
@@ -524,7 +526,7 @@ public class ReadReportingServiceImpl implements ReadReportingService {
 
             String sql = "select r.id as reportId, r.report_name as reportName, r.report_type as reportType, "
                     + " r.report_subtype as reportSubType, r.report_category as reportCategory, r.description, r.core_report as coreReport, r.use_report as useReport, "
-                    + " rp.parameter_id as reportParameterId, rp.report_parameter_name as reportParameterName, p.parameter_name as parameterName";
+                    + " rp.id as reportParameterId, rp.parameter_id as parameterId, rp.report_parameter_name as reportParameterName, p.parameter_name as parameterName";
 
             if (reportId != null) sql += ", r.report_sql as reportSql ";
 
@@ -571,12 +573,13 @@ public class ReadReportingServiceImpl implements ReadReportingService {
                 reportSql = null;
             }
 
-            final Long reportParameterId = JdbcSupport.getLong(rs, "reportParameterId");
+            final Long reportParameterId = rs.getLong("reportParameterId");
+            final Long parameterId = JdbcSupport.getLong(rs, "parameterId");
             final String reportParameterName = rs.getString("reportParameterName");
             final String parameterName = rs.getString("parameterName");
 
             return new ReportParameterJoinData(reportId, reportName, reportType, reportSubType, reportCategory, description, reportSql,
-                    coreReport, useReport, reportParameterId, reportParameterName, parameterName);
+                    coreReport, useReport, parameterId, reportParameterName, parameterName,reportParameterId);
         }
     }
 
@@ -740,4 +743,41 @@ public class ReadReportingServiceImpl implements ReadReportingService {
 	
 	}
 
+	@Override
+	public List<ReportParameterData> retrieveReportParams(Long reportId) {
+		try{
+			this.context.authenticatedUser();
+			ReportParameterMapper1 mapper=new ReportParameterMapper1();  
+			final String sql="select distinct "+mapper.schema()+" where srp.report_id ="+reportId+" "; 
+			return this.jdbcTemplate.query(sql,mapper,new Object[] {});		
+			
+		}catch(EmptyResultDataAccessException dve){
+			return null;
+		}
+	}
+
+	private static final class ReportParameterMapper1 implements RowMapper<ReportParameterData>{
+		
+		public String  schema(){
+			return " id as reportParamId, report_id as reportId, parameter_id as parameterId, report_parameter_name as reportParameterName "+
+				   " from stretchy_report_parameter srp "; 
+			
+		}
+
+		@Override
+		public ReportParameterData mapRow(ResultSet rs, int rowNum)
+				throws SQLException {
+			
+			final Long reportParamId= rs.getLong("reportParamId");
+			final Long reportId= rs.getLong("reportId");
+			final Long parameterId = rs.getLong("parameterId");
+			final String reportParameterName = rs.getString("reportParameterName");
+			return new ReportParameterData(reportParamId,reportId,parameterId,reportParameterName);
+		}
+
+		
+		
+	}
+	
+	
 }
