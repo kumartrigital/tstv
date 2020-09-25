@@ -28,13 +28,13 @@ public interface ToApiJsonSerializer<T> {
 	String serialize(ApiRequestJsonSerializationSettings settings,Page<JobDetailHistoryData> jobhistoryDetailData,
 			Set<String> jobHistoryResponseDataParameters);
 
-	String serializeWithTime(Object object);
+	//String serializeWithTime(Object object);
 
-	String serializeWithTimePretty(boolean prettyOn, Object object);
+	//String serializeWithTimePretty(boolean prettyOn, Object object);
 	
-    String serializetime(ApiRequestJsonSerializationSettings settings, T single, Set<String> supportedResponseParameters);
+    //String serializetime(ApiRequestJsonSerializationSettings settings, T single, Set<String> supportedResponseParameters);
 
-	String serializeDateTime(Object object);
+	//String serializeDateTime(Object object);
 
 	
 	

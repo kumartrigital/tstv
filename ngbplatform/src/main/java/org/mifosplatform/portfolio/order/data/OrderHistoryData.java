@@ -1,19 +1,20 @@
 package org.mifosplatform.portfolio.order.data;
 
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 
 public class OrderHistoryData {
 	
 	private final Long id;
-	private final LocalDateTime transactionDate;
-	private final LocalDateTime actualDate;
-	private final LocalDateTime provisioningDate;
+	private final LocalDate transactionDate;
+	private final	LocalDate actualDate;
+	private final LocalDate provisioningDate;
 	private final String transactioType;
 	private final Long PrepareRequsetId;
 	private final String userName;
 
-	public OrderHistoryData(Long id, LocalDateTime transDate, LocalDateTime actualDate,LocalDateTime provisionongDate, 
+	public OrderHistoryData(Long id, LocalDate transDate, LocalDate actualDate,LocalDate provisionongDate, 
 			String transactionType, Long prepareRequsetId, String userName) {
                this.id=id;
                this.transactionDate=transDate;
@@ -35,21 +36,21 @@ public class OrderHistoryData {
 	/**
 	 * @return the transactionDate
 	 */
-	public LocalDateTime getTransactionDate() {
+	public LocalDate getTransactionDate() {
 		return transactionDate;
 	}
 
 	/**
 	 * @return the actualDate
 	 */
-	public LocalDateTime getActualDate() {
+	public LocalDate getActualDate() {
 		return actualDate;
 	}
 
 	/**
 	 * @return the provisioningDate
 	 */
-	public LocalDateTime getProvisioningDate() {
+	public LocalDate getProvisioningDate() {
 		return provisioningDate;
 	}
 
