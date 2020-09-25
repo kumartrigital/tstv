@@ -548,57 +548,47 @@ public class VoucherWritePlatformServiceImpl implements VoucherWritePlatformServ
 		if (itemSale == null) {
 			throw new ItemSaleIdNotFoundException(saleRefId);
 		}
-
-		// read item id from sale ref no
-		/*
-		 * Long quantity = command.longValueOfParameterNamed("quantity");
-		 * 
-		 * java.util.List<VoucherData> voucherData =
-		 * voucherReadPlatformService.retrieveVocherDetailsBySaleRefId(saleRefId,
-		 * quantity); // ByteArrayInputStream bis =
-		 * exportVoucherAsPdf((ArrayList<VoucherData>) // voucherData);
-		 * 
-		 * int voucherDateSize = voucherData.size();
-		 * 
-		 * if (voucherDateSize < quantity) { throw new
-		 * NoMoreRecordsFoundToExportException( "Avaliable quatity :" + voucherDateSize
-		 * + " Request quatity :" + quantity);
-		 * 
-		 * }
-		 */
-
-		// read item id from sale ref no
+		
+		
 		Integer quantity = command.integerValueOfParameterNamed("quantity");
 
 		java.util.List<VoucherData> voucherData = voucherReadPlatformService.retrieveVocherDetailsBySaleRefId(saleRefId,
-				quantity);
+		quantity);
 		Long voucherDateSize = (long) voucherData.size();
 
 		if (!voucherDateSize.toString().equals(quantity.toString())) {
-			throw new NoMoreRecordsFoundToExportException(
-					"Avaliable quatity :" + voucherDateSize + " Request quatity :" + quantity);
+		throw new NoMoreRecordsFoundToExportException(
+		"Avaliable quatity :" + voucherDateSize + " Request quatity :" + quantity);
 
 		}
+		System.out.println("No of Vouchers Exporting :" +voucherDateSize);
+		if (voucherData.size() > 0) {
+		SimpleDateFormat formatter = new SimpleDateFormat("yyMMddhhmmssMs");
+		Date date = new Date();
+		String dateTime = formatter.format(date).toString();
+		String exportReqId = dateTime + "_" + saleRefId.toString() + "_" + quantity.toString();
 
-		if (voucherData.size() != 0) {
-			SimpleDateFormat formatter = new SimpleDateFormat("yyMMddhhmmssMs");
-			Date date = new Date();
-			String dateTime = formatter.format(date).toString();
-			String exportReqId = dateTime + "_" + saleRefId.toString() + "_" + quantity.toString();
+			/*
+			 * for (VoucherData v : voucherData) { String pinNum = v.getPinNo();
+			 * this.voucherDetailsRepository.updateExportReqId(exportReqId, pinNum); }
+			 */
+		try {
+		this.voucherReadPlatformService.batchUpdate(voucherData, exportReqId);
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+			//throw new ExportingRequestFailed("Export Failure");
+		}
+		exportVoucher.setReqId(exportReqId);
+		exportVoucher.setQuantity(Long.parseLong(quantity.toString()));
+		// exportVoucher.setQuantity(quantity);
 
-			for (VoucherData v : voucherData) {
-				String pinNum = v.getPinNo();
-				this.voucherDetailsRepository.updateExportReqId(exportReqId, pinNum);
-			}
-			exportVoucher.setReqId(exportReqId);
-			exportVoucher.setQuantity(Long.parseLong(quantity.toString()));
-			// exportVoucher.setQuantity(quantity);
+		exportVoucher.setRequestBy(itemSale.getPurchaseBy());
+		exportVoucher.setRequestDate(date);
+		exportVoucher.setSaleRefNo(saleRefId);
+		exportVoucher.setStatus("EXPORTED");
+		this.exportRepository.saveAndFlush(exportVoucher);
 
-			exportVoucher.setRequestBy(itemSale.getPurchaseBy());
-			exportVoucher.setRequestDate(date);
-			exportVoucher.setSaleRefNo(saleRefId);
-			exportVoucher.setStatus("EXPORTED");
-			this.exportRepository.saveAndFlush(exportVoucher);
 		} else {
 			throw new NoMoreRecordsFoundToExportException();
 		}
