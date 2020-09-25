@@ -76,6 +76,8 @@ public interface VoucherReadPlatformService {
 
 	Page<VoucherData> getAllData(SearchSqlQuery searchVouchers);
 
+	void batchUpdate(List<VoucherData> voucherList, String exportReqId);
+
 	
 
 

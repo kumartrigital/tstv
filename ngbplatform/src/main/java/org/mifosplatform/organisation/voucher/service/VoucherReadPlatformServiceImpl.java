@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -36,6 +37,7 @@ import org.mifosplatform.organisation.voucher.domain.VoucherPinCategory;
 import org.mifosplatform.organisation.voucher.domain.VoucherPinType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
@@ -1085,5 +1087,24 @@ public class VoucherReadPlatformServiceImpl implements VoucherReadPlatformServic
 		}
 
 	}
+	@Override
+	public void batchUpdate(List<VoucherData> voucherList,String exportReqId) {
+		String sql = "update b_pin_details pd set pd.export_req_id = ?, pd.status = 'EXPORTED' where pd.pin_no=?";
+
+		int[] updateCounts = this.jdbcTemplate.batchUpdate(sql,
+		new BatchPreparedStatementSetter() {
+		@Override
+		public void setValues(PreparedStatement ps, int i) throws SQLException {
+			VoucherData voucher = voucherList.get(i);
+		ps.setString(1,exportReqId);
+		ps.setString(2, voucher.getPinNo());
+		}
+
+		@Override
+		public int getBatchSize() {
+		return voucherList.size();
+		}
+		});
+		}
 
 }
