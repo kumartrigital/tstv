@@ -57,11 +57,10 @@ public final class DefaultToApiJsonSerializer<T> implements ToApiJsonSerializer<
 		return this.excludeNothingWithPrettyPrintingOff.serialize(object);
 	}
 
-	@Override
-	public String serializeDateTime(final Object object) {
-		return this.excludeNothingWithPrettyPrintingTimeOff.serialize(object);
-	}
-
+	/*
+	 * @Override public String serializeDateTime(final Object object) { return
+	 * this.excludeNothingWithPrettyPrintingTimeOff.serialize(object); }
+	 */
 	@Override
 	public String serializePretty(boolean prettyOn, final Object object) {
 		String json = "";
@@ -74,22 +73,19 @@ public final class DefaultToApiJsonSerializer<T> implements ToApiJsonSerializer<
 		return json;
 	}
 
-	@Override
-	public String serializeWithTime(final Object object) {
-		return this.excludeNothingWithPrettyPrintingTimeOff.serialize(object);
-	}
+	/*
+	 * @Override public String serializeWithTime(final Object object) { return
+	 * this.excludeNothingWithPrettyPrintingTimeOff.serialize(object); }
+	 */
 
-	@Override
-	public String serializeWithTimePretty(boolean prettyOn, final Object object) {
-		String json = "";
-
-		if (prettyOn) {
-			json = this.excludeNothingWithPrettyPrintingTimeOn.serializeWithTime(object);
-		} else {
-			json = serialize(object);
-		}
-		return json;
-	}
+	/*
+	 * @Override public String serializeWithTimePretty(boolean prettyOn, final
+	 * Object object) { String json = "";
+	 * 
+	 * if (prettyOn) { json =
+	 * this.excludeNothingWithPrettyPrintingTimeOn.serializeWithTime(object); } else
+	 * { json = serialize(object); } return json; }
+	 */
 
 	@Override
 	public String serialize(final ApiRequestJsonSerializationSettings settings, final Collection<T> collection,
@@ -109,7 +105,6 @@ public final class DefaultToApiJsonSerializer<T> implements ToApiJsonSerializer<
 			final Object[] dataObject) {
 		String json = null;
 		if (gson != null) {
-			json = helper.serializedJsonFrom(gson, dataObject);
 		} else {
 			if (settings.isPrettyPrint()) {
 				json = this.excludeNothingWithPrettyPrintingOn.serialize(dataObject);
@@ -135,27 +130,22 @@ public final class DefaultToApiJsonSerializer<T> implements ToApiJsonSerializer<
 		return json;
 	}
 
-	@Override
-	public String serializetime(final ApiRequestJsonSerializationSettings settings, final T singleObject,
-			final Set<String> supportedResponseParameters) {
-		final Gson delegatedSerializer = findAppropriateSerializer(settings, supportedResponseParameters);
-		return serializetimeWithSettings(delegatedSerializer, settings, singleObject);
-	}
-
-	private String serializetimeWithSettings(final Gson gson, final ApiRequestJsonSerializationSettings settings,
-			final Object dataObject) {
-		String json = null;
-		if (gson != null) {
-			json = helper.serializedJsonFrom(gson, dataObject);
-		} else {
-			if (settings.isPrettyPrint()) {
-				json = this.excludeNothingWithPrettyPrintingTimeOn.serializeWithTime(dataObject);
-			} else {
-				json = serializeDateTime(dataObject);
-			}
-		}
-		return json;
-	}
+	/*
+	 * @Override public String serializetime(final
+	 * ApiRequestJsonSerializationSettings settings, final T singleObject, final
+	 * Set<String> supportedResponseParameters) { final Gson delegatedSerializer =
+	 * findAppropriateSerializer(settings, supportedResponseParameters); return
+	 * serializetimeWithSettings(delegatedSerializer, settings, singleObject); }
+	 */
+	/*
+	 * private String serializetimeWithSettings(final Gson gson, final
+	 * ApiRequestJsonSerializationSettings settings, final Object dataObject) {
+	 * String json = null; if (gson != null) { json =
+	 * helper.serializedJsonFrom(gson, dataObject); } else { if
+	 * (settings.isPrettyPrint()) { json =
+	 * this.excludeNothingWithPrettyPrintingTimeOn.serializeWithTime(dataObject); }
+	 * else { json = serializeDateTime(dataObject); } } return json; }
+	 */
 
 	private Gson findAppropriateSerializer(final ApiRequestJsonSerializationSettings settings,
 			final Set<String> supportedResponseParameters) {
@@ -173,4 +163,6 @@ public final class DefaultToApiJsonSerializer<T> implements ToApiJsonSerializer<
 		final Gson delegatedSerializer = findAppropriateSerializer(settings, jobHistoryResponseDataParameters);
 		return serializeWithSettings(delegatedSerializer, settings, jobhistoryDetailData);
 	}
+
+
 }
