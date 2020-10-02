@@ -39,6 +39,7 @@ import org.mifosplatform.portfolio.order.domain.Order;
 import org.mifosplatform.portfolio.order.domain.OrderDiscount;
 import org.mifosplatform.portfolio.order.domain.OrderLine;
 import org.mifosplatform.portfolio.order.domain.OrderPrice;
+import org.mifosplatform.portfolio.order.domain.OrderPriceRepository;
 import org.mifosplatform.portfolio.order.domain.OrderRepository;
 import org.mifosplatform.portfolio.order.domain.StatusTypeEnum;
 import org.mifosplatform.portfolio.order.domain.UserActionStatusTypeEnum;
@@ -73,6 +74,7 @@ public class OrderAssembler {
 	private final SlabRateWritePlatformService slabRateWritePlatformService;
 	private final OrderRepository orderRepository;
 	private final PlanRepository planRepository;
+	private final OrderPriceRepository orderPriceRepository;
 
 	@Autowired
 	public OrderAssembler(final OrderDetailsReadPlatformServices orderDetailsReadPlatformServices,
@@ -83,7 +85,8 @@ public class OrderAssembler {
 			final OfficeReadPlatformService officeReadPlatformService,
 			final ClientReadPlatformService clientReadPlatformService,
 			final SlabRateWritePlatformService SlabRateWritePlatformService, final OrderRepository orderRepository,
-			final PlanRepository planRepository) {
+			final PlanRepository planRepository,
+			final OrderPriceRepository orderPriceRepository) {
 
 		this.orderDetailsReadPlatformServices = orderDetailsReadPlatformServices;
 		this.contractRepository = contractRepository;
@@ -98,6 +101,7 @@ public class OrderAssembler {
 		this.slabRateWritePlatformService = SlabRateWritePlatformService;
 		this.orderRepository = orderRepository;
 		this.planRepository = planRepository;
+		this.orderPriceRepository = orderPriceRepository;
 
 	}
 
@@ -360,7 +364,7 @@ public class OrderAssembler {
 			LocalDateTime billstartDate = startDate;
 			orderPrice.setBillStartDate(billstartDate);
 			// end date is null for rc
-			if (orderPrice.getChargeType().equalsIgnoreCase("RC") && endDate != null) {
+			if (orderPrice.getChargeType().equalsIgnoreCase("RC") && order.getEndDate() != null) {
 				if (plan.getIsAdvance() == 'N' || plan.getIsAdvance() == 'N') {
 				orderPrice.setBillEndDate(new LocalDateTime(order.getEndDate()));
 				}else {
@@ -371,6 +375,7 @@ public class OrderAssembler {
 			} else if (orderPrice.getChargeType().equalsIgnoreCase("NRC")) {
 				orderPrice.setBillEndDate(billstartDate);
 			}
+			this.orderPriceRepository.save(orderPrice);
 		}
 		return order;
 	}

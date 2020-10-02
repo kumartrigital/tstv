@@ -587,9 +587,9 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 		Configuration prepaidConfiguration = this.configurationRepository
 				.findOneByName(ConfigurationConstants.PREPAID_SERVICE);
 		OfficeData officeData = this.officeReadPlatformService.retriveOfficeDetail(clientId);
-
+		List<BillItem> billItemList = null;
 		BillItem billItem = null;
-		List<BillItem> billItemList = new ArrayList<BillItem>();
+	    billItemList = new ArrayList<BillItem>();
 		Map<Long,BillItem> billItemMap = new HashMap<Long,BillItem>();
 
 		Long orderId = null;
@@ -788,7 +788,8 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 
 		}
 
-		return billItemList;
+	return billItemList;
+
 	}
 	
 	public BigDecimal calculateChargeBillItemRecords(Map<String, List<Charge>> mappedCharges, Long clientId) {

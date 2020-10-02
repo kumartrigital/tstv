@@ -114,7 +114,7 @@ public String retrieveTemplateData(@Context final UriInfo uriInfo){
 @Consumes({ MediaType.APPLICATION_JSON })
 @Produces({ MediaType.APPLICATION_JSON })
 public String createNewItemSale(final String apiRequestBodyAsJson) {
-
+	
     final CommandWrapper commandRequest = new CommandWrapperBuilder().createItemSale().withJson(apiRequestBodyAsJson).build();
     final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
     return this.toApiJsonSerializer.serialize(result);
@@ -188,7 +188,7 @@ public String retrieveSingleItemSale(@PathParam("viewitemId") final Long viewite
 @Produces({ MediaType.APPLICATION_JSON })
 public String retrieveItemSaleByItemType(@PathParam("officeId") final Long officeId,@Context final UriInfo uriInfo){
 	
-	this.context.authenticatedUser().validateHasReadPermission(this.RESOURCE_TYPE);
+	this.context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
 	final Office clientOffice = this.officeRepository.findOne(officeId);
     if (clientOffice == null) { throw new OfficeNotFoundException(officeId); }
 	List<MRNDetailsData> itemSalesData=this.agentReadPlatformService.getVoucherRequest(officeId);

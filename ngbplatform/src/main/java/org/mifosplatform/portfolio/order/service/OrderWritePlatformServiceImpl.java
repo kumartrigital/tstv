@@ -2368,7 +2368,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				if (null != isPaywizard && isPaywizard.isEnabled()) {
 					topUpPaywizard(voucherId, stbNo);
 				}
-				if (voucherData.getPinType().equalsIgnoreCase(PRODUCT_PINTYPE) && voucherData.getPinValue() != null) {
+				//voucherData.getPinType().equalsIgnoreCase(PRODUCT_PINTYPE) &&
+				if ( voucherData.getPinValue() != null) {
 					String redemptionResult = redemptionApiResource.createRedemption(redemptionCommand.toString());
 					return new CommandProcessingResult(redemptionResult);
 				} else {

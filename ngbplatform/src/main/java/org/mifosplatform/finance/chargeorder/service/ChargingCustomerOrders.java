@@ -114,7 +114,9 @@ public class ChargingCustomerOrders {
 
 		LocalDateTime initialProcessDate = processDate;
 		DateTime nextBillableDate = null;
+		Map<String, List<Charge>> groupOfCharges = null;
 		// Get list of qualified orders of customer
+		
 		List<BillingOrderData> billingOrderDatas = chargingOrderReadPlatformService.retrieveOrderIds(clientId,
 				processDate);
 
@@ -122,7 +124,7 @@ public class ChargingCustomerOrders {
 
 			boolean prorataWithNextBillFlag = this
 					.checkInvoiceConfigurations(ConfigurationConstants.CONFIG_PRORATA_WITH_NEXT_BILLING_CYCLE);
-			Map<String, List<Charge>> groupOfCharges = new HashMap<String, List<Charge>>();
+		 groupOfCharges = new HashMap<String, List<Charge>>();
 
 			Map<String, List<Charge>> groupOfAdvanceCharges = new HashMap<String, List<Charge>>(); // add global config
 																									// to control
@@ -270,12 +272,15 @@ public class ChargingCustomerOrders {
 				}
 
 			}
-
+		
 			return this.generateChargesForOrderService.createBillItemRecords(groupOfCharges, clientId);
 
-		} else {
+		}
+
+		else {
 			throw new BillingOrderNoRecordsFoundException();
 		}
+	
 	}
 
 	public Map<String, List<Charge>> chargeLinesForServices(BillingOrderData billingOrderData, Long clientId,

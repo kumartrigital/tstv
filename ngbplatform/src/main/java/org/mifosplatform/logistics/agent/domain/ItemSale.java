@@ -57,6 +57,9 @@ public class ItemSale extends AbstractAuditableCustom<AppUser, Long> {
 	@Column(name = "charge_amount")
 	private BigDecimal chargeAmount;
 
+	@Column(name = "discount")
+	private BigDecimal discount;
+	
 	public void setOrderQuantity(Long orderQuantity) {
 		this.orderQuantity = orderQuantity;
 	}
@@ -70,7 +73,7 @@ public class ItemSale extends AbstractAuditableCustom<AppUser, Long> {
 	}
 
 	public ItemSale(Long itemId, Long purchaseFrom, Long purchaseBy, Date purchaseDate, Long orderQuantity,
-			BigDecimal unitPrice, BigDecimal chargeAmount) {
+			BigDecimal unitPrice, BigDecimal chargeAmount, BigDecimal discount) {
 
 		this.itemId = itemId;
 		this.purchasefrom = purchaseFrom;
@@ -79,6 +82,7 @@ public class ItemSale extends AbstractAuditableCustom<AppUser, Long> {
 		this.orderQuantity = orderQuantity;
 		this.unitPrice = unitPrice;
 		this.chargeAmount = chargeAmount;
+		this.discount = discount;
 
 	}
 
@@ -91,12 +95,13 @@ public class ItemSale extends AbstractAuditableCustom<AppUser, Long> {
 		final Long orderQuantity = command.longValueOfParameterNamed("orderQuantity");
 		final BigDecimal unitPrice = command.bigDecimalValueOfParameterNamed("unitPrice");
 		final BigDecimal chargeAmount = command.bigDecimalValueOfParameterNamed("chargeAmount");
+		final BigDecimal discount = command.bigDecimalValueOfParameterNamed("discount");
 
 		if (!purchaseByEmail.matches("[0-9]+")) {
-			return new ItemSale(itemId, purchaseFrom, null, purchaseDate, orderQuantity, unitPrice, chargeAmount);
+			return new ItemSale(itemId, purchaseFrom, null, purchaseDate, orderQuantity, unitPrice, chargeAmount,discount);
 		} else {
 			final Long purchaseBy = command.longValueOfParameterNamed("purchaseBy");
-			return new ItemSale(itemId, purchaseFrom, purchaseBy, purchaseDate, orderQuantity, unitPrice, chargeAmount);
+			return new ItemSale(itemId, purchaseFrom, purchaseBy, purchaseDate, orderQuantity, unitPrice, chargeAmount,discount);
 
 		}
 

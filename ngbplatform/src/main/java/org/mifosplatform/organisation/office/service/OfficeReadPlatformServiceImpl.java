@@ -19,6 +19,9 @@ import org.mifosplatform.crm.clientprospect.service.SearchSqlQuery;
 import org.mifosplatform.finance.financialtransaction.data.FinancialTransactionsData;
 import org.mifosplatform.finance.officebalance.data.OfficeBalanceData;
 import org.mifosplatform.infrastructure.codes.data.CodeValueData;
+import org.mifosplatform.infrastructure.configuration.domain.Configuration;
+import org.mifosplatform.infrastructure.configuration.domain.ConfigurationConstants;
+import org.mifosplatform.infrastructure.configuration.domain.ConfigurationRepository;
 import org.mifosplatform.infrastructure.core.api.ApiParameterHelper;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
@@ -53,14 +56,17 @@ public class OfficeReadPlatformServiceImpl implements OfficeReadPlatformService 
 	private final CurrencyReadPlatformService currencyReadPlatformService;
 	private final static String NAMEDECORATEDBASEON_HIERARCHY = "concat(substring('........................................', 1, ((LENGTH(o.hierarchy) - LENGTH(REPLACE(o.hierarchy, '.', '')) - 1) * 1)), o.name)";
 	private final PaginationHelper<OfficeData> paginationHelper = new PaginationHelper<OfficeData>();
+	private final ConfigurationRepository configurationRepository;
 
 	@Autowired
 	public OfficeReadPlatformServiceImpl(final PlatformSecurityContext context,
 			final CurrencyReadPlatformService currencyReadPlatformService,
-			final TenantAwareRoutingDataSource dataSource) {
+			final TenantAwareRoutingDataSource dataSource,
+			final ConfigurationRepository configurationRepository) {
 		this.context = context;
 		this.currencyReadPlatformService = currencyReadPlatformService;
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
+		this.configurationRepository = configurationRepository;
 	}
 	
 	
@@ -270,14 +276,22 @@ public class OfficeReadPlatformServiceImpl implements OfficeReadPlatformService 
 	public Collection<OfficeData> retrieveAllOffices() {
 
 		final AppUser currentUser = context.authenticatedUser();
+		final OfficeMapper officeMapper = new OfficeMapper();
 
+		Configuration isHeirachy = this.configurationRepository
+				.findOneByName(ConfigurationConstants.Restrict_To_Hierarchy);
+		if (null != isHeirachy && isHeirachy.isEnabled()) {
 		String hierarchy = currentUser.getOffice().getHierarchy();
 		String hierarchySearchString = hierarchy + "%";
 
-		final OfficeMapper officeMapper = new OfficeMapper();
 		final String sql = "select " + officeMapper.officeSchema() + " where o.hierarchy like ? group by o.name order by o.hierarchy,o.opening_date";
 
 		return this.jdbcTemplate.query(sql, officeMapper, new Object[] { hierarchySearchString });
+		}else {
+			final String sql = "select " + officeMapper.officeSchema() + "  group by o.name order by o.hierarchy,o.opening_date";
+			return this.jdbcTemplate.query(sql, officeMapper, new Object[] { });
+
+		}
 	}
 
 	@Override

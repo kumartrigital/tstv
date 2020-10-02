@@ -141,7 +141,7 @@ public class RevPayOrdersApiResource {
 		paymentGatewayRepository.save(revpayOrder);
 		URI indexPath = null;
 		try {
-			indexPath = new URI("https://41.217.20.98:8877/#/");
+			indexPath = new URI("https://13.232.5.6:8877/#/");
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}

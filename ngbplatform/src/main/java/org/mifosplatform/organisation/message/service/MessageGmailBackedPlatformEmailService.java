@@ -131,7 +131,10 @@ public class MessageGmailBackedPlatformEmailService implements MessagePlatformEm
 		     properties.put("mail.smtp.auth", "true");  
 		     properties.put("mail.smtp.starttls.enable", starttlsValue);//put as false
 		     properties.put("mail.smtp.starttls.required", starttlsValue);//put as false
+		     properties.put("mail.smtp.port", portNumber);
+		     properties.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
 
+		     try {
 
 		     Session session = Session.getDefaultInstance(properties,   
 		             new javax.mail.Authenticator() {   
@@ -139,7 +142,7 @@ public class MessageGmailBackedPlatformEmailService implements MessagePlatformEm
 		             return new PasswordAuthentication(authuser,authpwd);    }   });       
 
 		     //2) compose message      
-			try {
+			
 				MimeMessage message = new MimeMessage(session);
 				message.setFrom(new InternetAddress(authuser));
 				message.addRecipient(Message.RecipientType.TO,new InternetAddress(emailDetail.getMessageTo()));
@@ -187,8 +190,6 @@ public class MessageGmailBackedPlatformEmailService implements MessagePlatformEm
 
 			}catch(Exception e){
 				 System.out.println("message sending failed :" + e.getMessage());
-
-		    	 handleCodeDataIntegrityIssues(null, e);
 			     return e.getMessage();
 		     }
 		        
