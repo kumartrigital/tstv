@@ -71,7 +71,7 @@ public class RevPayOrderWritePlatformServiceImpl implements RevPayOrderWritePlat
 			revorder.put("txid", PaymentGateway.getPaymentId());
 			paymentGatewayRepository.save(PaymentGateway);
 			revorder.put("revorder", "order created sucussfully");
-			revorder.put("callbackUrl", "https://41.217.20.98:8877/ngbplatform/api/v1/revpay/orderlock");
+			revorder.put("callbackUrl", "https://13.232.5.6:8877/ngbplatform/api/v1/revpay/orderlock");
 
 			return new CommandProcessingResult(revorder);
 			

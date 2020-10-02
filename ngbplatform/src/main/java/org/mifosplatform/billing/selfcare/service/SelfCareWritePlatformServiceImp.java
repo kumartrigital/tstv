@@ -147,6 +147,8 @@ public class SelfCareWritePlatformServiceImp implements SelfCareWritePlatformSer
 			System.out.println("selfcare object::"+selfCare.toString());
 			this.selfCareRepository.save(selfCare);
 			
+			System.out.println("selfcare Username: " +selfCare.getUserName()+"    Password:"+selfCare.getPassword());
+			
 			
 			
 			/*The below code is Notification Message while Creating Self User*/

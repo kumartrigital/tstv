@@ -42,7 +42,7 @@ DECLARE v_allocated INTEGER DEFAULT 0;
  DEClARE i_cursor CURSOR FOR
  Select office_id,case when counts=1 then 'Allocated' else 'In Stock' end as stock_status ,
 	count(0) from (select office_id, case when client_id>0 then 1 else 0 end as counts 
-	from b_item_detail where item_master_id=1) x group by counts;
+	from b_item_detail where item_master_id=18) x group by counts;
 
  DECLARE CONTINUE HANDLER
         FOR NOT FOUND SET v_finished = 1;
@@ -77,9 +77,9 @@ DECLARE v_stock INTEGER DEFAULT 0;
 DECLARE v_allocated INTEGER DEFAULT 0;
 
  DEClARE i_cursor CURSOR FOR
- select c.id,a.status,count(0) counts from b_client_service a, m_client b,m_office c 
- where a.client_id=b.id and b.office_id=c.id and a.status='ACTIVE' group by a.status,c.id;
-
+ select c.id,b.status_enum,count(0) counts from b_client_service a, m_client b,m_office c 
+ where a.client_id=b.id and b.office_id=c.id and a.status='ACTIVE' and b.status_enum in (300,600) group by b.status_enum,c.id;
+ 
  DECLARE CONTINUE HANDLER
         FOR NOT FOUND SET v_finished = 1;
  OPEN i_cursor;
@@ -89,7 +89,7 @@ DECLARE v_allocated INTEGER DEFAULT 0;
  IF v_finished = 1 THEN
 	LEAVE get_stats;
  END IF;
-	if l_text ='ACTIVE' then
+	if l_text ='300' then
 	 Update m_office_statistics set  client_active=v_stock where office_id = v_officeid;
 	else
 	 Update m_office_statistics set  client_inactive=v_stock where office_id = v_officeid;
@@ -113,17 +113,16 @@ END //
 DELIMITER ;
 
 
+
 DROP EVENT  IF EXISTS dashboard;
 
 SET GLOBAL event_scheduler = ON;
 
-CREATE EVENT  `dashboard`
-  ON SCHEDULE EVERY 1 HOUR
-  	COMMENT ' Run this for every 1 hour to update the dashboard'
-  DO  call update_stats();
 
 	
 
+CREATE DEFINER=`root`@`localhost` EVENT `dashboard` ON SCHEDULE EVERY
+ 30 MINUTE DO call update_stats();
 
 
 
@@ -136,7 +135,7 @@ select a.id,IFNULL(b.client_active, 0) as active,IFNULL(b.client_inactive, 0) as
 from m_office a left join m_office_statistics b on a.id=b.office_id where a.hierarchy like '%') X;
 
 
-
+drop procedure IF EXISTS update_dash;
 
 ---> Single procedure 
 
@@ -154,7 +153,7 @@ DECLARE v_allocated INTEGER DEFAULT 0;
  DEClARE i_cursor CURSOR FOR
  Select office_id,case when counts=1 then 'Allocated' else 'In Stock' end as stock_status ,
 	count(0) from (select office_id, case when client_id>0 then 1 else 0 end as counts 
-	from b_item_detail where item_master_id=1) x group by counts;
+	from b_item_detail where item_master_id=18) x group by counts;
 
  DECLARE CONTINUE HANDLER
         FOR NOT FOUND SET v_finished = 1;
@@ -204,5 +203,7 @@ End;
  
 END //
 DELIMITER ;
+
+
 
 

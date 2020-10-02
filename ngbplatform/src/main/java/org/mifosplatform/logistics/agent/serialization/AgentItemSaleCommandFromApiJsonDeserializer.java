@@ -33,7 +33,7 @@ public final class AgentItemSaleCommandFromApiJsonDeserializer {
      */
 
     private final Set<String> supportedParameters = new HashSet<String>(Arrays.asList("agentId","itemId","purchaseDate","orderQuantity",
-    		"chargeAmount","taxPercantage","dateFormat","locale","chargeCode","unitPrice","purchaseFrom","purchaseBy","currencyId"));
+    		"chargeAmount","taxPercantage","dateFormat","locale","chargeCode","unitPrice","purchaseFrom","purchaseBy","currencyId","discount"));
     private final FromJsonHelper fromApiJsonHelper;
 
     @Autowired
@@ -70,6 +70,7 @@ public final class AgentItemSaleCommandFromApiJsonDeserializer {
         final BigDecimal unitPrice = fromApiJsonHelper.extractBigDecimalWithLocaleNamed("unitPrice", element);
         baseDataValidator.reset().parameter("unitPrice").value(unitPrice).notNull();
         
+        
         final String purchaseBy = fromApiJsonHelper.extractStringNamed("purchaseBy", element);
         baseDataValidator.reset().parameter("purchaseBy").value(purchaseBy).notNull();
         
@@ -78,6 +79,9 @@ public final class AgentItemSaleCommandFromApiJsonDeserializer {
         
         final BigDecimal currencyId = fromApiJsonHelper.extractBigDecimalWithLocaleNamed("currencyId", element);
         baseDataValidator.reset().parameter("currencyId").value(currencyId).notNull();
+        
+        final BigDecimal disscount = fromApiJsonHelper.extractBigDecimalWithLocaleNamed("disscount", element);
+        baseDataValidator.reset().parameter("disscount").value(disscount);
         
         throwExceptionIfValidationWarningsExist(dataValidationErrors);
         

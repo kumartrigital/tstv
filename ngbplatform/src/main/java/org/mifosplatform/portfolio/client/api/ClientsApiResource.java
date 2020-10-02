@@ -462,6 +462,9 @@ public class ClientsApiResource {
 		 * ClientNotFoundException(columnValue, 0l); }
 		 */
 		ClientData clientdata = this.clientReadPlatformService.retrieveSearchClientId(columnName,columnValue);
+		if(clientdata==null) {
+			throw new ClientNotFoundException(columnValue);
+		}
 		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper
 				.process(uriInfo.getQueryParameters());
 		return this.toApiJsonSerializer.serialize(settings, clientdata,
