@@ -179,8 +179,8 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
 			} else if (path.contains("/api/v1/revpay/orderlock") && request.getMethod().equalsIgnoreCase(POST)) {
 
 				tenant = getTenantIdentifier(request);
-				String username = "admin";
-				String password = "admin";
+				String username = "dealer";
+				String password = "dealer";
 
 				boolean isValid = this.licenseUpdateService.checkIfKeyIsValid(tenant.getLicensekey(), tenant);
 				if (!isValid) {
