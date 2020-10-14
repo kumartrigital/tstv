@@ -24,12 +24,15 @@ public interface TicketMasterReadPlatformService {
 
 	TicketMasterData retrieveTicket(Long clientId, Long ticketId);
 	
-	Page<ClientTicketData> retrieveAssignedTicketsForNewClient(SearchSqlQuery searchTicketMaster, String statusType, String fromDate, String toDate);
+	Page<ClientTicketData> retrieveAssignedTicketsForNewClient(SearchSqlQuery searchTicketMaster, String statusType, String fromDate, String toDate,String type);
 
 	List<SubCategoryData> retrieveSubCategory(final int codeValue);
 
 	
 	List<TicketMasterData> retrieveOfficeTicketDetails(Long officeId);
+	
+	List<TicketMasterData> retrieveAllOfficeTicketDetails();
+
 
 	TicketMasterData retrieveSingleOfficeTicketDetails(Long officeId,	Long ticketId);
 

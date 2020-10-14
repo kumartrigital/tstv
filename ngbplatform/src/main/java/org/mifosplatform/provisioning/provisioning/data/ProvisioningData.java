@@ -39,6 +39,7 @@ public class ProvisioningData {
 	private LocalDate created_date;
 	private String response_message;
 	private String response_status;
+	private String serial_no;
 
 	
 
@@ -239,7 +240,14 @@ public class ProvisioningData {
 		this.networkElementDatas = networkElementDatas;
 	}
 
-	
+	public String getSerial_no() {
+		return serial_no;
+	}
+
+
+	public void setSerial_no(String serial_no) {
+		this.serial_no = serial_no;
+	}
 	
 	
 }

@@ -246,7 +246,7 @@ public class TicketMasterApiResource {
 		}
 		
 		
-		/**
+		/**h
 		 * Listing tickets
 		 * */		
 		@GET
@@ -256,11 +256,12 @@ public class TicketMasterApiResource {
 		public String assignedAllTickets(@Context final UriInfo uriInfo, @QueryParam("sqlSearch") final String sqlSearch,
 				@QueryParam("limit") final Integer limit, @QueryParam("offset") final Integer offset, @QueryParam("statusType") final String statusType,
 				@QueryParam("fromDate") final String fromDate,
-				@QueryParam("toDate") final String toDate){
+				@QueryParam("toDate") final String toDate,
+				@QueryParam ("type") final String type){
 			
 			context.authenticatedUser().validateHasReadPermission(resourceNameForPermission);
 			final SearchSqlQuery searchTicketMaster = SearchSqlQuery.forSearch(sqlSearch, offset,limit );
-		    final Page<ClientTicketData> data = this.ticketMasterReadPlatformService.retrieveAssignedTicketsForNewClient(searchTicketMaster,statusType,fromDate,toDate);
+		    final Page<ClientTicketData> data = this.ticketMasterReadPlatformService.retrieveAssignedTicketsForNewClient(searchTicketMaster,statusType,fromDate,toDate,type);
 		    
 	        return this.clientToApiJsonSerializer.serialize(data);
 		}
@@ -495,6 +496,22 @@ public class TicketMasterApiResource {
 	        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 	        return this.toApiJsonSerializer.serialize(settings, data, RESPONSE_PARAMETERS);
 	    }
+		
+		
+		
+		@GET
+	    @Path("office")
+	    @Consumes({MediaType.APPLICATION_JSON})
+	    @Produces({MediaType.APPLICATION_JSON})
+	    public String retrieveAllOfficeTicketDetails( @Context final UriInfo uriInfo) {
+
+			context.authenticatedUser().validateHasReadPermission(resourceNameForPermission);
+	        final List<TicketMasterData> data = this.ticketMasterReadPlatformService.retrieveAllOfficeTicketDetails();
+	        final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+	        return this.toApiJsonSerializer.serialize(settings, data, RESPONSE_PARAMETERS);
+	    }
+		
+		
 		@GET
 	    @Path("officeid/{officeId}")
 	    @Consumes({MediaType.APPLICATION_JSON})

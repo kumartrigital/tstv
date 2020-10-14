@@ -8,12 +8,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.json.simple.JSONObject;
 import org.mifosplatform.Revpay.order.domain.RevPayOrderRepository;
@@ -28,8 +32,11 @@ import org.mifosplatform.finance.paymentsgateway.domain.PaymentGateway;
 import org.mifosplatform.finance.paymentsgateway.domain.PaymentGatewayRepository;
 import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
+import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSerializer;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+import org.mifosplatform.infrastructure.core.serialization.ToApiJsonSerializer;
+import org.mifosplatform.logistics.mrn.data.MRNDetailsData;
 import org.mifosplatform.portfolio.order.service.OrderWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -53,6 +60,7 @@ public class RevPayOrdersApiResource {
 	private final PaymentGatewayRepository paymentGatewayRepository;
 	private final PaymentWritePlatformService PaymentWritePlatformService;
 	private final PaymentsApiResource paymentsApiResource;
+	private final ToApiJsonSerializer<PaymentGateway> apiJsonSerializerPaymentGateway;
 
 	@Autowired
 	public RevPayOrdersApiResource(final DefaultToApiJsonSerializer<RevpayOrder> apiJsonSerializer,
@@ -63,7 +71,8 @@ public class RevPayOrdersApiResource {
 			final OrderWritePlatformService orderWritePlatformService,
 			final PaymentGatewayRepository paymentGatewayRepository,
 			final PaymentWritePlatformService PaymentWritePlatformService,
-			final PaymentsApiResource paymentsApiResource) {
+			final PaymentsApiResource paymentsApiResource,
+			final ToApiJsonSerializer<PaymentGateway> apiJsonSerializerPaymentGateway) {
 
 		this.toApiJsonSerializer = apiJsonSerializer;
 		this.apiRequestParameterHelper = apiRequestParameterHelper;
@@ -75,6 +84,7 @@ public class RevPayOrdersApiResource {
 		this.paymentGatewayRepository = paymentGatewayRepository;
 		this.PaymentWritePlatformService = PaymentWritePlatformService;
 		this.paymentsApiResource = paymentsApiResource;
+		this.apiJsonSerializerPaymentGateway = apiJsonSerializerPaymentGateway;
 
 	}
 
@@ -93,10 +103,25 @@ public class RevPayOrdersApiResource {
 
 	@POST
 	@Path("/orderlock")
-	@Consumes({ MediaType.APPLICATION_JSON })
-	@Produces({ MediaType.APPLICATION_JSON })
+	/*
+	 * @Consumes({ MediaType.APPLICATION_JSON })
+	 * 
+	 * @Produces({ MediaType.APPLICATION_JSON })
+	 */
 	@SuppressWarnings("unchecked")
-	public Response CallBackRavePayOrder(@QueryParam("txref") Long txref, @QueryParam("flwref") String flwref) {
+	public Response CallBackRavePayOrder(@QueryParam("txref") Long txref, @QueryParam("flwref") String flwref,
+			@QueryParam("cancelled") Boolean cancelled) {
+		URI indexPath = null;
+
+		if (cancelled == true) {
+			try {
+				indexPath = new URI("http://tstvbilling.com:3301/topup"+txref);
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			}
+			return Response.temporaryRedirect(indexPath).build();
+
+		}
 		String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
 
 		String locale = "en";
@@ -139,13 +164,26 @@ public class RevPayOrdersApiResource {
 			revpayOrder.setStatus("Failed");
 		}
 		paymentGatewayRepository.save(revpayOrder);
-		URI indexPath = null;
 		try {
-			indexPath = new URI("https://13.232.5.6:8877/#/");
+			indexPath = new URI("http://tstvbilling.com:3301/topup/"+txref);
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
 
 		return Response.temporaryRedirect(indexPath).build();
 	}
+
+	@GET
+	@Path("/status/{txid}")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String getRavePayStatus(@PathParam("txid") String txid, @Context final UriInfo uriInfo) {
+
+		PaymentGateway orderDetails = paymentGatewayRepository.findPaymentDetailsByPaymentId(txid);
+		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper
+				.process(uriInfo.getQueryParameters());
+		return this.apiJsonSerializerPaymentGateway.serialize(settings, orderDetails, RESPONSE_DATA_PARAMETERS);
+
+	}
+
 }
