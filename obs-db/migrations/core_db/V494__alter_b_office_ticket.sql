@@ -1,4 +1,3 @@
-
 Drop procedure IF EXISTS columnType;
 DELIMITER //
 create procedure columnType()
@@ -24,7 +23,7 @@ Begin
 IF NOT EXISTS (
 SELECT * FROM information_schema.COLUMNS
 WHERE COLUMN_NAME = 'team_user_id'
-and TABLE_NAME = 'b_office_ticket'
+and TABLE_NAME = 'b_ticket_master'
 and TABLE_SCHEMA = DATABASE())THEN
 ALTER TABLE `b_ticket_master`
 ADD COLUMN `type` VARCHAR(45) NOT NULL AFTER `team_user_id`;
@@ -34,4 +33,3 @@ END //
 DELIMITER ;
 call columnOfficeType();
 Drop procedure IF EXISTS columnOfficeType;
-
