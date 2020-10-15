@@ -89,6 +89,8 @@ public class ConfigurationConstants {
 	public static final String GLOBALPAY_PAYMENTGATEWAY = "globalpay";
 	public static final String PAYPAL_PAYMENTGATEWAY = "paypal";
 	public static final String PAYMENTGATEWAY_IS_PAYPAL_CHECK = "is-paypal";
+	public static final String User_LOGIN = "user_login";
+
 	public static final String PAYMENTGATEWAY_IS_PAYPAL_CHECK_IOS = "is-paypal-for-ios";
 	public static final String NETELLER_PAYMENTGATEWAY = "neteller";
 	public static final String NETELLER_ACCESS_TOKEN = "oauth2/token?grant_type=client_credentials";

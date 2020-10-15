@@ -289,8 +289,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			final EventOrderApiResource eventOrderApiResource, final EventMasterRepository eventMasterRepository,
 			final VoucherReadPlatformService voucherReadPlatformService,
 			final ItemDetailsRepository itemDetailsRepository,
-			final EventPriceReadPlatformService eventPriceReadPlatformService
-			,final ChargingOrderApiResourse chargingOrderApiResourse) {
+			final EventPriceReadPlatformService eventPriceReadPlatformService,
+			final ChargingOrderApiResourse chargingOrderApiResourse) {
 
 		this.context = context;
 		this.reverseInvoice = reverseInvoice;
@@ -415,8 +415,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				// For Order History
 				OrderHistory orderHistory = new OrderHistory(order.getId(), DateTimeUtils.getLocalDateTimeOfTenant(),
 						DateTimeUtils.getLocalDateTimeOfTenant(), commandId, requstStatus, userId, null);
-				
-				
+
 				logger.info(orderHistory.toString());
 				this.orderHistoryRepository.save(orderHistory);
 
@@ -447,29 +446,28 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			 * .associationWriteplatformService.createNewHardwareAssociation( clientId,
 			 * plan.getId(), serialnum, order.getId(), allocationType); }
 			 */
-			
-				if (plan.getIsAdvance() == 'Y' || plan.getIsAdvance() == 'y') {
-					// charging
-					JSONObject jsonObject = new JSONObject();
-					SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy HH:mm:ss");
-					try {
-						jsonObject.put("dateFormat", "dd MMMM yyyy HH:mm:ss");
-						jsonObject.put("locale", "en");
-						jsonObject.put("systemDate", dateFormat.format(order.getStartDate()));
-						this.chargingOrderApiResourse.createChargesToOrders(order.getClientId(), jsonObject.toString());
-					} catch (Exception e) {
-						throw new PlatformDataIntegrityException("error.msg.charge.exception",
-								"error.message.charging.exception");
-					}
+
+			if (plan.getIsAdvance() == 'Y' || plan.getIsAdvance() == 'y') {
+				// charging
+				JSONObject jsonObject = new JSONObject();
+				SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy HH:mm:ss");
+				try {
+					jsonObject.put("dateFormat", "dd MMMM yyyy HH:mm:ss");
+					jsonObject.put("locale", "en");
+					jsonObject.put("systemDate", dateFormat.format(order.getStartDate()));
+					this.chargingOrderApiResourse.createChargesToOrders(order.getClientId(), jsonObject.toString());
+				} catch (Exception e) {
+					throw new PlatformDataIntegrityException("error.msg.charge.exception",
+							"error.message.charging.exception");
 				}
-		
+			}
+
 			if (plan.getProvisionSystem().equalsIgnoreCase("None")) {
 
 				Client client = this.clientRepository.findOne(clientId);
 				client.setStatus(ClientStatus.ACTIVE.getValue());
 				this.clientRepository.save(client);
 
-			
 			}
 
 			/*
@@ -479,10 +477,9 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			 */
 			Order order1 = this.orderRepository.findOne(order.getId());
 			ClientService clientService = null;
-			clientService =	this.clientServiceRepository
-					.findOne(command.longValueOfParameterNamed("clientServiceId"));
+			clientService = this.clientServiceRepository.findOne(command.longValueOfParameterNamed("clientServiceId"));
 			if (clientService.getStatus().equalsIgnoreCase("NEW")) {
-				order1.setStatus( OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.NEW).getId());
+				order1.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.NEW).getId());
 			} else {
 				order1.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.PENDING).getId());
 			}
@@ -495,7 +492,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			if (!plan.getProvisionSystem().equalsIgnoreCase("None")) {
 				this.provisioningRequesting(order, oldOrder, plan.isPrepaid());
 			} else {
-				 clientService = this.clientServiceRepository.findOne(order.getClientServiceId());
+				clientService = this.clientServiceRepository.findOne(order.getClientServiceId());
 
 				clientService.setStatus("ACTIVE");
 				clientService = this.clientServiceRepository.saveAndFlush(clientService);
@@ -791,9 +788,9 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 						order.getId().toString(), "SUSPENTATION");
 
 				// For Order History
-				final OrderHistory orderHistory = new OrderHistory(order.getId(), DateTimeUtils.getLocalDateTimeOfTenant(),
-						DateTimeUtils.getLocalDateTimeOfTenant(), Long.valueOf(0),
-						UserActionStatusTypeEnum.SUSPENTATION.toString(), getUserId(), null);
+				final OrderHistory orderHistory = new OrderHistory(order.getId(),
+						DateTimeUtils.getLocalDateTimeOfTenant(), DateTimeUtils.getLocalDateTimeOfTenant(),
+						Long.valueOf(0), UserActionStatusTypeEnum.SUSPENTATION.toString(), getUserId(), null);
 				this.orderHistoryRepository.save(orderHistory);
 			}
 			// provisioning request generation
@@ -852,10 +849,12 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			if (contractDetails == null) {
 				throw new ContractNotNullException();
 			}
-			LocalDateTime contractEndDate = this.orderAssembler.calculateEndDate(DateTimeUtils.getLocalDateTimeOfTenant(),
-					contractDetails.getSubscriptionType(), contractDetails.getUnits());
-			LocalDateTime chargeCodeEndDate = this.orderAssembler.calculateEndDate(DateTimeUtils.getLocalDateTimeOfTenant(),
-					chargeCodeMaster.get(0).getDurationType(), chargeCodeMaster.get(0).getChargeDuration().longValue());
+			LocalDateTime contractEndDate = this.orderAssembler.calculateEndDate(
+					DateTimeUtils.getLocalDateTimeOfTenant(), contractDetails.getSubscriptionType(),
+					contractDetails.getUnits());
+			LocalDateTime chargeCodeEndDate = this.orderAssembler.calculateEndDate(
+					DateTimeUtils.getLocalDateTimeOfTenant(), chargeCodeMaster.get(0).getDurationType(),
+					chargeCodeMaster.get(0).getChargeDuration().longValue());
 			if (contractEndDate != null && chargeCodeEndDate != null) {
 				if (contractEndDate.toDate().before(chargeCodeEndDate.toDate())) {
 					if (plan.isPrepaid() == 'N' || plan.isPrepaid() == 'n') {
@@ -1070,8 +1069,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			List<SubscriptionData> subscriptionDatas = this.contractPeriodReadPlatformService
 					.retrieveSubscriptionDatabyOrder(orderId);
 			Contract contractPeriod = this.subscriptionRepository.findOne(subscriptionDatas.get(0).getId());
-			LocalDateTime EndDate = this.orderAssembler.calculateEndDate(startDate, contractPeriod.getSubscriptionType(),
-					contractPeriod.getUnits());
+			LocalDateTime EndDate = this.orderAssembler.calculateEndDate(startDate,
+					contractPeriod.getSubscriptionType(), contractPeriod.getUnits());
 			order.setStartDate(startDate);
 			order.setEndDate(EndDate);
 			order.setNextBillableDay(null);
@@ -1194,11 +1193,52 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 
 	/* ==================COMMAND CENTER START================== */
 
+	/*
+	 * @SuppressWarnings("unused")
+	 * 
+	 * @Override
+	 * 
+	 * public CommandProcessingResult retrackOsdMessage(final JsonCommand command) {
+	 * Configuration isPaywizard =
+	 * configurationRepository.findOneByName(ConfigurationConstants.
+	 * PAYWIZARD_INTEGRATION); try { this.context.authenticatedUser(); int count =
+	 * 0;
+	 * 
+	 * if (command.stringValueOfParameterName("type").equalsIgnoreCase("group") &&
+	 * command.booleanPrimitiveValueOfParameterNamed("isGroupSupported")) {
+	 * Map<String, Object> changes = new HashMap<>(); List<ClientServiceData>
+	 * clientServiceDatas = this.clientServiceReadPlatformService
+	 * .retriveActiveClientsInOrg(command.longValueOfParameterNamed("officeId"));
+	 * for (ClientServiceData clientServiceData : clientServiceDatas) { JsonCommand
+	 * com = this.provisioningJsonPreparation(command, clientServiceData);
+	 * this.provisioningWritePlatformService.
+	 * createProvisioningRequestForCommandCenter(com); count++; }
+	 * 
+	 * }
+	 * 
+	 * if (null != isPaywizard && isPaywizard.isEnabled()) { ItemData itemData =
+	 * itemReadPlatformService
+	 * .retriveSerialNum(Long.parseLong(command.stringValueOfParameterName(
+	 * "clientId")));
+	 * inviewWritePlatformService.retrackForPaywizardRestCall(itemData.getSerialNo()
+	 * ); }
+	 * 
+	 * return new
+	 * CommandProcessingResultBuilder().withResourceIdAsString(String.valueOf(count)
+	 * ).build();
+	 * 
+	 * } catch (DataIntegrityViolationException dve) { return
+	 * CommandProcessingResult.empty(); }
+	 * 
+	 * }
+	 */
+
 	@SuppressWarnings("unused")
 	@Override
 	public CommandProcessingResult retrackOsdMessage(final JsonCommand command) {
 		Configuration isPaywizard = configurationRepository.findOneByName(ConfigurationConstants.PAYWIZARD_INTEGRATION);
 		try {
+			System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
 			this.context.authenticatedUser();
 			int count = 0;
 
@@ -1212,13 +1252,22 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 					this.provisioningWritePlatformService.createProvisioningRequestForCommandCenter(com);
 					count++;
 				}
-				
+
+			} else {
+				System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
+
+				Map<String, Object> changes = new HashMap<>();
+				List<ClientServiceData> clientServiceDatas = this.clientServiceReadPlatformService
+						.retriveActiveClientsInOrg(command.longValueOfParameterNamed("clientServiceId"));
+				for (ClientServiceData clientServiceData : clientServiceDatas) {
+					JsonCommand com = this.provisioningJsonPreparation(command, clientServiceData);
+					System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
+					this.provisioningWritePlatformService.createProvisioningRequestForCommandCenter(com);
+					count++;
+				}
+
 			}
-			if (null != isPaywizard && isPaywizard.isEnabled()) {
-				ItemData itemData = itemReadPlatformService
-						.retriveSerialNum(Long.parseLong(command.stringValueOfParameterName("clientId")));
-				inviewWritePlatformService.retrackForPaywizardRestCall(itemData.getSerialNo());
-			}
+
 			return new CommandProcessingResultBuilder().withResourceIdAsString(String.valueOf(count)).build();
 
 		} catch (DataIntegrityViolationException dve) {
@@ -1417,8 +1466,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 
 			// For Order History
 			OrderHistory orderHistory = new OrderHistory(order.getId(), DateTimeUtils.getLocalDateTimeOfTenant(),
-					DateTimeUtils.getLocalDateTimeOfTenant(), processResuiltId, UserActionStatusTypeEnum.CHANGE_PLAN.toString(),
-					null, null);
+					DateTimeUtils.getLocalDateTimeOfTenant(), processResuiltId,
+					UserActionStatusTypeEnum.CHANGE_PLAN.toString(), null, null);
 
 			this.orderHistoryRepository.save(orderHistory);
 			processNotifyMessages(EventActionConstants.EVENT_NOTIFY_TECHNICALTEAM, newOrder.getClientId(),
@@ -1656,7 +1705,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				order.setEndDate(endDate);
 				for (OrderPrice orderprice : orderPrices) {
 					orderprice.setBillEndDate(endDate);
-					LocalDateTime endDateTimeDate =  new LocalDateTime(endDate.toDate());
+					LocalDateTime endDateTimeDate = new LocalDateTime(endDate.toDate());
 					orderprice.setInvoiceTillDate(endDateTimeDate);
 					orderprice.setNextBillableDay(endDate.toDate());
 					this.orderPriceRepository.save(orderprice);
@@ -1702,8 +1751,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 
 			// For Order History
 			OrderHistory orderHistory = new OrderHistory(order.getId(), DateTimeUtils.getLocalDateTimeOfTenant(),
-					DateTimeUtils.getLocalDateTimeOfTenant(), entityId, UserActionStatusTypeEnum.EXTENSION.toString(), userId,
-					extensionReason);
+					DateTimeUtils.getLocalDateTimeOfTenant(), entityId, UserActionStatusTypeEnum.EXTENSION.toString(),
+					userId, extensionReason);
 			this.orderHistoryRepository.save(orderHistory);
 			return new CommandProcessingResult(entityId, order.getClientId());
 
@@ -1755,8 +1804,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			this.orderRepository.saveAndFlush(order);
 
 			OrderHistory orderHistory = new OrderHistory(order.getId(), DateTimeUtils.getLocalDateTimeOfTenant(),
-					DateTimeUtils.getLocalDateTimeOfTenant(), resourceId, UserActionStatusTypeEnum.TERMINATION.toString(),
-					appUser.getId(), null);
+					DateTimeUtils.getLocalDateTimeOfTenant(), resourceId,
+					UserActionStatusTypeEnum.TERMINATION.toString(), appUser.getId(), null);
 
 			// checking for Paypal Recurring DisConnection
 			processNotifyMessages(EventActionConstants.EVENT_NOTIFY_ORDER_TERMINATE, order.getClientId(),
@@ -1794,8 +1843,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				this.orderRepository.saveAndFlush(order);
 
 				OrderHistory orderHistory = new OrderHistory(order.getId(), DateTimeUtils.getLocalDateTimeOfTenant(),
-						DateTimeUtils.getLocalDateTimeOfTenant(), resourceId, UserActionStatusTypeEnum.TERMINATION.toString(),
-						appUser.getId(), null);
+						DateTimeUtils.getLocalDateTimeOfTenant(), resourceId,
+						UserActionStatusTypeEnum.TERMINATION.toString(), appUser.getId(), null);
 
 				// checking for Paypal Recurring DisConnection
 				processNotifyMessages(EventActionConstants.EVENT_NOTIFY_ORDER_TERMINATE, order.getClientId(),
@@ -1874,8 +1923,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			processPaypalRecurringActions(entityId, EventActionConstants.EVENT_PAYPAL_RECURRING_DISCONNECT_ORDER);
 
 			final OrderHistory orderHistory = new OrderHistory(order.getId(), DateTimeUtils.getLocalDateTimeOfTenant(),
-					DateTimeUtils.getLocalDateTimeOfTenant(), resourceId, UserActionStatusTypeEnum.TERMINATION.toString(),
-					appUser.getId(), null);
+					DateTimeUtils.getLocalDateTimeOfTenant(), resourceId,
+					UserActionStatusTypeEnum.TERMINATION.toString(), appUser.getId(), null);
 			this.orderHistoryRepository.save(orderHistory);
 			return new CommandProcessingResult(entityId, order.getClientId());
 		} catch (DataIntegrityViolationException dve) {
@@ -1995,8 +2044,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			processPaypalRecurringActions(entityId, EventActionConstants.EVENT_PAYPAL_RECURRING_RECONNECTION_ORDER);
 
 			final OrderHistory orderHistory = new OrderHistory(order.getId(), DateTimeUtils.getLocalDateTimeOfTenant(),
-					DateTimeUtils.getLocalDateTimeOfTenant(), resourceId, UserActionStatusTypeEnum.REACTIVATION.toString(),
-					appUser.getId(), null);
+					DateTimeUtils.getLocalDateTimeOfTenant(), resourceId,
+					UserActionStatusTypeEnum.REACTIVATION.toString(), appUser.getId(), null);
 			this.orderHistoryRepository.save(orderHistory);
 
 			return new CommandProcessingResult(entityId, order.getClientId());
@@ -2179,7 +2228,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 		if (contract == null) {
 			throw new ContractNotNullException();
 		}
-		LocalDateTime contractEndDate = this.orderAssembler.calculateEndDate(DateTimeUtils.getLocalDateTimeOfTenant(),contract.getSubscriptionType(), contract.getUnits());
+		LocalDateTime contractEndDate = this.orderAssembler.calculateEndDate(DateTimeUtils.getLocalDateTimeOfTenant(),
+				contract.getSubscriptionType(), contract.getUnits());
 		LocalDateTime chargeCodeEndDate = this.orderAssembler.calculateEndDate(DateTimeUtils.getLocalDateTimeOfTenant(),
 				chargeCodeMaster.get(0).getDurationType(), chargeCodeMaster.get(0).getChargeDuration().longValue());
 		if (contractEndDate != null && chargeCodeEndDate != null) {
@@ -2368,8 +2418,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				if (null != isPaywizard && isPaywizard.isEnabled()) {
 					topUpPaywizard(voucherId, stbNo);
 				}
-				//voucherData.getPinType().equalsIgnoreCase(PRODUCT_PINTYPE) &&
-				if ( voucherData.getPinValue() != null) {
+				// voucherData.getPinType().equalsIgnoreCase(PRODUCT_PINTYPE) &&
+				if (voucherData.getPinValue() != null) {
 					String redemptionResult = redemptionApiResource.createRedemption(redemptionCommand.toString());
 					return new CommandProcessingResult(redemptionResult);
 				} else {
@@ -2557,7 +2607,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 
 				JSONObject paymentDetails = new JSONObject();
 				paymentDetails.put("transactionNo", refernceID);
-				
+
 				paymentDetails.put("paymentType", "OnlinePayment");
 				topUpCommand.put("paymentDetails", paymentDetails);
 

@@ -646,7 +646,7 @@ public class ProvisioningReadPlatformServiceImpl implements ProvisioningReadPlat
 	RowMapper<ProvisioningData> {
 
 public String schema() {
-	return "id,client_id,request_type,status ,created_date,response_message,response_status from provisioning_requests_vw where status='F' order by id desc";
+	return "id,client_id,request_type,serial_no,status ,created_date,response_message,response_status from provisioning_requests_vw where status='F' order by id desc";
 }
 
 @Override
@@ -659,6 +659,7 @@ public ProvisioningData mapRow(final ResultSet rs, final int rowNum) throws SQLE
     final LocalDate created_date = JdbcSupport.getLocalDate(rs, "created_date");
 	final String responsemessage = rs.getString("response_message");
 	final String responsestatus = rs.getString("response_status");
+	final String serial_no = rs.getString("serial_no");
 	
 	//final String paramNotes = rs.getString("paramNotes");
 	
@@ -671,6 +672,7 @@ public ProvisioningData mapRow(final ResultSet rs, final int rowNum) throws SQLE
 	provisioningData.setCreated_date(created_date);
 	provisioningData.setResponse_message(responsemessage);
 	provisioningData.setResponse_status(responsestatus);
+	provisioningData.setSerial_no(serial_no);
 	return provisioningData;
 	
 			

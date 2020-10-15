@@ -24,7 +24,7 @@ import com.google.gson.reflect.TypeToken;
 public class TicketMasterFromApiJsonDeserializer {
 	
 	private final Set<String> supportedParameters = new HashSet<String>(Arrays.asList("priority", "problemCode", "description", "assignedTo", "ticketDate", "ticketTime", "locale", "dateFormat",
-														"subCategory","sourceOfTicket", "dueTime", "ticketURL","status","resolutionDescription", "fileLocation","statusCode","teamCode","teamUserId","title"));
+														"subCategory","sourceOfTicket", "dueTime", "ticketURL","status","resolutionDescription", "fileLocation","statusCode","teamCode","teamUserId","title","type"));
 	private final FromJsonHelper fromApiJsonHelper;
 	
 	@Autowired
@@ -52,6 +52,8 @@ public class TicketMasterFromApiJsonDeserializer {
 	     final String subCategory = fromApiJsonHelper.extractStringNamed("subCategory", element); 
 	     final String teamCode= fromApiJsonHelper.extractStringNamed("teamCode", element);
 	     final Long teamUserId= fromApiJsonHelper.extractLongNamed("teamUserId", element);
+	     final String type= fromApiJsonHelper.extractStringNamed("type", element);
+
 	    
 	     
 	     baseDataValidator.reset().parameter("problemCode").value(problemCode).notBlank().notExceedingLengthOf(100);
@@ -88,6 +90,7 @@ public class TicketMasterFromApiJsonDeserializer {
 	     final String teamCode= fromApiJsonHelper.extractStringNamed("teamCode", element);
 	     final Long teamUserId= fromApiJsonHelper.extractLongNamed("teamUserId", element);
 	     final String title= fromApiJsonHelper.extractStringNamed("title", element);
+	     
 	     
 	     baseDataValidator.reset().parameter("problemCode").value(problemCode).notBlank().notExceedingLengthOf(100);
 	     baseDataValidator.reset().parameter("priority").value(priority).notBlank().notExceedingLengthOf(100);

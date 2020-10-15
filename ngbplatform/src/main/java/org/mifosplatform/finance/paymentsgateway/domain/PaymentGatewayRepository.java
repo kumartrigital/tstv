@@ -15,5 +15,6 @@ public interface PaymentGatewayRepository extends JpaRepository<PaymentGateway, 
 	@Query("from PaymentGateway paymentGateway where paymentGateway.paymentId=:paymentId")
 	PaymentGateway findPaymentDetailsByPaymentId(@Param("paymentId") String paymentId);
 
+
 }
 

@@ -469,11 +469,7 @@ public class VoucherPinApiResource {
 	public String retriveExportRequestDeatils(@PathParam("officeId") final Long officeId,
 			@Context final UriInfo uriInfo) {
 		this.context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
-		/*
-		 * ExportVoucherData data =
-		 * this.exportVoucherRepository.findByRequestBy(officeId);
-		 * System.out.print(data);
-		 */
+	
 		final List<ExportVoucherData> exportVoucher = this.readPlatformService.retrieveExportRequestDetails(officeId);
 		return this.toApiJsonSerializer.serialize(exportVoucher);
 	}
@@ -486,11 +482,7 @@ public class VoucherPinApiResource {
 	public String retriveexportVoucherDetails(@PathParam("requestId") final String requestId,
 			@Context final UriInfo uriInfo) {
 		context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
-		/*
-		 * ExportVoucherData data =
-		 * this.exportVoucherRepository.findByRequestId(requestId);
-		 * System.out.print(data);
-		 */
+	
 		final ExportVoucherData exportVoucher = this.readPlatformService.exportVoucherDetails(requestId);
 		return this.toApiJsonSerializer.serialize(exportVoucher);
 	}
