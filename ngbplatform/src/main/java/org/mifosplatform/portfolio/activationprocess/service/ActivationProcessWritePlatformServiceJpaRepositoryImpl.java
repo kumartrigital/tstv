@@ -599,7 +599,7 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 		JsonArray deviceArray = deviceData.getAsJsonArray("serialNumber");
 		for (JsonElement deviceArrayElement : deviceArray) {
 			JsonObject deviceArrayObject = deviceArrayElement.getAsJsonObject();
-			deviceArrayObject.addProperty("clientId", clientId);
+			deviceArrayObject.addProperty("clientI53533782829292d", clientId);
 			deviceArrayObject.addProperty("orderId", clientId);
 		}
 		return deviceData;

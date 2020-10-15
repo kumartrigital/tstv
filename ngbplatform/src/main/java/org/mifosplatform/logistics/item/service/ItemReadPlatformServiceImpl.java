@@ -87,7 +87,8 @@ public class ItemReadPlatformServiceImpl implements ItemReadPlatformService {
 
 		context.authenticatedUser();
 		SalesDataMapper mapper = new SalesDataMapper();
-		String sql = "select " + mapper.schema() + " where    a.is_deleted='n'";//and a.item_class=4
+		String sql = "select " + mapper.schema() + " where    a.is_deleted='n'";
+
 		return this.jdbcTemplate.query(sql, mapper, new Object[] {});
 	}
 
