@@ -7,17 +7,12 @@ package org.mifosplatform.portfolio.clientservice.service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 import org.joda.time.LocalDate;
-import org.json.JSONObject;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
-import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.clientservice.data.ClientServiceData;
 import org.mifosplatform.provisioning.provisioning.data.ServiceParameterData;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -145,19 +140,20 @@ public class ClientServiceReadPlatformServiceImpl implements ClientServiceReadPl
 		return this.jdbcTemplate.update("insert into b_service_parameters (`client_id`, `parameter_name`, `parameter_value`,`status`, `clientservice_id`) VALUES(?,'0','0','new',?)",clientId,id);
 	}
 	
-	
+
 	@Override
-	public List<ClientServiceData> retriveActiveClientsInOrg(Long officeId) {
+	public List<ClientServiceData> retriveActiveClientsInOrg(Long clientServiceID) {
     	
     	final ClientServiceOrgMapper mapper = new ClientServiceOrgMapper();
 		StringBuilder sql = new StringBuilder("Select ");
 		sql.append(mapper.schema());
-		if(officeId!=0){
-			sql.append(" and b.office_id ="+officeId);
+		if(clientServiceID!=0){
+			sql.append(" and a.id ="+clientServiceID);
 		}
     	return this.jdbcTemplate.query(sql.toString(), mapper, new Object[] {});
     
     }
+	
 	
 	protected static final class ClientServiceOrgMapper implements RowMapper<ClientServiceData> {
 
