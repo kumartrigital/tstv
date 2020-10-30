@@ -7,6 +7,9 @@ import java.util.List;
 
 import org.joda.time.LocalDate;
 import org.mifosplatform.crm.clientprospect.service.SearchSqlQuery;
+import org.mifosplatform.infrastructure.configuration.domain.Configuration;
+import org.mifosplatform.infrastructure.configuration.domain.ConfigurationConstants;
+import org.mifosplatform.infrastructure.configuration.domain.ConfigurationRepository;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
 import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.infrastructure.core.service.PaginationHelper;
@@ -29,11 +32,14 @@ public  class MRNDetailsReadPlatformServiceImp implements MRNDetailsReadPlatform
 	
 	private final PaginationHelper<MRNDetailsData> paginationHelper = new PaginationHelper<MRNDetailsData>();
 	private final PaginationHelper<InventoryTransactionHistoryData> paginationHelper2 = new PaginationHelper<InventoryTransactionHistoryData>();
+	private final ConfigurationRepository configurationRepository;
 	
 	@Autowired
-	public MRNDetailsReadPlatformServiceImp(final PlatformSecurityContext context, final TenantAwareRoutingDataSource dataSource) {
+	public MRNDetailsReadPlatformServiceImp(final PlatformSecurityContext context, final TenantAwareRoutingDataSource dataSource,
+			final ConfigurationRepository configurationRepository) {
 		this.context = context;
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
+		this.configurationRepository = configurationRepository;
 	}
 	
 	
@@ -104,17 +110,27 @@ public  class MRNDetailsReadPlatformServiceImp implements MRNDetailsReadPlatform
 	public Page<MRNDetailsData> retriveMRNDetails(SearchSqlQuery searchMRNDetails) {
 		this.context.authenticatedUser();
 		final AppUser currentUser = context.authenticatedUser();
-
+		 String sql = null;
+		   String grvsql = null;
 		String hierarchy = currentUser.getOffice().getHierarchy();
 		String hierarchySearchString = hierarchy + "%";
+		Configuration isHierarchy = this.configurationRepository.findOneByName(ConfigurationConstants.Restrict_To_Hierarchy);
+		if(null!=isHierarchy && isHierarchy.isEnabled()) {
 		
-		final String sql = "Select Concat("+"'MRN ('"+",mrn.id,')') as mrnId, mrn.requested_date as requestedDate," +
+		 sql = "Select Concat("+"'MRN ('"+",mrn.id,')') as mrnId, mrn.requested_date as requestedDate," +
 				"(select item_description from b_item_master where id=mrn.item_master_id) as item," +
 				"(select enum_value from r_enum_value e join b_item_master b on b.item_class = e.enum_id where b.id=mrn.item_master_id and e.enum_name = 'item_class') as itemClass, " +
 				" (select name from m_office where id=mrn.from_office) as fromOffice, (select name from m_office o where id = mrn.to_office) as toOffice," +
 				" (select id from m_office where id=mrn.from_office) as fromOfficeId, (select id from m_office o where id = mrn.to_office) as toOfficeId," +
 				"mrn.orderd_quantity as orderdQuantity, mrn.received_quantity as receivedQuantity, mrn.status as status from b_mrn mrn left join m_office mo on mrn.to_office=mo.id where mo.hierarchy like '"+hierarchySearchString+"'";
-		
+		}else {
+			 sql = "Select Concat("+"'MRN ('"+",mrn.id,')') as mrnId, mrn.requested_date as requestedDate," +
+					"(select item_description from b_item_master where id=mrn.item_master_id) as item," +
+					"(select enum_value from r_enum_value e join b_item_master b on b.item_class = e.enum_id where b.id=mrn.item_master_id and e.enum_name = 'item_class') as itemClass, " +
+					" (select name from m_office where id=mrn.from_office) as fromOffice, (select name from m_office o where id = mrn.to_office) as toOffice," +
+					" (select id from m_office where id=mrn.from_office) as fromOfficeId, (select id from m_office o where id = mrn.to_office) as toOfficeId," +
+					"mrn.orderd_quantity as orderdQuantity, mrn.received_quantity as receivedQuantity, mrn.status as status from b_mrn mrn left join m_office mo on mrn.to_office=mo.id where mrn.from_office="+currentUser.getOffice().getId()+"";
+		}
 		MRNDetailsMapper rowMapper = new MRNDetailsMapper();
 		StringBuilder sqlBuilder = new StringBuilder(200);
         sqlBuilder.append(sql).append(" and mrn.status = 'Completed' | 'New' | 'Pending' ");
@@ -129,15 +145,31 @@ public  class MRNDetailsReadPlatformServiceImp implements MRNDetailsReadPlatform
 	    				+ " mrn.status like '%"+sqlSearch+"%')" ;
 	    }
             sqlBuilder.append(extraCriteria);
-            final String itemSql = "Union all Select Concat("+"'Item Sale ('"+",its.id,')') as id,its.purchase_date as requestedDate," +
+             String itemSql = null;
+    		if(null!=isHierarchy && isHierarchy.isEnabled()) {
+
+            itemSql = "Union all Select Concat("+"'Item Sale ('"+",its.id,')') as id,its.purchase_date as requestedDate," +
             		"(select item_description from b_item_master where id=its.item_id) as item, " +
             		"(select enum_value from r_enum_value e join b_item_master b on b.item_class = e.enum_id where b.id=its.item_id and e.enum_name = 'item_class') as itemClass, " +
             		"(select name from m_office where id = its.purchase_from) as fromOffice,(select name from m_office where id = its.purchase_by) as toOffice, " +
             		"(select id from m_office where id = its.purchase_from) as fromOfficeId,(select id from m_office where id = its.purchase_by) as toOfficeId, " +
             		" its.order_quantity as orderdQuantity," +
             		"its.received_quantity as receivedQuantity, its.status as status  from b_itemsale its left join m_office mo on its.purchase_by=mo.id where mo.hierarchy like '"+hierarchySearchString+"'";
-           
             sqlBuilder.append(itemSql).append(" and its.status = 'Completed' | 'New' | 'Pending' ");
+
+    		}else {
+
+                itemSql = "Union all Select Concat("+"'Item Sale ('"+",its.id,')') as id,its.purchase_date as requestedDate," +
+                		"(select item_description from b_item_master where id=its.item_id) as item, " +
+                		"(select enum_value from r_enum_value e join b_item_master b on b.item_class = e.enum_id where b.id=its.item_id and e.enum_name = 'item_class') as itemClass, " +
+                		"(select name from m_office where id = its.purchase_from) as fromOffice,(select name from m_office where id = its.purchase_by) as toOffice, " +
+                		"(select id from m_office where id = its.purchase_from) as fromOfficeId,(select id from m_office where id = its.purchase_by) as toOfficeId, " +
+                		" its.order_quantity as orderdQuantity," +
+                		"its.received_quantity as receivedQuantity, its.status as status  from b_itemsale its left join m_office mo on its.purchase_by=mo.id where its.purchase_from="+currentUser.getOffice().getId()+"";
+                sqlBuilder.append(itemSql).append(" and its.status = 'Completed' | 'New' | 'Pending' ");
+
+    		}
+
             String extraCriteriaForItemsale = "";
     	    if (sqlSearch != null) {
     	    	sqlSearch=sqlSearch.trim();
@@ -147,14 +179,24 @@ public  class MRNDetailsReadPlatformServiceImp implements MRNDetailsReadPlatform
     	    }
                 /*sqlBuilder.append(extraCriteriaForItemsale).append("order by 2 desc");*/
     	    	sqlBuilder.append(extraCriteriaForItemsale);
-                
-                final String grvsql = "Union all Select Concat("+"'GRV ('"+",grv.id,')') as grvId, grv.requested_date as requestedDate," +
+    			if(null!=isHierarchy && isHierarchy.isEnabled()) {
+
+                 grvsql = "Union all Select Concat("+"'GRV ('"+",grv.id,')') as grvId, grv.requested_date as requestedDate," +
         				"(select item_description from b_item_master where id=grv.item_master_id) as item," +
         				"(select enum_value from r_enum_value e join b_item_master b on b.item_class = e.enum_id where b.id=grv.item_master_id and e.enum_name = 'item_class') as itemClass, " +
         				" (select name from m_office where id=grv.from_office) as fromOffice, (select name from m_office where id = grv.to_office) as toOffice," +
         				" (select id from m_office where id=grv.from_office) as fromOfficeId, (select id from m_office where id = grv.to_office) as toOfficeId," +
         				"grv.orderd_quantity as orderdQuantity, grv.received_quantity as receivedQuantity, grv.status as status from b_grv grv left join m_office mo on grv.to_office=mo.id where mo.hierarchy like '"+hierarchySearchString+"'";
-        		
+    			}else {
+    				grvsql = "Union all Select Concat("+"'GRV ('"+",grv.id,')') as grvId, grv.requested_date as requestedDate," +
+            				"(select item_description from b_item_master where id=grv.item_master_id) as item," +
+            				"(select enum_value from r_enum_value e join b_item_master b on b.item_class = e.enum_id where b.id=grv.item_master_id and e.enum_name = 'item_class') as itemClass, " +
+            				" (select name from m_office where id=grv.from_office) as fromOffice, (select name from m_office where id = grv.to_office) as toOffice," +
+            				" (select id from m_office where id=grv.from_office) as fromOfficeId, (select id from m_office where id = grv.to_office) as toOfficeId," +
+            				"grv.orderd_quantity as orderdQuantity, grv.received_quantity as receivedQuantity, grv.status as status from b_grv grv left join m_office mo on grv.to_office=mo.id";
+        			
+    			}
+    			
                 sqlBuilder.append(grvsql).append(" and grv.status = 'Completed' | 'New' | 'Pending' ");
                 String extraCriteriaForGrv = "";
         	    if (sqlSearch != null) {

@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-@CommandType(entity = "VOUCHER_UPDATE", action = "UPDATE")
+@CommandType(entity = "MOVE_VOUCHER", action = "UPDATE")
 public class MoveVoucherCommandHandler implements NewCommandSourceHandler{
 
 	private final VoucherWritePlatformService voucherWritePlatformService;
@@ -22,7 +22,7 @@ public class MoveVoucherCommandHandler implements NewCommandSourceHandler{
 	public CommandProcessingResult processCommand(JsonCommand command) {
 		// TODO Auto-generated method stub
 		
-		return voucherWritePlatformService.moveVouchers(command,command.entityId());
+		return this.voucherWritePlatformService.moveVouchers(command,command.entityId());
 	}
 
 }
