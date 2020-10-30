@@ -185,6 +185,43 @@ public class PlanData {
 		this.duration = duration;
 		this.isAdvance = isAdvance;
 	}
+	public PlanData(Long id, String planCode, LocalDate startDate,LocalDate endDate, Long bill_rule, String contractPeriod,
+			long status, String planDescription,String provisionSys,EnumOptionData enumstatus, String isPrepaid,
+			String allowTopup, String volume, String units, String unitType, Collection<ServiceData> products, Long contractId, String isHwReq,Long count, Long planType,
+			String planTypeName,Long currencyId,String currencyCode,Long serviceId, String duration, String isAdvance, BigDecimal price) {
+
+		this.id = id;
+		this.planCode = planCode;
+		this.productDescription = null;
+		this.startDate = startDate;
+		this.status = status;
+		this.billRule = bill_rule;
+		this.endDate = endDate;
+		this.planDescription = planDescription;
+		this.services = null;
+		this.billRuleDatas = null;
+		this.contractPeriod = contractPeriod;
+        this.provisionSystem=provisionSys;  
+		this.selectedProducts = null;
+		this.planstatus = enumstatus;
+		this.isPrepaid=isPrepaid;
+		this.allowTopup=allowTopup;
+		this.volume=volume;
+		this.units=units;
+		this.unitType=unitType;
+		this.isHwReq=isHwReq;
+		this.products=products;
+		this.contractId=contractId;
+		this.ordersFlag=(count>0)?true:false;
+		this.planType=planType;
+		this.planTypeName=planTypeName;
+		this.currencyId=currencyId;
+		this.currencyCode=currencyCode;
+		this.serviceId=serviceId;
+		this.duration = duration;
+		this.isAdvance = isAdvance;
+		this.price = price;
+	}
 
 	public PlanData(final Long id, final String planCode, final String planDescription, String planPoid, final String dealPoid,final String isPrepaid) {
 		this.id = id;

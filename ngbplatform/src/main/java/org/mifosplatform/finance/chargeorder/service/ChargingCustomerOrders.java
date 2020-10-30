@@ -2,14 +2,13 @@ package org.mifosplatform.finance.chargeorder.service;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.json.JSONObject;
 import org.mifosplatform.finance.chargeorder.data.BillingOrderData;
@@ -32,7 +31,6 @@ import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.portfolio.clientservice.domain.ClientService;
 import org.mifosplatform.portfolio.clientservice.domain.ClientServiceRepository;
 import org.mifosplatform.portfolio.order.data.OrderData;
-import org.mifosplatform.portfolio.order.domain.Order;
 import org.mifosplatform.portfolio.order.domain.OrderRepository;
 import org.mifosplatform.portfolio.order.service.OrderReadPlatformService;
 import org.mifosplatform.portfolio.order.service.OrderWritePlatformService;
@@ -104,7 +102,7 @@ public class ChargingCustomerOrders {
 			List<BillItem> invoice = this.invoicingSingleClient(command.entityId(), processDate);
 			return new CommandProcessingResultBuilder().withCommandId(command.commandId())
 					.withEntityId(invoice.get(0).getId()).build();
-		} catch (DataIntegrityViolationException dve) {
+		} catch (Exception dve) {
 			return new CommandProcessingResult(Long.valueOf(-1));
 		}
 
@@ -116,7 +114,7 @@ public class ChargingCustomerOrders {
 		DateTime nextBillableDate = null;
 		Map<String, List<Charge>> groupOfCharges = null;
 		// Get list of qualified orders of customer
-		
+
 		List<BillingOrderData> billingOrderDatas = chargingOrderReadPlatformService.retrieveOrderIds(clientId,
 				processDate);
 
@@ -124,17 +122,18 @@ public class ChargingCustomerOrders {
 
 			boolean prorataWithNextBillFlag = this
 					.checkInvoiceConfigurations(ConfigurationConstants.CONFIG_PRORATA_WITH_NEXT_BILLING_CYCLE);
-		 groupOfCharges = new HashMap<String, List<Charge>>();
+			groupOfCharges = new HashMap<String, List<Charge>>();
 
 			Map<String, List<Charge>> groupOfAdvanceCharges = new HashMap<String, List<Charge>>(); // add global config
 																									// to control
-																									// isadvance plan
+			Configuration isAdvance = this.globalConfigurationRepository.findOneByName(ConfigurationConstants.IS_ADVANCE)	;																			// isadvance plan
 																									// flag
+			if (null != isAdvance && isAdvance.isEnabled()) {
 
 			for (BillingOrderData billingOrderData : billingOrderDatas) {
 
-				
-				if (billingOrderData.getBillEndDate()!=null && processDate.isAfter(billingOrderData.getBillEndDate().toLocalDateTime())) {
+				if (billingOrderData.getBillEndDate() != null
+						&& processDate.isAfter(billingOrderData.getBillEndDate().toLocalDateTime())) {
 
 					JSONObject disconnectCommand = new JSONObject();
 
@@ -158,7 +157,8 @@ public class ChargingCustomerOrders {
 							null, null, null, null);
 
 					orderWritePlatformService.disconnectOrder(disconnectCommandJson, billingOrderData.getOrderId());
-					throw new ProcessDateGreaterThanPlanEndDateException("Process Date:: "+processDate+"is greater than plan end date:: "+billingOrderData.getEndDate());
+					throw new ProcessDateGreaterThanPlanEndDateException("Process Date:: " + processDate
+							+ "is greater than plan end date:: " + billingOrderData.getEndDate());
 				} // returnin
 				else {
 					nextBillableDate = billingOrderData.getNextBillableDate();
@@ -174,8 +174,8 @@ public class ChargingCustomerOrders {
 
 					while (processDate.toDateTime().isAfter(nextBillableDate)
 							|| processDate.toDateTime().compareTo(nextBillableDate) == 0) {
-						System.out.println(processDate.toDateTime().isAfter(nextBillableDate));
-						System.out.println(processDate.toDateTime().compareTo(nextBillableDate) == 0);
+						//System.out.println(processDate.toDateTime().isAfter(nextBillableDate));
+						//System.out.println(processDate.toDateTime().compareTo(nextBillableDate) == 0);
 
 						Plan plan = planRepository.findOne(billingOrderData.getPlanId());
 						if (plan.getIsAdvance() == 'y' || plan.getIsAdvance() == 'Y') {
@@ -241,6 +241,7 @@ public class ChargingCustomerOrders {
 				}
 			}
 
+			}
 			for (BillingOrderData billingOrderData : billingOrderDatas) {
 
 				nextBillableDate = billingOrderData.getNextBillableDate();
@@ -255,7 +256,7 @@ public class ChargingCustomerOrders {
 
 				while (processDate.toDateTime().isAfter(nextBillableDate)
 						|| processDate.toDateTime().compareTo(nextBillableDate) == 0) {
-
+//System.out.println("Group of charges "+billingOrderData.toString());
 					groupOfCharges = chargeLinesForServices(billingOrderData, clientId, processDate, groupOfCharges);
 
 					if (!groupOfCharges.isEmpty()
@@ -272,15 +273,18 @@ public class ChargingCustomerOrders {
 				}
 
 			}
-		
-			return this.generateChargesForOrderService.createBillItemRecords(groupOfCharges, clientId);
+
+			//System.out.println("Group of charges" +groupOfCharges.toString());
+		return this.generateChargesForOrderService.createBillItemRecords(groupOfCharges, clientId);
+
 
 		}
 
 		else {
-			throw new BillingOrderNoRecordsFoundException();
+			List<BillItem> billItem = new ArrayList<BillItem>();
+			return billItem;
 		}
-	
+
 	}
 
 	public Map<String, List<Charge>> chargeLinesForServices(BillingOrderData billingOrderData, Long clientId,

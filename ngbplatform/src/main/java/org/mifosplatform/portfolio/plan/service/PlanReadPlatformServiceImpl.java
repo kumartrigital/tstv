@@ -314,7 +314,7 @@ public class PlanReadPlatformServiceImpl implements PlanReadPlatformService {
 		final String sql = "SELECT pm.id AS id,pm.plan_code AS planCode,pm.duration As duration,pm.plan_description AS planDescription,pm.start_date AS startDate,pm.end_date AS endDate,"
 				+ "pm.plan_status AS planStatus,pm.provision_sys AS provisionSys,pm.plan_type AS planType,co.code_value AS planTypeName,pm.bill_rule AS billRule,pm.is_prepaid as isPrepaid,"
 				+ " pm.allow_topup as allowTopup,v.volume_type as volumeType, v.units as units,pm.is_hw_req as isHwReq,v.units_type as unitType,count(o.id) as orders,pm.currencyId as currencyId,mc.code as currencyCode,"
-				+ " pm.is_advance as isAdvance FROM (b_plan_master pm  left join b_volume_details v on pm.id = v.plan_id) join m_code_value co ON pm.plan_type = co.id"
+				+ " pm.is_advance as isAdvance,pp.price as price FROM (b_plan_master pm  left join b_volume_details v on pm.id = v.plan_id) join m_code_value co join b_plan_pricing pp  on pp.plan_id=pm.id and  pm.plan_type = co.id"
 				+ " LEFT OUTER JOIN b_orders o on (pm.id = o.plan_id and o.order_status in(1,4))"
 				+ " left outer join m_currency mc on mc.id = pm.currencyId "
 				+ "  WHERE pm.id = ? AND pm.is_deleted = 'n' group by pm.id";
@@ -351,10 +351,11 @@ public class PlanReadPlatformServiceImpl implements PlanReadPlatformService {
 			final String currencyCode = rs.getString("currencyCode");
 			final String duration = rs.getString("duration");
 			final String isAdvance=rs.getString("isAdvance");
+			final BigDecimal price = rs.getBigDecimal("price");
 
 			return new PlanData(id, planCode, startDate, endDate, billRule, null, planStatus, planDescription,
 					provisionSys, null, isPrepaid, allowTopup, volume, units, unitType, null, null, isHwReq, count,
-					planType, planTypeName, currencyId, currencyCode, null, duration, isAdvance);
+					planType, planTypeName, currencyId, currencyCode, null, duration, isAdvance,price);
 		}
 	}
 

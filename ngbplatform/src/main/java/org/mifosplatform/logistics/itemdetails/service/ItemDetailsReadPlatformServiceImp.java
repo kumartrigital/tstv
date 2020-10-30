@@ -151,7 +151,7 @@ public class ItemDetailsReadPlatformServiceImp implements ItemDetailsReadPlatfor
 		String extraCriteria = "";
 		if (sqlSearch != null) {
 			sqlSearch = sqlSearch.trim();
-			extraCriteria = " and item.serial_no like '%" + sqlSearch + "%' ";
+			extraCriteria = " and item.serial_no like '%" + sqlSearch + "%'  or item.provisioning_serialno like '%" + sqlSearch + "%' ";
 			/*
 			 * extraCriteria = " and (master.item_code like '%"+sqlSearch+"%' OR" +
 			 * " item.serial_no like '%"+sqlSearch+"%' OR" +

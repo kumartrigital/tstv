@@ -190,6 +190,11 @@ public class MessageGmailBackedPlatformEmailService implements MessagePlatformEm
 
 			}catch(Exception e){
 				 System.out.println("message sending failed :" + e.getMessage());
+					BillingMessage billingMessage = this.messageDataRepository.findOne(emailDetail.getId());
+					if (billingMessage.getStatus().contentEquals("N")) {
+						billingMessage.setStatus("I");
+					}
+					this.messageDataRepository.save(billingMessage);
 			     return e.getMessage();
 		     }
 		        

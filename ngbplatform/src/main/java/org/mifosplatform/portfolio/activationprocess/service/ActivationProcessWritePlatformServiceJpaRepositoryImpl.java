@@ -5,8 +5,11 @@
  */
 package org.mifosplatform.portfolio.activationprocess.service;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -187,6 +190,8 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 	static JSONObject serialNumberJson = new JSONObject();
 	static JSONObject pairableItemDetailsJson = new JSONObject();
 	static JSONObject planDataJson = new JSONObject();
+	static JSONObject planDataJson1 = new JSONObject();
+	Date date = null;
 	static JSONObject adjustmentJson = new JSONObject();
 	static SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
 	static Date nextBilldate = null;
@@ -427,6 +432,33 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 			newJson.put("clientData", clientDataArray);
 			newJson.put("clientServiceData", clientServiceArray);
 			newJson.put("deviceData", jsonObject.getJSONArray("deviceData"));
+			JSONArray planDataArray = jsonObject.getJSONArray("planData");
+			if (planDataArray != null) {
+				for (int i = 0; i < planDataArray.length(); i++) {
+					JSONObject planDataObject = planDataArray.getJSONObject(i);
+					Plan plan = this.planRepository.findOne(planDataObject.getLong("planCode"));
+					if(plan.getDescription().equalsIgnoreCase("STARTER")) {
+						Calendar c = Calendar.getInstance();
+						try {
+							// Setting the date to the given date
+							String date = formatter.format(new Date());
+							c.setTime(formatter.parse(date));
+						} catch (ParseException e) {
+							e.printStackTrace();
+						}
+						// Number of Days to add
+						c.add(Calendar.DAY_OF_MONTH, 15);
+						// Date after adding the days to the given date
+						String endDate = formatter.format(c.getTime());		
+						planDataObject.put("endDate", endDate);
+						planData.add(planDataObject);
+						newJson.put("planData", planData);
+						planData.clear();
+					}else {
+						newJson.put("planData", jsonObject.getJSONArray("planData"));
+					}
+				}
+			}
 			newJson.put("planData", jsonObject.getJSONArray("planData"));
 
 			final CommandWrapper commandRequest = new CommandWrapperBuilder().createClientSimpleActivation(clientId)
@@ -486,9 +518,7 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 			addressjsonBilling.put("addressType", "BILLING");
 			address.add(addressjsonBilling);
 
-			String pattern = dateFormat;
-			SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
-			String date = simpleDateFormat.format(new Date());
+			String date = formatter.format(new Date());
 
 			clientjson.put("locale", locale);
 			clientjson.put("dateFormat", dateFormat);
@@ -512,14 +542,17 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 
 			JsonArray planarray = fromJsonHelper.extractJsonArrayNamed("plans", element);
 			String planCode = null;
+			PlanData planData1 = null;
 			for (JsonElement j : planarray) {
 
 				deviceComm = new JsonCommand(null, j.toString(), j, fromJsonHelper, null, null, null, null, null, null,
 						null, null, null, null, null, null);
 				planCode = deviceComm.stringValueOfParameterName("planCode");
+				planData1 = planReadPlatformService.retrivePlanByPlanCode(planCode);
+
 			}
 
-			PlanData planData1 = planReadPlatformService.retrivePlanByPlanCode(planCode);
+			// PlanData planData1 = planReadPlatformService.retrivePlanByPlanCode(planCode);
 			if (planData1 == null) {
 				throw new PlanNotFundException();
 			}
@@ -562,17 +595,57 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 			deviceJson.put("isPairing", "N");
 			deviceData.add(deviceJson);
 			// plan data
-			planDataJson.put("locale", locale);
-			planDataJson.put("dateFormat", dateFormat);
-			planDataJson.put("planCode", planData1.getId());
-			planDataJson.put("contractPeriod", 1);
-			planDataJson.put("paytermCode", planData1.getChargeCycle());
-			planDataJson.put("isNewplan", isNewplan);
-			planDataJson.put("billAlign", false);
-			planDataJson.put("start_date", date);
+			for (JsonElement j : planarray) {
 
-			planData.add(planDataJson);
+				deviceComm = new JsonCommand(null, j.toString(), j, fromJsonHelper, null, null, null, null, null, null,
+						null, null, null, null, null, null);
+				planCode = deviceComm.stringValueOfParameterName("planCode");
+				planData1 = planReadPlatformService.retrivePlanByPlanCode(planCode);
 
+				if (planCode.equalsIgnoreCase("FTA")) {
+					planDataJson.put("locale", locale);
+					planDataJson.put("dateFormat", dateFormat);
+					planDataJson.put("planCode", planData1.getId());
+					planDataJson.put("contractPeriod", 1);
+					planDataJson.put("paytermCode", planData1.getChargeCycle());
+					planDataJson.put("isNewplan", isNewplan);
+					planDataJson.put("billAlign", false);
+					planDataJson.put("start_date", date);
+					planData.add(planDataJson);
+
+					/*
+					 * Iterator keys = planDataJson.keys(); while (keys.hasNext())
+					 * planDataJson.remove((String) planDataJson.keys().next());
+					 */
+				} else {
+
+					planDataJson1.put("locale", locale);
+					planDataJson1.put("dateFormat", dateFormat);
+					planDataJson1.put("planCode", planData1.getId());
+					planDataJson1.put("contractPeriod", 1);
+					planDataJson1.put("paytermCode", planData1.getChargeCycle());
+					planDataJson1.put("isNewplan", isNewplan);
+					planDataJson1.put("billAlign", false);
+					planDataJson1.put("start_date", date);
+					if (planData1.getplanDescription().equalsIgnoreCase("STARTER")) {
+						Calendar c = Calendar.getInstance();
+						try {
+							// Setting the date to the given date
+							c.setTime(formatter.parse(date));
+						} catch (ParseException e) {
+							e.printStackTrace();
+						}
+
+						// Number of Days to add
+						c.add(Calendar.DAY_OF_MONTH, 15);
+						// Date after adding the days to the given date
+						String endDate = formatter.format(c.getTime());
+						planDataJson1.put("endDate", endDate);
+						planData.add(planDataJson1);
+
+					}
+				}
+			}
 			activation.put("clientData", client);
 			client.clear();
 			activation.put("clientServiceData", clientServiceData);
@@ -1279,7 +1352,7 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 						this.updatingPurchaseProductPoIdinOrderLine(order, substances);
 					}
 
-					break;
+					//break;
 				}
 			} else {
 				this.throwError("Plan");

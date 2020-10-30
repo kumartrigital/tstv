@@ -192,8 +192,11 @@ public class SlabRateWritePlatformServiceImpl implements SlabRateWritePlatformSe
 			            	  }else{
 			            		  clientAmount  = clientAmounts.negate();
 			            	  }
-			            	  if(clientAmount.compareTo(price) < 0){
+			            	  if(! price.toString().equals("0.000000")) {
+			            	  if(clientAmount.compareTo(price) < 0 ){
+			            		  
 			            		  throw new PlatformDataIntegrityException("Insufficient client balance","Insufficient client balance","Insufficient client balance"); 
+			            	  }
 			            	  }
 			               }
 			              }
