@@ -1243,7 +1243,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			int count = 0;
 
 			if (command.stringValueOfParameterName("type").equalsIgnoreCase("group")
-					&& command.booleanPrimitiveValueOfParameterNamed("isGroupSupported")) {
+			 && command.booleanPrimitiveValueOfParameterNamed("isGroupSupported") ) {
 				Map<String, Object> changes = new HashMap<>();
 				List<ClientServiceData> clientServiceDatas = this.clientServiceReadPlatformService
 						.retriveActiveClientsInOrg(command.longValueOfParameterNamed("officeId"));
@@ -1254,8 +1254,6 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				}
 
 			} else {
-				System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
-
 				Map<String, Object> changes = new HashMap<>();
 				List<ClientServiceData> clientServiceDatas = this.clientServiceReadPlatformService
 						.retriveActiveClientsInOrg(command.longValueOfParameterNamed("clientServiceId"));
