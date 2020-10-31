@@ -136,7 +136,7 @@ public class ConfigurationConstants {
 	
 	public static final String PAIRED_DEVICE_IN_PROV_REQ = "is-pairedDevice-in-provisioning";
 	public static final String REGISTER_CITY = "Register_City";
-	public static final String CONFIG_VOUCHERPIN_VALUES= "Voucherpins";
+	public static final String CONFIG_VOUCHERPIN_VALUES= "voucherPins";
 	public static final String CONFIG_MAX_ACTIVE_SESSIONS= "max_active_sessions";
 	public static final String PAYWIZARD_INTEGRATION= "paywizard_integration";
 	public static final String Restrict_To_Hierarchy= "restrictToHierarchy";
