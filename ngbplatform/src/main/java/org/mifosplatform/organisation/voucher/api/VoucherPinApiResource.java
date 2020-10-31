@@ -390,7 +390,7 @@ public class VoucherPinApiResource {
 	@Consumes({ MediaType.APPLICATION_JSON })
 	public String moveVoucher(@PathParam("officeid") final Long officeId, String apiRequestBodyAsJson)
 			throws JSONException {
-		this.context.authenticatedUser().validateHasReadPermission(resourceNameFordownloadFilePermissions);
+	//	this.context.authenticatedUser().validateHasReadPermission(resourceNameFordownloadFilePermissions);
 		Long newStatuscount = null;
 		Long reqQuantity = null;
 		Boolean isProduct = false;
@@ -437,7 +437,7 @@ public class VoucherPinApiResource {
 	@Consumes({ MediaType.APPLICATION_JSON })
 	public String exportVoucher(@PathParam("saleRefId") final Long saleRefId, String apiRequestBodyAsJson)
 			throws JSONException {
-		this.context.authenticatedUser().validateHasReadPermission(resourceNameFordownloadFilePermissions);
+		//this.context.authenticatedUser().validateHasReadPermission(resourceNameFordownloadFilePermissions);
 		final CommandWrapper commandRequest = new CommandWrapperBuilder().exportVoucher(saleRefId)
 				.withJson(apiRequestBodyAsJson).build();
 		final CommandProcessingResult result = this.writePlatformService.logCommandSource(commandRequest);

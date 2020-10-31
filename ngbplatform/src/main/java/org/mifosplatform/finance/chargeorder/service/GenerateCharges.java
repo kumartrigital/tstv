@@ -434,16 +434,17 @@ public class GenerateCharges {
 		
 		if (billingOrderData.getNextBillableDate() == null) {
 			startDate = new LocalDateTime(billingOrderData.getBillStartDate());
-			endDate = startDate;
+			endDate = startDate.plusDays(1);
 			
 		} else {
 
 			startDate = new LocalDateTime(billingOrderData.getNextBillableDate());
-			endDate = startDate;
+			endDate = startDate.plusDays(1);
 		}
 		
 		invoiceTillDate = endDate;
-		nextbillDate = invoiceTillDate.plusDays(1);
+		//nextbillDate = invoiceTillDate.plusDays(1);
+		nextbillDate = invoiceTillDate;
 		price = billingOrderData.getPrice();
 		List<ChargeTaxCommand> listOfTaxes = this.calculateTax(billingOrderData, price);
 		return this.createChargeData(billingOrderData, startDate,endDate, invoiceTillDate, nextbillDate, price, listOfTaxes,discountMasterData,billingOrderData.getChargeOwner());

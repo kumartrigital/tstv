@@ -245,6 +245,7 @@ public class ChargingOrderWritePlatformServiceImplementation implements Charging
 			}else{
 				balance=clientBalance.getBalanceAmount().add(amount);
 				clientBalance.setBalanceAmount(balance);
+				System.out.println("clientBalance" +balance);
 			}
 			
 	   }

@@ -466,9 +466,9 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 				JsonCommand clientBalanceCommand = new JsonCommand(null, clientServiceElementNew.toString(),
 						clientServiceElementNew, fromJsonHelper, null, null, null, null, null, null, null, null, null,
 						null, null, null);
-
 				this.chargingOrderWritePlatformService.updateClientNonCurrencyBalance(clientBalanceCommand);
 			}
+
 		}
 		return groupOfCharges;
 	}
@@ -590,6 +590,7 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 		List<BillItem> billItemList = null;
 		BillItem billItem = null;
 	    billItemList = new ArrayList<BillItem>();
+	    BigDecimal invoiceAmount_local = null;
 		Map<Long,BillItem> billItemMap = new HashMap<Long,BillItem>();
 
 		Long orderId = null;
@@ -643,7 +644,7 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 						
 
 						BigDecimal netTaxAmount_local = BigDecimal.ZERO;
-						BigDecimal invoiceAmount_local = BigDecimal.ZERO;
+						 invoiceAmount_local = BigDecimal.ZERO;
 						BigDecimal totalChargeAmount_local = BigDecimal.ZERO;						
 						billItem = billItemMap.get(charge.getClientId());
 						
@@ -652,14 +653,16 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 						}
 						
 											
-						invoiceAmount_local = billItem.getInvoiceAmount();
+						//invoiceAmount_local = billItem.getInvoiceAmount();
+						invoiceAmount_local = charge.getChargeAmount();
 						netTaxAmount_local = billItem.getTaxAmount();
-						totalChargeAmount_local = billItem.getNetChargeAmount();
+						//totalChargeAmount_local = billItem.getNetChargeAmount();
 						
 						totalChargeAmount_local = totalChargeAmount_local.add(charge.getNetChargeAmount());
 						netTaxAmount_local = netTaxAmount_local.add(netTaxAmount);
-						invoiceAmount_local = invoiceAmount_local.add(totalChargeAmount_local.add(netTaxAmount_local));						
+						invoiceAmount_local = totalChargeAmount_local.add(netTaxAmount_local);						
 						orderId = charge.getOrderId();	
+						System.out.println("order id" +orderId);
 						billItem.setNetChargeAmount(totalChargeAmount_local);
 						billItem.setTaxAmount(netTaxAmount_local);
 						billItem.setInvoiceAmount(invoiceAmount_local);
@@ -685,7 +688,7 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 							  getClientId());
 					if(billItemMap.containsKey(officeData.getClientId())) {
 						BigDecimal netTaxAmount_local = BigDecimal.ZERO;
-						BigDecimal invoiceAmount_local = BigDecimal.ZERO;
+						 invoiceAmount_local = BigDecimal.ZERO;
 						BigDecimal totalChargeAmount_local = BigDecimal.ZERO;	
 						billItem = billItemMap.get(officeData.getClientId());
 						for (ChargeTax chargeTax : charge.getChargeTaxs()) {
@@ -734,7 +737,14 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 			for (Map.Entry<Long, BillItem> entry : billItemMap.entrySet()) {
 				
 				/*Save item record */
+				
 				billItem = this.billItemRepository.saveAndFlush(entry.getValue());
+				
+				//System.out.println("Save operation" +entry.getValue());
+				/*
+				 * for(Charge charge : billItem.getCharges()) { //System.out.println("Charge Id"
+				 * +charge.getId()); }
+				 */
 				//this.billItemRepository.saveAndFlush(entry.getValue());
 				
 				List<OrderData> orderData = this.orderReadPlatformService.orderDetailsForClientBalance(orderId);
@@ -758,6 +768,7 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 				
 				clientBalanceObject.addProperty("clientId", billItem.getClientId());
 				clientBalanceObject.addProperty("amount", billItem.getInvoiceAmount());
+				//clientBalanceObject.addProperty("amount",invoiceAmount_local);
 				clientBalanceObject.addProperty("isWalletEnable", false);
 				clientBalanceObject.addProperty("clientServiceId", orderData.get(0).getClientServiceId());
 				clientBalanceObject.addProperty("currencyId", billItem.getCurrencyId());
@@ -770,9 +781,10 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 				
 				//check client balance 
 				
-
+//System.out.println("clientBalance "+clientBalanceObject);
 				this.chargingOrderWritePlatformService.updateClientBalance(clientBalanceCommand);
 				billItemList.add(entry.getValue());
+				billItemMap.clear();
 				
 		    }
 			

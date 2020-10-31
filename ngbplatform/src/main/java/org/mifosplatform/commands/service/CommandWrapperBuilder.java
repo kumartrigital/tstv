@@ -3988,7 +3988,7 @@ public class CommandWrapperBuilder {
 	public CommandWrapperBuilder moveVoucher(Long officeId) {
 		// TODO Auto-generated method stub
 		this.actionName = "UPDATE";
-		this.entityName = "VOUCHER_UPDATE";
+		this.entityName = "MOVE_VOUCHER";
 		this.entityId = officeId;
 		this.href = "/vouchers/" + officeId;
 		return this;

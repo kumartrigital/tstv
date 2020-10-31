@@ -1171,8 +1171,8 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 			sqlQuery.append("o.hierarchy like '" + hierarchySearchString + "'");
 			return this.jdbcTemplate.queryForObject(sqlQuery.toString(), mapper, new Object[] {});
 
-		} catch (EmptyResultDataAccessException e) {
-			return null;
+		} catch (Exception e) {
+			throw new ClientNotFoundException(columnValue);
 		}
 	}
 
