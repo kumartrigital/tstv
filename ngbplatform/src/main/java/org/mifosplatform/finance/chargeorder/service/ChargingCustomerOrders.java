@@ -98,6 +98,8 @@ public class ChargingCustomerOrders {
 	public CommandProcessingResult createNewCharges(JsonCommand command) {
 
 		try {
+			
+			System.out.println("ChargingCustomerOrders.createNewCharges()");
 			// validation not written
 			this.apiJsonDeserializer.validateForCreate(command.json());
 			LocalDateTime processDate = ProcessDate.fromJsonDateTime(command);
@@ -256,6 +258,7 @@ public class ChargingCustomerOrders {
 				while (processDate.toDateTime().isAfter(nextBillableDate)
 						|| processDate.toDateTime().compareTo(nextBillableDate) == 0) {
 
+					System.out.println("ChargingCustomerOrders.invoicingSingleClient() chargeLinesForServices");
 					groupOfCharges = chargeLinesForServices(billingOrderData, clientId, processDate, groupOfCharges);
 
 					if (!groupOfCharges.isEmpty()
@@ -286,6 +289,8 @@ public class ChargingCustomerOrders {
 	public Map<String, List<Charge>> chargeLinesForServices(BillingOrderData billingOrderData, Long clientId,
 			LocalDateTime processDate, Map<String, List<Charge>> groupOfCharges) {
 
+		
+		System.out.println("ChargingCustomerOrders.chargeLinesForServices()" + billingOrderData);
 		// Get qualified order complete details
 		List<BillingOrderData> chargeServices = this.chargingOrderReadPlatformService.retrieveBillingOrderData(clientId,
 				processDate, billingOrderData.getOrderId());

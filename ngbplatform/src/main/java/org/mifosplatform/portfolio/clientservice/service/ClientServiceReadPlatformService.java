@@ -23,6 +23,9 @@ public interface ClientServiceReadPlatformService {
 	Integer insertServiceParametersDetail(Long clientId, Long id);
 
 	List<ClientServiceData> retriveActiveClientsInOrg(Long officeId);
+	
+
+	List<ClientServiceData> retriveActiveClientsInOrgOfficeId(Long officeId);
 
 	
 	

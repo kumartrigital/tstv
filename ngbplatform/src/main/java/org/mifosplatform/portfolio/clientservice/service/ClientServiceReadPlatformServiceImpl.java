@@ -140,6 +140,20 @@ public class ClientServiceReadPlatformServiceImpl implements ClientServiceReadPl
 		return this.jdbcTemplate.update("insert into b_service_parameters (`client_id`, `parameter_name`, `parameter_value`,`status`, `clientservice_id`) VALUES(?,'0','0','new',?)",clientId,id);
 	}
 	
+	
+	@Override
+	public List<ClientServiceData> retriveActiveClientsInOrgOfficeId(Long OfficeID) {
+    	
+    	final ClientServiceOrgMapper mapper = new ClientServiceOrgMapper();
+		StringBuilder sql = new StringBuilder("Select ");
+		sql.append(mapper.schema());
+		if(OfficeID!=0){
+			sql.append(" and b.office_id ="+OfficeID);
+		}
+    	return this.jdbcTemplate.query(sql.toString(), mapper, new Object[] {});
+    
+    }
+	
 
 	@Override
 	public List<ClientServiceData> retriveActiveClientsInOrg(Long clientServiceID) {
