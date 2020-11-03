@@ -548,12 +548,16 @@ public class VoucherWritePlatformServiceImpl implements VoucherWritePlatformServ
 		if (itemSale == null) {
 			throw new ItemSaleIdNotFoundException(saleRefId);
 		}
-		
+		java.util.List<VoucherData> voucherData = null;
 		
 		Integer quantity = command.integerValueOfParameterNamed("quantity");
-
-		java.util.List<VoucherData> voucherData = voucherReadPlatformService.retrieveVocherDetailsBySaleRefId(saleRefId,
-		quantity);
+		if(itemSale.getPurchaseBy().toString().equalsIgnoreCase("5")) {
+			 voucherData = this.voucherReadPlatformService.retrieveVocherDetailsBySaleRefId(saleRefId,
+					quantity,itemSale.getPurchaseBy());
+		}else {
+		 voucherData = this.voucherReadPlatformService.retrieveVocherDetailsBySaleRefId(saleRefId,
+		quantity,null);
+		}
 		Long voucherDateSize = (long) voucherData.size();
 
 		if (!voucherDateSize.toString().equals(quantity.toString())) {
