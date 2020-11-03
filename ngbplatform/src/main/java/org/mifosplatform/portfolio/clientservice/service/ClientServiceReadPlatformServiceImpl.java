@@ -172,8 +172,8 @@ public class ClientServiceReadPlatformServiceImpl implements ClientServiceReadPl
 	protected static final class ClientServiceOrgMapper implements RowMapper<ClientServiceData> {
 
 		public String schema() {
-			StringBuilder query = new StringBuilder("a.id as id, b.id as clientId from b_client_service a,m_client b  where ");
-			query.append("a.client_id=b.id and a.status='ACTIVE' ");
+			StringBuilder query = new StringBuilder("a.id as id, b.id as clientId from b_client_service a,m_client b, b_item_detail id  where ");
+			query.append("a.client_id=b.id and a.client_id = id.client_id and a.status='ACTIVE' ");
 			return query.toString();
 		}
 		
