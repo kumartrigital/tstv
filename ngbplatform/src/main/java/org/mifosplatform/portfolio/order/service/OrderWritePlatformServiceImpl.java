@@ -1246,7 +1246,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			 && command.booleanPrimitiveValueOfParameterNamed("isGroupSupported") ) {
 				Map<String, Object> changes = new HashMap<>();
 				List<ClientServiceData> clientServiceDatas = this.clientServiceReadPlatformService
-						.retriveActiveClientsInOrg(command.longValueOfParameterNamed("officeId"));
+						.retriveActiveClientsInOrgOfficeId(command.longValueOfParameterNamed("officeId"));
 				for (ClientServiceData clientServiceData : clientServiceDatas) {
 					JsonCommand com = this.provisioningJsonPreparation(command, clientServiceData);
 					this.provisioningWritePlatformService.createProvisioningRequestForCommandCenter(com);
