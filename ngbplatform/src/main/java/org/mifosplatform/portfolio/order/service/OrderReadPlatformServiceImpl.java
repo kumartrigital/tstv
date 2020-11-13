@@ -533,7 +533,7 @@ public class OrderReadPlatformServiceImpl implements OrderReadPlatformService
 					+ " p.is_prepaid as isprepaid,p.allow_topup as allowTopUp, ifnull(g.group_name, p.plan_code) as groupName,  "
 					+ " date_sub(o.next_billable_day,INTERVAL 1 DAY) as invoiceTillDate,(SELECT sum(ol.price) AS price FROM b_order_price ol WHERE o.id = ol.order_id and ol.currency_id <= 1000) AS price,(select ol.price as nonCurrency from b_order_price ol where o.id = ol.order_id and ol.currency_id >= 1001) as nonCurrency,"
 					+ " p.provision_sys as provSys,o.client_service_id AS clientServiceId, (select distinct deal_poid from b_plan_detail pd "
-					+ "where p.id=pd.plan_id) as dealPoId"
+					+ "where p.id=pd.plan_id) as dealPoId,p.is_advance as isAdvance"
 					+ " FROM b_orders o, b_plan_master p,b_contract_period co, m_client c "
 					+ "  left join b_group g on g.id=c.group_id ";
 		}
@@ -567,6 +567,7 @@ public class OrderReadPlatformServiceImpl implements OrderReadPlatformService
 			String status = Enumstatus.getValue();
 			final Long contractPeriodId = rs.getLong("contractPeriodId");
 			final double nonCurrency = rs.getDouble("nonCurrency");
+			final String isAdvance = rs.getString("isAdvance");
 
 			/*
 			 * return new OrderData(id, planId, plancode, status, startDate, endDate, price,
@@ -577,7 +578,7 @@ public class OrderReadPlatformServiceImpl implements OrderReadPlatformService
 			OrderData orderdata = new OrderData(id, planId, plancode, planType, status, startDate, endDate, price,
 					contractPeriod, isprepaid, allowtopup, userAction, provSys, orderNo, invoiceTillDate, activaDate,
 					groupName, autoRenew, clientServiceId, planDescription, planPoid, dealPoId);
-
+			orderdata.setIsAdvance(isAdvance);
 			orderdata.setContractPeriodId(contractPeriodId);
 			orderdata.setNonCurrency(nonCurrency);
 			return orderdata;

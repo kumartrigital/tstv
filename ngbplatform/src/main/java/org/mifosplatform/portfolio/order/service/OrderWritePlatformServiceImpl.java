@@ -2332,7 +2332,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				planElement = planObject;
 				newCommand = new JsonCommand(null, planElement.toString(), planElement, this.fromJsonHelper, null, null,
 						null, null, null, null, null, null, null, null, null, null);
-
+				
 				this.createOrder(clientId, newCommand, oldOrder);
 				i++;
 			}

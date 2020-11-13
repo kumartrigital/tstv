@@ -96,6 +96,7 @@ public class OrderData {
 	private double nonCurrency;
 	// private String chargeOwner;
 	private String orderStatus;
+	private String isAdvance;
 
 	public OrderData(List<PlanCodeData> allowedtypes, List<PaytermData> paytermData,
 			List<SubscriptionData> contractPeriod, OrderData data, List<ClientServiceData> clientServiceData,
@@ -967,5 +968,14 @@ public class OrderData {
 		this.orderStatus = orderStatus;
 	}
 
+	public String getIsAdvance() {
+		return isAdvance;
+	}
+
+	public void setIsAdvance(String isAdvance) {
+		this.isAdvance = isAdvance;
+	}
+
+	
 	
 }

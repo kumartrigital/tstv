@@ -34,6 +34,7 @@ import org.mifosplatform.portfolio.client.domain.ClientBillProfileInfo;
 import org.mifosplatform.portfolio.client.domain.ClientBillProfileInfoRepository;
 import org.mifosplatform.portfolio.client.domain.ClientRepository;
 import org.mifosplatform.portfolio.client.exception.ClientNotFoundException;
+import org.mifosplatform.portfolio.client.exception.ClientStatusException;
 import org.mifosplatform.portfolio.contract.domain.Contract;
 import org.mifosplatform.portfolio.contract.domain.ContractRepository;
 import org.mifosplatform.portfolio.order.domain.Order;
@@ -48,6 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.paypal.exception.ClientActionRequiredException;
 
 @Service
 public class RedemptionWritePlatformServiceImpl implements
@@ -120,7 +122,6 @@ public class RedemptionWritePlatformServiceImpl implements
 			this.clientObjectRetrieveById(clientId);
             Long resourceId=Long.valueOf(0);
             CommandProcessingResult result =null;
-
 			final VoucherDetails voucherDetails = retrieveRandomDetailsByPinNo(pinNum);
 			final Voucher voucher = voucherDetails.getVoucher();
 			final String pinType = voucher.getPinType();
@@ -239,7 +240,8 @@ public class RedemptionWritePlatformServiceImpl implements
 			this.voucherDetailsRepository.save(voucherDetails);
 			 
 			return new CommandProcessingResult(voucherDetails.getId(), clientId);
-		}catch(DataIntegrityViolationException dve){
+		}
+		catch(DataIntegrityViolationException dve){
 			handleCodeDataIntegrityIssues(dve);
 	    	return new CommandProcessingResult(Long.valueOf(-1));
 		}

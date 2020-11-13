@@ -573,10 +573,10 @@ public class ClientsApiResource {
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	public String retriveUserInformnation(@Context final UriInfo uriInfo) {
-		/*
-		 * this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants
-		 * .CLIENT_RESOURCE_NAME);
-		 */
+		
+		  this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants
+		  .CLIENT_RESOURCE_NAME);
+		 
 		AppUser logedInUser = this.context.authenticatedUser();
 		ClientData clientData = this.clientReadPlatformService.userdeviceinformation(logedInUser.getOffice().getId());
 		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper
