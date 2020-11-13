@@ -50,7 +50,7 @@ public interface VoucherReadPlatformService {
 	Long retriveQuantityBySaleRefId(Long saleRefId);
 
 
-	List<VoucherData> retrieveVocherDetailsBySaleRefId(Long saleRefId, Integer quantity);
+	List<VoucherData> retrieveVocherDetailsBySaleRefId(Long saleRefId, Integer quantity, Long officeId);
 
 	VoucherRequestData retrieveVocherRequestDetails(Long saleRefId);
 

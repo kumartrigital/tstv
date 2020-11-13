@@ -821,15 +821,19 @@ public class VoucherReadPlatformServiceImpl implements VoucherReadPlatformServic
 	}
 
 	@Override
-	public List<VoucherData> retrieveVocherDetailsBySaleRefId(Long saleRefId, Integer quantity) {
+	public List<VoucherData> retrieveVocherDetailsBySaleRefId(Long saleRefId, Integer quantity, Long officeId) {
 		// TODO Auto-generated method stub
 		this.context.authenticatedUser();
 		String sql;
 		try {
 			RetrieveVoucherMapper mapper = new RetrieveVoucherMapper();
+			if(officeId==null) {
 			sql = "SELECT  " + mapper.schema() + " WHERE pd.sale_ref_no = " + saleRefId
 					+ " and pd.status = 'ALLOCATED' order by serialNo desc limit " + quantity + "";
-
+			}else {
+				sql = "SELECT  " + mapper.schema() + " WHERE pd.sale_ref_no = " + saleRefId
+						+ " and pd.status = 'NEW' order by serialNo desc limit " + quantity + "";
+			}
 			return this.jdbcTemplate.query(sql, mapper, new Object[] {});
 		} catch (EmptyResultDataAccessException e) {
 			return null;
@@ -857,6 +861,7 @@ public class VoucherReadPlatformServiceImpl implements VoucherReadPlatformServic
 
 		}
 	}
+	
 
 	@SuppressWarnings("deprecation")
 	@Override
