@@ -227,7 +227,7 @@ public class ProductReadPlatformServiceImpl implements ProductReadPlatformServic
 
 		public String schema() {
 			return "da.id as id, da.product_code as product_code, da.product_description as product_description,da.service_id as service_id,s.service_code as service_code "
-					+ " from b_product da left join b_service s ON da.service_id = s.id where da.is_deleted='N' ";
+					+ " from b_product da left join b_service s ON da.service_id = s.id where da.is_deleted='N' and da.status = 'ACTIVE'";
 
 			
 			
