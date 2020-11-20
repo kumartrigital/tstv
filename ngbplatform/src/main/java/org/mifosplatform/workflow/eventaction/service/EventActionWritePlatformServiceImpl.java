@@ -333,12 +333,17 @@ public class EventActionWritePlatformServiceImpl implements ActiondetailsWritePl
 									orderData.getOfficeName());
 							footerMessage = footerMessage.replaceAll("<Contact Name>", orderData.getOfficeEmail());
 							footerMessage = footerMessage.replaceAll("<Number>", orderData.getOfficePhoneNo());
-
+							if(orderData.getEmailId()!=null) {
 							billingMessage = new BillingMessage(headerMessage, bodyMessage, footerMessage,
 									orderData.getOfficeEmail(), orderData.getEmailId(), template.getSubject(),
 									BillingMessageTemplateConstants.MESSAGE_TEMPLATE_STATUS, template,
 									BillingMessageTemplateConstants.MESSAGE_TEMPLATE_MESSAGE_TYPE, null);
-
+							}else {
+								billingMessage = new BillingMessage(headerMessage, bodyMessage, footerMessage,
+										orderData.getOfficeEmail(), "default@tstv.com", template.getSubject(),
+										BillingMessageTemplateConstants.MESSAGE_TEMPLATE_STATUS, template,
+										BillingMessageTemplateConstants.MESSAGE_TEMPLATE_MESSAGE_TYPE, null);
+							}
 							this.messageDataRepository.save(billingMessage);
 
 							break;
