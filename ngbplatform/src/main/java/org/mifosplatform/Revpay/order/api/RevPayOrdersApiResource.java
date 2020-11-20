@@ -165,7 +165,7 @@ public class RevPayOrdersApiResource {
 		}
 		paymentGatewayRepository.save(revpayOrder);
 		try {
-			indexPath = new URI("http://tstvbilling.com:3301/topup/"+txref);
+			indexPath = new URI("http://tstvbilling.com:3301/renewal-customer/"+txref);
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
