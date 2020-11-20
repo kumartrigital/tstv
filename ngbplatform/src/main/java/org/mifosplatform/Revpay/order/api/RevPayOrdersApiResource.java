@@ -120,12 +120,12 @@ public class RevPayOrdersApiResource {
 		 * 
 		 * }
 		 */
-		String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
-
+	//	String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
+        String status  = "success";
 		String locale = "en";
 		String dateFormat = "dd MMMM yyyy";
 		PaymentGateway revpayOrder = paymentGatewayRepository.findPaymentDetailsByPaymentId(txref.toString());
-		if (status.equals("success")) {
+		if (status.equalsIgnoreCase("success")) {
 
 			revpayOrder.setStatus("Success");
 			revpayOrder.setPartyId(flwref);
