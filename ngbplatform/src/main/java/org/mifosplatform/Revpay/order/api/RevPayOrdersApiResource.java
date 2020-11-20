@@ -40,6 +40,7 @@ import org.mifosplatform.logistics.mrn.data.MRNDetailsData;
 import org.mifosplatform.portfolio.order.service.OrderWritePlatformService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.sun.jersey.spi.resource.Singleton;
 
@@ -102,17 +103,14 @@ public class RevPayOrdersApiResource {
 	}
 
 	@POST
-	@Path("/orderlock")
-	/*
-	 * @Consumes({ MediaType.APPLICATION_JSON })
-	 * 
-	 * @Produces({ MediaType.APPLICATION_JSON })
-	 */
+	@Path("/orderlock/{txref}/{flwref}")
 	@SuppressWarnings("unchecked")
-	public Response CallBackRavePayOrder(@QueryParam("txref") Long txref, @QueryParam("flwref") String flwref) {
+	public Response CallBackRavePayOrder(@PathParam("txref") String txref,@PathParam("flwref") String flwref , @QueryParam("resp") String resp) {
+	
 		URI indexPath = null;
 
-		/*
+		/*	public Response CallBackRavePayOrder(@QueryParam("txref") Long txref, @QueryParam("flwref") String flwref) {
+
 		 * if (cancelled == true) { try { indexPath = new
 		 * URI("http://tstvbilling.com:3301/topup"+txref); } catch (URISyntaxException
 		 * e) { e.printStackTrace(); } return
@@ -120,15 +118,17 @@ public class RevPayOrdersApiResource {
 		 * 
 		 * }
 		 */
-		String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
+		//String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
+		String status = "success";
 
 		String locale = "en";
 		String dateFormat = "dd MMMM yyyy";
 		PaymentGateway revpayOrder = paymentGatewayRepository.findPaymentDetailsByPaymentId(txref.toString());
 		if (status.equals("success")) {
-
+			
 			revpayOrder.setStatus("Success");
 			revpayOrder.setPartyId(flwref);
+			paymentGatewayRepository.save(revpayOrder);
 
 			JSONObject paymentJson = new JSONObject();
 			paymentJson.put("clientId", revpayOrder.getReffernceId());
@@ -160,8 +160,9 @@ public class RevPayOrdersApiResource {
 
 		} else {
 			revpayOrder.setStatus("Failed");
+			paymentGatewayRepository.save(revpayOrder);
+
 		}
-		paymentGatewayRepository.save(revpayOrder);
 		try {
 			indexPath = new URI("http://tstvbilling.com:3301/renewal-customer/"+txref);
 		} catch (URISyntaxException e) {
