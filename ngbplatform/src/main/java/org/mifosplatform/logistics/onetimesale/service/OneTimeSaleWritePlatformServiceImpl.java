@@ -203,7 +203,8 @@ public class OneTimeSaleWritePlatformServiceImpl implements OneTimeSaleWritePlat
 				for (JsonElement je : serialData) {
 					JsonObject serialNumber = je.getAsJsonObject();
 					serialNumber.addProperty("clientId", oneTimeSale.getClientId());
-					serialNumber.addProperty("orderId", oneTimeSale.getId());break;
+					serialNumber.addProperty("orderId", oneTimeSale.getId());
+					break;
 				}
 				jsonObject.addProperty("itemId", oneTimeSale.getItemId());
 				jsonObject.addProperty("quantity", oneTimeSale.getQuantity());

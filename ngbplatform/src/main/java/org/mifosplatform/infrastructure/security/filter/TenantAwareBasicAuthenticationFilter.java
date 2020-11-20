@@ -180,8 +180,8 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
 					||(path.contains("/api/v1/revpay/orderlock") && request.getMethod().equalsIgnoreCase(GET))) {
 
 				tenant = getTenantIdentifier(request);
-				String username = "dealer";
-				String password = "dealer";
+				String username = "admin";
+				String password = "Tstv2019!";
 
 				boolean isValid = this.licenseUpdateService.checkIfKeyIsValid(tenant.getLicensekey(), tenant);
 				if (!isValid) {
@@ -191,7 +191,20 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
 				authenticateLocal(request, chain, response, username, password);
 
 			}
-			
+			else if (path.contains("/api/v1/revpay/status") && request.getMethod().equalsIgnoreCase(GET)) {
+
+				tenant = getTenantIdentifier(request);
+				String username = "admin";
+				String password = "Tstv2019!";
+
+				boolean isValid = this.licenseUpdateService.checkIfKeyIsValid(tenant.getLicensekey(), tenant);
+				if (!isValid) {
+					throw new InvalidLicenseKeyException("License key Exipired.");
+				}
+				ThreadLocalContextUtil.setTenant(tenant);
+				authenticateLocal(request, chain, response, username, password);
+
+			}
 			
 			else if (path.contains("/api/v1/entitlements/getauth") && request.getMethod().equalsIgnoreCase(GET)) {
 
