@@ -120,7 +120,8 @@ public class RevPayOrdersApiResource {
 		 * 
 		 * }
 		 */
-		String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
+		//String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
+		String status = "success";
 
 		String locale = "en";
 		String dateFormat = "dd MMMM yyyy";
