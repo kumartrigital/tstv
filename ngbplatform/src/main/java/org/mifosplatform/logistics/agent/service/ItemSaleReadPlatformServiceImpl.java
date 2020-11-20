@@ -181,8 +181,10 @@ public List<MRNDetailsData> getVoucherRequest(Long officeId) {
 		 
 		 this.context.authenticatedUser();
 		 final ItemSaleByItemTypeMapper mapper=new ItemSaleByItemTypeMapper();
-		 final String sql="select distinct "+mapper.schema()+" from b_itemsale its  join m_office mo on its.purchase_by="+officeId+", b_item_master im where its.item_id = im.id " + 
-		 		"and im.item_class = 4 ";
+		 final String sql="select distinct "+mapper.schema()+" FROM b_itemsale its " + 
+		 		", m_office mo,b_item_master im,b_pin_details pd  where its.purchase_by = "+officeId+"" + 
+		 		" and its.item_id = im.id and pd.office_id=mo.id" + 
+		 		" AND im.item_class = 4 ";
 		 
 		 return this.jdbcTemplate.query(sql,mapper,new Object[]{});
 		 
@@ -192,17 +194,34 @@ public List<MRNDetailsData> getVoucherRequest(Long officeId) {
 }
 private static final class ItemSaleByItemTypeMapper implements RowMapper<MRNDetailsData> {
 
+		/*
+		 * public String schema() { return
+		 * "its.id as id,its.purchase_date as requestedDate," +
+		 * " (select item_description from b_item_master where id=its.item_id) as item,"
+		 * + " (select name from m_office where id = its.purchase_from) as fromOffice, "
+		 * + "(select name from m_office where id = its.purchase_by) as toOffice, " +
+		 * "its.order_quantity as orderdQuantity, its.received_quantity as receivedQuantity,"
+		 * + "its.charge_amount as chargeAmount, its.unit_price as unitPrice, " +
+		 * "its.status as status,(select count(1) from  b_pin_details where sale_ref_no=its.id and status = 'EXPORTED') as exportedQuantity,"
+		 * +
+		 * "(select count(1) from  b_pin_details where sale_ref_no=its.id and status = 'USED') as redeemedQuantity,"
+		 * +
+		 * "(select count(1) from  b_pin_details where sale_ref_no=its.id and status = 'ALLOCATED') as allocatedQuantity "
+		 * ;
+		 * 
+		 * }
+		 */
 	public String schema() {
-		return  "its.id as id,its.purchase_date as requestedDate,"
-				+ " (select item_description from b_item_master where id=its.item_id) as item,"
-				+ " (select name from m_office where id = its.purchase_from) as fromOffice, "
-				+ "(select name from m_office where id = its.purchase_by) as toOffice, "
-				+ "its.order_quantity as orderdQuantity, its.received_quantity as receivedQuantity,"
-				+ "its.charge_amount as chargeAmount, its.unit_price as unitPrice, "
-				+ "its.status as status,(select count(1) from  b_pin_details where sale_ref_no=its.id and status = 'EXPORTED') as exportedQuantity,"
-				+ "(select count(1) from  b_pin_details where sale_ref_no=its.id and status = 'USED') as redeemedQuantity,"
-				+ "(select count(1) from  b_pin_details where sale_ref_no=its.id and status = 'ALLOCATED') as allocatedQuantity ";
-
+		return "its.id AS id, im.item_description as item," + 
+				"its.purchase_date AS requestedDate," + 
+				"im.item_description," + 
+				"its.purchase_from as fromOffice," + 
+				"its.purchase_by as toOffice," + 
+				"its.order_quantity AS orderdQuantity," + 
+				"its.received_quantity AS receivedQuantity," + 
+				"its.charge_amount AS chargeAmount," + 
+				"its.unit_price AS unitPrice," + 
+				"its.STATUS AS status" ;
 	}
 
 	@Override
@@ -217,13 +236,15 @@ private static final class ItemSaleByItemTypeMapper implements RowMapper<MRNDeta
 		final String status = rs.getString("status");
 		final BigDecimal chargeAmount = rs.getBigDecimal("chargeAmount");
 		final BigDecimal unitPrice = rs.getBigDecimal("unitPrice");
-		final Long exportedQuantity = rs.getLong("exportedQuantity");
-		final Long redeemedQuantity = rs.getLong("redeemedQuantity");
-		final Long allocatedQuantity = rs.getLong("allocatedQuantity");
+			/*
+			 * final Long exportedQuantity = rs.getLong("exportedQuantity"); final Long
+			 * redeemedQuantity = rs.getLong("redeemedQuantity"); final Long
+			 * allocatedQuantity = rs.getLong("allocatedQuantity");
+			 */
 		/*final String notes = rs.getString("notes");*/
 		
 		return new MRNDetailsData(id, requestedDate, fromOffice, toOffice, orderdQuantity, receivedQuantity,
-				status,itemDescription,chargeAmount,unitPrice,exportedQuantity, redeemedQuantity,allocatedQuantity);
+				status,itemDescription,chargeAmount,unitPrice,null, null,null);
 
 	}
 }

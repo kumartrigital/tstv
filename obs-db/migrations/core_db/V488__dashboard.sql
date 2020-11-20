@@ -42,7 +42,7 @@ DECLARE v_allocated INTEGER DEFAULT 0;
  DEClARE i_cursor CURSOR FOR
  Select office_id,case when counts=1 then 'Allocated' else 'In Stock' end as stock_status ,
 	count(0) from (select office_id, case when client_id>0 then 1 else 0 end as counts 
-	from b_item_detail where item_master_id=18) x group by counts;
+	from b_item_detail where item_master_id=18) x group by 1,2;
 
  DECLARE CONTINUE HANDLER
         FOR NOT FOUND SET v_finished = 1;
@@ -151,9 +151,10 @@ DECLARE v_stock INTEGER DEFAULT 0;
 DECLARE v_allocated INTEGER DEFAULT 0;
 
  DEClARE i_cursor CURSOR FOR
- Select office_id,case when counts=1 then 'Allocated' else 'In Stock' end as stock_status ,
+  Select office_id,case when counts=1 then 'Allocated' else 'In Stock' end as stock_status ,
 	count(0) from (select office_id, case when client_id>0 then 1 else 0 end as counts 
-	from b_item_detail where item_master_id=18) x group by counts;
+	from b_item_detail where item_master_id=18) x group by 1,2;
+
 
  DECLARE CONTINUE HANDLER
         FOR NOT FOUND SET v_finished = 1;
@@ -181,7 +182,7 @@ DECLARE v_allocated INTEGER DEFAULT 0;
 
  DEClARE i_cursor CURSOR FOR
  select c.id,a.status,count(0) counts from b_client_service a, m_client b,m_office c 
- where a.client_id=b.id and b.office_id=c.id and a.status='ACTIVE' group by a.status,c.id;
+ where a.client_id=b.id and b.office_id=c.id and a.status='ACTIVE' and b.status_enum in (300,600) group by b.status_enum,c.id;
 
  DECLARE CONTINUE HANDLER
         FOR NOT FOUND SET v_finished = 1;
@@ -203,6 +204,8 @@ End;
  
 END //
 DELIMITER ;
+
+
 
 
 

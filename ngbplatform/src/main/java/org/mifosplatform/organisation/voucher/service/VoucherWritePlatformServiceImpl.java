@@ -483,7 +483,6 @@ public class VoucherWritePlatformServiceImpl implements VoucherWritePlatformServ
 			if (officeBalance.getBalanceAmount().longValue() > 0L) {
 				throw new OfficeBalanceIsNotEnoughException(officeBalance.getBalanceAmount());
 			}
-			
 
 			Long saleRefNo = command.longValueOfParameterNamed("saleRefNo");
 			Long fromOffice = command.longValueOfParameterNamed("fromOffice");
@@ -514,14 +513,13 @@ public class VoucherWritePlatformServiceImpl implements VoucherWritePlatformServ
 				throw new ItemSaleNotRegisteredException(fromOffice);
 			}
 
-
 			BigDecimal pinValue = itemSale.getUnitPrice();
 			Long orderdQuantity = itemSale.getOrderQuantity();
 			ItemData itemData = this.itemReadPlatformService.retrieveSingleItemDetails(null, itemSale.getItemId(), null,
 					false);
 			if (itemSale.getPurchaseBy().toString().equals("5")) {
 				this.voucherDetailsRepository.updateVoucherOfficeForKallakPower(toOffice, orderdQuantity, saleRefNo,
-						fromOffice,pinValue);
+						fromOffice, pinValue);
 
 			} else {
 				this.voucherDetailsRepository.updateVoucherOffice(toOffice, orderdQuantity, saleRefNo, fromOffice,
@@ -549,49 +547,47 @@ public class VoucherWritePlatformServiceImpl implements VoucherWritePlatformServ
 			throw new ItemSaleIdNotFoundException(saleRefId);
 		}
 		java.util.List<VoucherData> voucherData = null;
-		
+
 		Integer quantity = command.integerValueOfParameterNamed("quantity");
-		if(itemSale.getPurchaseBy().toString().equalsIgnoreCase("5")) {
-			 voucherData = this.voucherReadPlatformService.retrieveVocherDetailsBySaleRefId(saleRefId,
-					quantity,itemSale.getPurchaseBy());
-		}else {
-		 voucherData = this.voucherReadPlatformService.retrieveVocherDetailsBySaleRefId(saleRefId,
-		quantity,null);
+		if (itemSale.getPurchaseBy().toString().equalsIgnoreCase("5")) {
+			voucherData = this.voucherReadPlatformService.retrieveVocherDetailsBySaleRefId(saleRefId, quantity,
+					itemSale.getPurchaseBy());
+		} else {
+			voucherData = this.voucherReadPlatformService.retrieveVocherDetailsBySaleRefId(saleRefId, quantity, null);
 		}
 		Long voucherDateSize = (long) voucherData.size();
 
 		if (!voucherDateSize.toString().equals(quantity.toString())) {
-		throw new NoMoreRecordsFoundToExportException(
-		"Avaliable quatity :" + voucherDateSize + " Request quatity :" + quantity);
+			throw new NoMoreRecordsFoundToExportException(
+					"Avaliable quatity :" + voucherDateSize + " Request quatity :" + quantity);
 
 		}
-		System.out.println("No of Vouchers Exporting :" +voucherDateSize);
+		System.out.println("No of Vouchers Exporting :" + voucherDateSize);
 		if (voucherData.size() > 0) {
-		SimpleDateFormat formatter = new SimpleDateFormat("yyMMddhhmmssMs");
-		Date date = new Date();
-		String dateTime = formatter.format(date).toString();
-		String exportReqId = dateTime + "_" + saleRefId.toString() + "_" + quantity.toString();
+			SimpleDateFormat formatter = new SimpleDateFormat("yyMMddhhmmssMs");
+			Date date = new Date();
+			String dateTime = formatter.format(date).toString();
+			String exportReqId = dateTime + "_" + saleRefId.toString() + "_" + quantity.toString();
+
+			for (VoucherData v : voucherData) {
+				String pinNum = v.getPinNo();
+				this.voucherDetailsRepository.updateExportReqId(exportReqId, pinNum);
+			}
 
 			/*
-			 * for (VoucherData v : voucherData) { String pinNum = v.getPinNo();
-			 * this.voucherDetailsRepository.updateExportReqId(exportReqId, pinNum); }
+			 * try { this.voucherReadPlatformService.batchUpdate(voucherData, exportReqId);
+			 * }catch(Exception e) { e.printStackTrace(); //throw new
+			 * ExportingRequestFailed("Export Failure"); }
 			 */
-		try {
-		this.voucherReadPlatformService.batchUpdate(voucherData, exportReqId);
-		}catch(Exception e)
-		{
-			e.printStackTrace();
-			//throw new ExportingRequestFailed("Export Failure");
-		}
-		exportVoucher.setReqId(exportReqId);
-		exportVoucher.setQuantity(Long.parseLong(quantity.toString()));
-		// exportVoucher.setQuantity(quantity);
+			exportVoucher.setReqId(exportReqId);
+			exportVoucher.setQuantity(Long.parseLong(quantity.toString()));
+			// exportVoucher.setQuantity(quantity);
 
-		exportVoucher.setRequestBy(itemSale.getPurchaseBy());
-		exportVoucher.setRequestDate(date);
-		exportVoucher.setSaleRefNo(saleRefId);
-		exportVoucher.setStatus("EXPORTED");
-		this.exportRepository.saveAndFlush(exportVoucher);
+			exportVoucher.setRequestBy(itemSale.getPurchaseBy());
+			exportVoucher.setRequestDate(date);
+			exportVoucher.setSaleRefNo(saleRefId);
+			exportVoucher.setStatus("EXPORTED");
+			this.exportRepository.saveAndFlush(exportVoucher);
 
 		} else {
 			throw new NoMoreRecordsFoundToExportException();

@@ -923,9 +923,7 @@ public class VoucherReadPlatformServiceImpl implements VoucherReadPlatformServic
 			List<VoucherData> vouchers = retrieveVocherDetails(saleRefId);
 
 			VoucheRequestDetailsMapper reqMapper = new VoucheRequestDetailsMapper();
-			final String sql = "select " + reqMapper.schema()
-					+ " from b_itemsale its join b_pin_details pd on its.id= pd.sale_ref_no " + " where its.id = "
-					+ saleRefId + "  group by its.id ";
+			final String sql = "select " + reqMapper.schema()+" from b_itemsale its , b_pin_details pd, b_item_master im where its.id= pd.sale_ref_no  and im.id=its.item_id and its.id = "+saleRefId+" group by its.id";
 			// List<VoucherData> vouchers = (List<VoucherData>) this.jdbcTemplate.query(sql,
 			// mapper, new Object[] {});
 
@@ -940,15 +938,36 @@ public class VoucherReadPlatformServiceImpl implements VoucherReadPlatformServic
 
 	private static final class VoucheRequestDetailsMapper implements RowMapper<VoucherRequestData> {
 
+		/*
+		 * public String schema() { return " its.id as id," +
+		 * "its.purchase_date as requestedDate, " +
+		 * "(select item_description from b_item_master where id=its.item_id) as item,"
+		 * + "its.order_quantity as orderdQuantity, " +
+		 * "its.received_quantity as receivedQuantity,(select count(1) from  b_pin_details where sale_ref_no = its.id and status = 'EXPORTED') as exportedQuantity,"
+		 * +
+		 * "(select count(1) from  b_pin_details where sale_ref_no = its.id and status = 'USED') as reedeemedQuantity,"
+		 * +
+		 * "(select count(1) from  b_pin_details where sale_ref_no = its.id and status = 'ALLOCATED') as allocatedQuantity,"
+		 * +
+		 * "its.status as status, its.charge_amount as chargeAmount, its.unit_price as unitPrice "
+		 * ;
+		 * 
+		 * }
+		 */
 		public String schema() {
-			return " its.id as id," + "its.purchase_date as requestedDate, "
-					+ "(select item_description from b_item_master where id=its.item_id) as item,"
-					+ "its.order_quantity as orderdQuantity, "
-					+ "its.received_quantity as receivedQuantity,(select count(1) from  b_pin_details where sale_ref_no = its.id and status = 'EXPORTED') as exportedQuantity,"
-					+ "(select count(1) from  b_pin_details where sale_ref_no = its.id and status = 'USED') as reedeemedQuantity,"
-					+ "(select count(1) from  b_pin_details where sale_ref_no = its.id and status = 'ALLOCATED') as allocatedQuantity,"
-					+ "its.status as status, its.charge_amount as chargeAmount, its.unit_price as unitPrice ";
-
+			return "sum(CASE WHEN pd.status = 'EXPORTED' THEN 1\n" + 
+					"                    ELSE 0 end) as 'exportedQuantity',\n" + 
+					"                   sum(CASE WHEN pd.status = 'ALLOCATED' THEN 1\n" + 
+					"                    ELSE 0 end) as 'allocatedQuantity',\n" + 
+					"                     sum(CASE WHEN pd.status = 'USED' THEN 1\n" + 
+					"                    ELSE 0 end) as 'reedeemedQuantity',\n" + 
+					"                    its.id as id,its.purchase_date as requestedDate, \n" + 
+					"					im.item_description  as item,\n" + 
+					"				    its.order_quantity as orderdQuantity, \n" + 
+					"					its.received_quantity as receivedQuantity,\n" + 
+					"					its.status as status, \n" + 
+					"                    its.charge_amount as chargeAmount,\n" + 
+					"                    its.unit_price as unitPrice";
 		}
 
 		@Override
