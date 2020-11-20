@@ -109,19 +109,17 @@ public class RevPayOrdersApiResource {
 	 * @Produces({ MediaType.APPLICATION_JSON })
 	 */
 	@SuppressWarnings("unchecked")
-	public Response CallBackRavePayOrder(@QueryParam("txref") Long txref, @QueryParam("flwref") String flwref,
-			@QueryParam("cancelled") Boolean cancelled) {
+	public Response CallBackRavePayOrder(@QueryParam("txref") Long txref, @QueryParam("flwref") String flwref) {
 		URI indexPath = null;
 
-		if (cancelled == true) {
-			try {
-				indexPath = new URI("http://tstvbilling.com:3301/topup"+txref);
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			}
-			return Response.temporaryRedirect(indexPath).build();
-
-		}
+		/*
+		 * if (cancelled == true) { try { indexPath = new
+		 * URI("http://tstvbilling.com:3301/topup"+txref); } catch (URISyntaxException
+		 * e) { e.printStackTrace(); } return
+		 * Response.temporaryRedirect(indexPath).build();
+		 * 
+		 * }
+		 */
 		String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
 
 		String locale = "en";
