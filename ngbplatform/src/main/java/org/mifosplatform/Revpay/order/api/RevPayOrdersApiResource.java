@@ -118,6 +118,15 @@ public class RevPayOrdersApiResource {
 		 * 
 		 * }
 		 */
+//<<<<<<< HEAD
+	//	String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
+        String status  = "success";
+		String locale = "en";
+		String dateFormat = "dd MMMM yyyy";
+		PaymentGateway revpayOrder = paymentGatewayRepository.findPaymentDetailsByPaymentId(txref.toString());
+		if (status.equalsIgnoreCase("success")) {
+
+/*=======
 		//String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
 		String status = "success";
 
@@ -126,6 +135,7 @@ public class RevPayOrdersApiResource {
 		PaymentGateway revpayOrder = paymentGatewayRepository.findPaymentDetailsByPaymentId(txref.toString());
 		if (status.equals("success")) {
 			
+>>>>>>> 2056955c6e69be9d0c825b4b94af82de0eab947f*/
 			revpayOrder.setStatus("Success");
 			revpayOrder.setPartyId(flwref);
 			paymentGatewayRepository.save(revpayOrder);
