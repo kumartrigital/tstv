@@ -174,7 +174,7 @@ public class RevPayOrdersApiResource {
 
 		}
 		try {
-			indexPath = new URI("http://tstvbilling.com:3301/renewal-customer/"+txref);
+			indexPath = new URI("http://tstv.nextgenerationbilling.com:3301/renewal-customer/"+txref);
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
