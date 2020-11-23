@@ -97,7 +97,7 @@ public class ChargingCustomerOrders {
 
 		try {
 			
-			System.out.println("ChargingCustomerOrders.createNewCharges()");
+			//System.out.println("ChargingCustomerOrders.createNewCharges()");
 			// validation not written
 			this.apiJsonDeserializer.validateForCreate(command.json());
 			LocalDateTime processDate = ProcessDate.fromJsonDateTime(command);
@@ -293,7 +293,7 @@ public class ChargingCustomerOrders {
 			LocalDateTime processDate, Map<String, List<Charge>> groupOfCharges) {
 
 		
-		System.out.println("ChargingCustomerOrders.chargeLinesForServices()" + billingOrderData);
+		//System.out.println("ChargingCustomerOrders.chargeLinesForServices()" + billingOrderData);
 		// Get qualified order complete details
 		List<BillingOrderData> chargeServices = this.chargingOrderReadPlatformService.retrieveBillingOrderData(clientId,
 				processDate, billingOrderData.getOrderId());

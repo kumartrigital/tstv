@@ -1502,7 +1502,7 @@ public class EventActionWritePlatformServiceImpl implements ActiondetailsWritePl
 								jsonObject.put("systemDate", dateFormat.format(order.getStartDate()));
 								//check flag isAdvance
 								if(plan.getIsAdvance()!='Y' || plan.getIsAdvance()!= 'y') {
-									System.out.println("charging"+plan.getIsAdvance());
+									//System.out.println("charging"+plan.getIsAdvance());
 								this.chargingOrderApiResourse.createChargesToOrders(order.getClientId(),
 										jsonObject.toString());
 								}
