@@ -96,6 +96,8 @@ final public class ClientData implements Comparable<ClientData> {
 	private String officeHierarchy;
 	private String selfcarePassword;
 	private String currencyCode;
+	private String voucher_stock;
+	private String provision_pending;
 	
 	public String getCurrencyCode() {
 		return currencyCode;
@@ -1545,6 +1547,22 @@ public static ClientData fromCelcomJson(String result,ClientData clientData) thr
     public void setClientDatas(List<ClientData> clientDatas) {
         this.clientDatas = clientDatas;
     }
+
+	public String getVoucher_stock() {
+		return voucher_stock;
+	}
+
+	public void setVoucher_stock(String voucher_stock) {
+		this.voucher_stock = voucher_stock;
+	}
+
+	public String getProvision_pending() {
+		return provision_pending;
+	}
+
+	public void setProvision_pending(String provision_pending) {
+		this.provision_pending = provision_pending;
+	}
 
 	
 

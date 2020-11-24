@@ -1417,13 +1417,27 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 			hierarchySearchString = hierarchy + "%";
 		} else {
 			hierarchySearchString = "%";
+			//hierarchySearchString = hierarchy + "%";
+
 		}
 		// end of change
 
 		try {
 			UserdeviceinformationMapper userdeviceinformationMapper = new UserdeviceinformationMapper();
-			String sql = "SELECT " + userdeviceinformationMapper.Schema(hierarchySearchString);
-			return jdbcTemplate.queryForObject(sql, userdeviceinformationMapper, new Object[] {});
+			UserdeviceinformationMapper1 userdeviceinformationMapper1 = new UserdeviceinformationMapper1();
+
+			String sql=null;
+			//it is for tstv allowing super user to show the dashboard without hierarchy restriction
+			if(officeId.toString().equalsIgnoreCase("1")) {
+			 sql = "SELECT " + userdeviceinformationMapper.Schema(hierarchySearchString);
+				return jdbcTemplate.queryForObject(sql, userdeviceinformationMapper, new Object[] {});
+
+			}else {
+				//allowing to see the dashboard specific to office id
+				 sql = "SELECT " + userdeviceinformationMapper1.Schema1(officeId);
+					return jdbcTemplate.queryForObject(sql, userdeviceinformationMapper1, new Object[] {});
+
+			}
 		} catch (EmptyResultDataAccessException ex) {
 			return null;
 		}
@@ -1433,8 +1447,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 	private static final class UserdeviceinformationMapper implements RowMapper<ClientData> {
 
 		public String Schema(String hierarchy) {
-			return "sum(active) as c_active,sum(inactive) as c_inactive , sum(instock) as c_instock,sum(allocated) as c_allocated from"
-					+ " (select a.id,IFNULL(b.client_active, 0) as active,IFNULL(b.client_inactive, 0) as inactive,IFNULL(b.in_stock, 0) as instock,IFNULL(b.stock_allocated, 0) as allocated"
+			return "sum(active) as c_active,sum(inactive) as c_inactive , sum(instock) as c_instock,sum(allocated) as c_allocated,sum(voucher_stock) as voucherStock,sum(provision_pending) as provisionPending  from"
+					+ " (select a.id,IFNULL(b.client_active, 0) as active,IFNULL(b.client_inactive, 0) as inactive,"
+					+ "IFNULL(b.in_stock, 0) as instock,IFNULL(b.stock_allocated, 0) as allocated, IFNULL(b.voucher_stock,0) as voucher_stock,IFNULL(b.provision_pending,0) as provision_pending"
 					+ " from m_office a left join m_office_statistics b on a.id=b.office_id where a.hierarchy like '"
 					+ hierarchy + "%')X";
 		}
@@ -1445,10 +1460,38 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 			final String c_inactive = rs.getString("c_inactive");
 			final String c_instock = rs.getString("c_instock");
 			final String c_allocated = rs.getString("c_allocated");
+			final String voucherStock = rs.getString("voucherStock");
+			final String provisionPending = rs.getString("provisionPending");
+
 			ClientData clientData = ClientData.searchClient(null);
 			clientData.setC_active(c_active);
 			clientData.setC_allocated(c_allocated);
 			clientData.setC_inactive(c_inactive);
+			clientData.setC_instock(c_instock);
+			clientData.setVoucher_stock(voucherStock);
+			clientData.setProvision_pending(provisionPending);
+			return clientData;
+		}
+
+	}
+	private static final class UserdeviceinformationMapper1 implements RowMapper<ClientData> {
+
+		
+		public String Schema1(Long officeId) {
+			return " client_active as `clientActive`,in_stock as `boxStock`,voucher_stock as `voucherStock`,provision_pending as `provisionPending`"
+					+ " from m_office_statistics where office_id="+officeId+"" ;
+		}
+
+		@Override
+		public ClientData mapRow(final ResultSet rs, final int rowNum) throws SQLException {
+			final String c_active = rs.getString("clientActive");
+			final String voucherStock = rs.getString("voucherStock");
+			final String c_instock = rs.getString("boxStock");
+			final String provisionPending = rs.getString("provisionPending");
+			ClientData clientData = ClientData.searchClient(null);
+			clientData.setC_active(c_active);
+			clientData.setVoucher_stock(voucherStock);
+			clientData.setC_inactive(provisionPending);
 			clientData.setC_instock(c_instock);
 			return clientData;
 		}

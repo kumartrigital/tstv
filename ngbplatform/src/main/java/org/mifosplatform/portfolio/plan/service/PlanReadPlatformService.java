@@ -2,7 +2,9 @@ package org.mifosplatform.portfolio.plan.service;
 
 import java.util.List;
 
+import org.mifosplatform.crm.clientprospect.service.SearchSqlQuery;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
+import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.organisation.partner.data.PartnersData;
 import org.mifosplatform.portfolio.contract.data.SubscriptionData;
 import org.mifosplatform.portfolio.plan.data.PlanCodeData;
@@ -12,7 +14,7 @@ import org.mifosplatform.portfolio.plan.data.ServiceData;
 public interface PlanReadPlatformService {
 	
 	
-	List<PlanData> retrievePlanData(String planType);
+	Page<PlanData> retrievePlanData(String planType, SearchSqlQuery searchPlan);
 	
 	List<SubscriptionData> retrieveSubscriptionData(Long orderId, String planType);
 	

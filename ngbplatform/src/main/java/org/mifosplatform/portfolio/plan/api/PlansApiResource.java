@@ -23,12 +23,14 @@ import org.mifosplatform.billing.emun.data.EnumValuesConstants;
 import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
+import org.mifosplatform.crm.clientprospect.service.SearchSqlQuery;
 import org.mifosplatform.crm.service.CrmServices;
 import org.mifosplatform.infrastructure.codes.service.CodeReadPlatformService;
 import org.mifosplatform.infrastructure.core.api.ApiRequestParameterHelper;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.serialization.ApiRequestJsonSerializationSettings;
 import org.mifosplatform.infrastructure.core.serialization.DefaultToApiJsonSerializer;
+import org.mifosplatform.infrastructure.core.service.Page;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.mcodevalues.api.CodeNameConstants;
 import org.mifosplatform.organisation.mcodevalues.service.MCodeReadPlatformService;
@@ -160,11 +162,14 @@ public class PlansApiResource  {
 	@GET
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
-	public String retrieveAllPlans(@QueryParam("planType") final String planType,  @Context final UriInfo uriInfo) {
+	public String retrieveAllPlans(@QueryParam("planType") final String planType,  @Context final UriInfo uriInfo, @QueryParam("sqlSearch") final String sqlSearch,
+			@QueryParam("limit") final Integer limit, @QueryParam("offset") final Integer offset) {
  		 context.authenticatedUser().validateHasReadPermission(RESOURCE_NAME_FOR_PERMISSION);
-		final List<PlanData> products = this.planReadPlatformService.retrievePlanData(planType);
+ 		final SearchSqlQuery searchPlan = SearchSqlQuery.forSearch(sqlSearch, offset,limit );
+		final Page<PlanData> products = this.planReadPlatformService.retrievePlanData(planType,searchPlan);
 		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
-		return this.toApiJsonSerializer.serialize(settings, products, RESPONSE_DATA_PARAMETERS);
+		//return this.toApiJsonSerializer.serialize(settings, products, RESPONSE_DATA_PARAMETERS);
+		return this.toApiJsonSerializer.serialize(products);
 	}
 	
 	/**

@@ -52,16 +52,16 @@ public class ProductReadPlatformServiceImpl implements ProductReadPlatformServic
         String extraCriteria = null;
 	    if (sqlSearch != null) {
 	    	sqlSearch=sqlSearch.trim();
-	    	extraCriteria = " and (id like '%"+sqlSearch+"%' OR" 
-	    			+ " product_code like '%"+sqlSearch+"%' OR"
-	    			+ " product_description like '%"+sqlSearch+"%' OR"
-	    			+ " product_category like '%"+sqlSearch+"%' OR"
-	    			+ " service_id like '%"+sqlSearch+"%' OR"
+	    	extraCriteria = " and (p.id like '%"+sqlSearch+"%' OR" 
+	    			+ " p.product_code like '%"+sqlSearch+"%' OR"
+	    			+ " p.product_description like '%"+sqlSearch+"%' OR"
+	    			+ " p.product_category like '%"+sqlSearch+"%' OR"
+	    			+ " p.service_id like '%"+sqlSearch+"%' OR"
 	    	/*		+ " provision_id like '%"+sqlSearch+"%' OR"
 	    			+ " validity_start like '%"+sqlSearch+"%' OR"*/
-	    			+ " service_code like '%"+sqlSearch+"%' OR"
-	    			+ " status like '%"+sqlSearch+"%' OR"
-	    			+ " is_Bouquet like '%"+sqlSearch+"%')";
+	    			+ " s.service_code like '%"+sqlSearch+"%' OR"
+	    			+ " p.status like '%"+sqlSearch+"%' OR"
+	    			+ " p.is_Bouquet like '%"+sqlSearch+"%')";
 	    }
         
         if (null != extraCriteria) {

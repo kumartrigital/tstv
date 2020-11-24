@@ -20,16 +20,86 @@ CREATE TABLE IF NOT EXISTS `m_office_statistics` (
   `client_inactive` bigint(20) DEFAULT 0,
   `in_stock` bigint(20) DEFAULT 0,
   `stock_allocated` bigint(20) DEFAULT 0,  
+  `voucher_stock` bigint(20) DEFAULT 0,
+  `provision_pending` bigint(20) DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `stats_office_key` (`office_id`),
   CONSTRAINT `stats_office_key` FOREIGN KEY (`office_id`) REFERENCES `m_office` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-insert  into m_office_statistics  select id,id,0,0,0,0 from m_office;
+insert  into m_office_statistics  select id,id,0,0,0,0,0,0 from m_office;
+
+drop  procedure IF EXISTS update_stat3;
+
+DELIMITER //
+CREATE DEFINER=`root`@`localhost` PROCEDURE `update_stat3`()
+BEGIN
+DECLARE v_finished INTEGER DEFAULT 0;
+DECLARE v_officeid INTEGER DEFAULT 0;
+DECLARE voucher_stock INTEGER DEFAULT 0;
+
+ DEClARE i_cursor CURSOR FOR
+	select office_id,count(1) from b_pin_details where status!='used' group by 1;
+
+ DECLARE CONTINUE HANDLER
+        FOR NOT FOUND SET v_finished = 1;
+ OPEN i_cursor;
+ get_stats: LOOP
+
+ FETCH i_cursor INTO v_officeid,voucher_stock;
+ IF v_finished = 1 THEN
+	LEAVE get_stats;
+ END IF;
+	update m_office_statistics set voucher_stock=voucher_stock where office_id = v_officeid;
+ END LOOP get_stats;
+ CLOSE i_cursor;
+ 
+END //
+DELIMITER ;
+
+drop  procedure IF EXISTS update_stat4;
+
+DELIMITER //
+CREATE DEFINER=`root`@`localhost` PROCEDURE `update_stat4`()
+BEGIN
+DECLARE v_finished INTEGER DEFAULT 0;
+DECLARE v_officeid INTEGER DEFAULT 0;
+DECLARE provision_pending INTEGER DEFAULT 0;
+
+ DEClARE i_cursor CURSOR FOR
+	select c.office_id,count(1) from m_client c 
+ JOIN
+`b_orders` `o` ON `c`.`id` = `o`.`client_id`
+LEFT JOIN
+`b_provisioning_request_detail` `bpr` ON COALESCE(JSON_EXTRACT(request_message,
+'$.newOrderList[0].orderId'),
+JSON_EXTRACT(request_message,
+'$.oldOrderList[0].orderId')) = o.id
+LEFT JOIN
+`b_provisioning_request` `bp` ON `bp`.`id` = `bpr`.`provisioning_req_id`
+WHERE
+`o`.order_status = 4 
+AND bp.status IN ('F' , 'N') and date(bp.start_date)=date(curdate())
+GROUP BY 1; 
+
+ DECLARE CONTINUE HANDLER
+        FOR NOT FOUND SET v_finished = 1;
+ OPEN i_cursor;
+ get_stats: LOOP
+
+ FETCH i_cursor INTO v_officeid,provision_pending;
+ IF v_finished = 1 THEN
+	LEAVE get_stats;
+ END IF;
+	update m_office_statistics set provision_pending=provision_pending where office_id = v_officeid;
+ END LOOP get_stats;
+ CLOSE i_cursor;
+ 
+END //
+DELIMITER ;
+
 
 drop  procedure IF EXISTS update_stat2;
-
-
 DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `update_stat2`()
 BEGIN
@@ -106,9 +176,11 @@ drop procedure IF EXISTS update_stats;
 DELIMITER //
 CREATE PROCEDURE update_stats()
 BEGIN
-insert into m_office_statistics  select id,id,0,0,0,0 from m_office where id not in (select office_id from m_office_statistics);
+insert into m_office_statistics  select id,id,0,0,0,0,0,0 from m_office where id not in (select office_id from m_office_statistics);
  call update_stat1();
  call update_stat2();
+ call update_stat3();
+ call update_stat4();
 END //
 DELIMITER ;
 
@@ -204,9 +276,5 @@ End;
  
 END //
 DELIMITER ;
-
-
-
-
 
 

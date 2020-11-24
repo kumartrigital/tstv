@@ -81,6 +81,24 @@ public class ServiceMasterReadPlatformServiceImpl implements  ServiceMasterReadP
 			sql = sql + " AND d.service_category = '"+serviceCategory+"' ";
 		}
 		sqlBuilder.append(sql);
+		
+		String sqlSearch = searchCodes.getSqlSearch();
+        String extraCriteria = null;
+	    if (sqlSearch != null) {
+	    	sqlSearch=sqlSearch.trim();
+	    	extraCriteria = " and (d.id like '%"+sqlSearch+"%' OR" 
+	    			+ " d.service_code like '%"+sqlSearch+"%' OR"
+	    			+ " d.service_description like '%"+sqlSearch+"%' OR"
+	    			+ " d.service_unittype like '%"+sqlSearch+"%' OR"
+	    			+ " d.status like '%"+sqlSearch+"%' OR"
+	    			+ " d.is_optional like '%"+sqlSearch+"%' OR"
+	    			+ " d.is_auto like '%"+sqlSearch+"%' OR"
+	    			+ " d.service_category like '%"+sqlSearch+"%')";
+	    }
+        
+        if (null != extraCriteria) {
+            sqlBuilder.append(extraCriteria);
+        }
 		if (searchCodes.isLimited()) {
             sqlBuilder.append(" limit ").append(searchCodes.getLimit());
         }
