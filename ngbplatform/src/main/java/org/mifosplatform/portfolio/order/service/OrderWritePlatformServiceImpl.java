@@ -1238,7 +1238,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 	public CommandProcessingResult retrackOsdMessage(final JsonCommand command) {
 		Configuration isPaywizard = configurationRepository.findOneByName(ConfigurationConstants.PAYWIZARD_INTEGRATION);
 		try {
-			System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
+			//System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
 			this.context.authenticatedUser();
 			int count = 0;
 
