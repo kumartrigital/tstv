@@ -61,6 +61,8 @@ public class ProvisioningRequest extends AbstractAuditableCustom<AppUser, Long>{
 	@Column(name = "version")
 	private int version='1';
 	
+	@Column(name = "entitlement_count")
+	private int entitlementCount = 0;
 	
 	
 	@LazyCollection(LazyCollectionOption.FALSE)
@@ -243,6 +245,18 @@ public class ProvisioningRequest extends AbstractAuditableCustom<AppUser, Long>{
 	        }
 	        return actualChanges;
 
+	}
+
+
+
+	public int getEntitlementCount() {
+		return entitlementCount;
+	}
+
+
+
+	public void setEntitlementCount(int entitlementCount) {
+		this.entitlementCount = entitlementCount;
 	}
 	
 
