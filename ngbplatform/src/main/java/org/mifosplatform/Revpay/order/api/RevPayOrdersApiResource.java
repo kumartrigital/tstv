@@ -105,37 +105,18 @@ public class RevPayOrdersApiResource {
 	@POST
 	@Path("/orderlock/{txref}/{flwref}")
 	@SuppressWarnings("unchecked")
-	public Response CallBackRavePayOrder(@PathParam("txref") String txref,@PathParam("flwref") String flwref , @QueryParam("resp") String resp) {
-	
+	public Response CallBackRavePayOrder(@PathParam("txref") String txref, @PathParam("flwref") String flwref,
+			@QueryParam("resp") String resp) {
+
 		URI indexPath = null;
 
-		/*	public Response CallBackRavePayOrder(@QueryParam("txref") Long txref, @QueryParam("flwref") String flwref) {
-
-		 * if (cancelled == true) { try { indexPath = new
-		 * URI("http://tstvbilling.com:3301/topup"+txref); } catch (URISyntaxException
-		 * e) { e.printStackTrace(); } return
-		 * Response.temporaryRedirect(indexPath).build();
-		 * 
-		 * }
-		 */
-//<<<<<<< HEAD
-	//	String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
-        String status  = "success";
+		// String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
+		String status = "success";
 		String locale = "en";
 		String dateFormat = "dd MMMM yyyy";
 		PaymentGateway revpayOrder = paymentGatewayRepository.findPaymentDetailsByPaymentId(txref.toString());
 		if (status.equalsIgnoreCase("success")) {
 
-/*=======
-		//String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
-		String status = "success";
-
-		String locale = "en";
-		String dateFormat = "dd MMMM yyyy";
-		PaymentGateway revpayOrder = paymentGatewayRepository.findPaymentDetailsByPaymentId(txref.toString());
-		if (status.equals("success")) {
-			
->>>>>>> 2056955c6e69be9d0c825b4b94af82de0eab947f*/
 			revpayOrder.setStatus("Success");
 			revpayOrder.setPartyId(flwref);
 			paymentGatewayRepository.save(revpayOrder);
@@ -155,16 +136,6 @@ public class RevPayOrdersApiResource {
 			SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
 
 			paymentJson.put("paymentDate", formatter.format(revpayOrder.getPaymentDate()));
-			/*
-			 * final JsonElement paymentElement =
-			 * fromApiJsonHelper.parse(paymentJson.toString());
-			 * 
-			 * JsonCommand paymentCommandJson = new JsonCommand(null,
-			 * paymentElement.toString(), paymentElement, fromApiJsonHelper, null, null,
-			 * null, null, null, null, null, null, null, null, null, null);
-			 * 
-			 * PaymentWritePlatformService.createPayment(paymentCommandJson);
-			 */
 
 			paymentsApiResource.createPayment(Long.parseLong(revpayOrder.getReffernceId()), paymentJson.toString());
 
@@ -174,7 +145,7 @@ public class RevPayOrdersApiResource {
 
 		}
 		try {
-			indexPath = new URI("http://tstv.nextgenerationbilling.com:3301/renewal-customer/"+txref);
+			indexPath = new URI("https://tstv.nextgenerationbilling.com/#/renewal-customer/" + txref);
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
@@ -195,4 +166,57 @@ public class RevPayOrdersApiResource {
 
 	}
 
+	
+	@GET
+	@Path("/orderlock/{txref}/{flwref}")
+	@SuppressWarnings("unchecked")
+	public Response GetcllBackRavePayOrder(@PathParam("txref") Long txref, @PathParam("flwref") String flwref,
+			@QueryParam("resp") String resp) {
+
+		URI indexPath = null;
+
+		 String status = revPayOrderWritePlatformService.revTransactionStatus(txref);
+		//String status = "success";
+		String locale = "en";
+		String dateFormat = "dd MMMM yyyy";
+		PaymentGateway revpayOrder = paymentGatewayRepository.findPaymentDetailsByPaymentId(txref.toString());
+		if (status.equalsIgnoreCase("success")) {
+
+			revpayOrder.setStatus("Success");
+			revpayOrder.setPartyId(flwref);
+			paymentGatewayRepository.save(revpayOrder);
+
+			JSONObject paymentJson = new JSONObject();
+			paymentJson.put("clientId", revpayOrder.getReffernceId());
+			paymentJson.put("isSubscriptionPayment", "false");
+			paymentJson.put("isChequeSelected", "No");
+			paymentJson.put("paymentCode", 27);
+			paymentJson.put("receiptNo", revpayOrder.getReceiptNo());// need to
+			paymentJson.put("remarks", "nothing");
+			paymentJson.put("amountPaid", revpayOrder.getAmountPaid());// need to
+			paymentJson.put("paymentType", "Online Payment");
+			paymentJson.put("locale", locale);
+			paymentJson.put("dateFormat", dateFormat);
+			paymentJson.put("paymentSource", null);
+			SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
+
+			paymentJson.put("paymentDate", formatter.format(revpayOrder.getPaymentDate()));
+
+			paymentsApiResource.createPayment(Long.parseLong(revpayOrder.getReffernceId()), paymentJson.toString());
+
+		} else {
+			revpayOrder.setStatus("Failed");
+			paymentGatewayRepository.save(revpayOrder);
+
+		}
+		try {
+			indexPath = new URI("https://tstv.nextgenerationbilling.com/#/renewal-customer/" + txref);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+
+		return Response.temporaryRedirect(indexPath).build();
+	}
+
+	
 }
