@@ -1491,7 +1491,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 			ClientData clientData = ClientData.searchClient(null);
 			clientData.setC_active(c_active);
 			clientData.setVoucher_stock(voucherStock);
-			clientData.setC_inactive(provisionPending);
+			clientData.setProvision_pending(provisionPending);
 			clientData.setC_instock(c_instock);
 			return clientData;
 		}
