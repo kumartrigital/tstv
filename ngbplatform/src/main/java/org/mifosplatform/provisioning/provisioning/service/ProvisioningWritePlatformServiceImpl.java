@@ -766,7 +766,7 @@ public class ProvisioningWritePlatformServiceImpl implements ProvisioningWritePl
 				JSONArray deviceDetails = this.retrivedeviceDetailsforProvisioningRequest((List<HardwarePlanData>)hardwareAndDeviceDetails.get("hardwareMappingDetails"),(List<OneTimeSaleData>)hardwareAndDeviceDetails.get("deviceDetails"),command);
 				requestMessageObject.put("newDeviceInfo", String.valueOf(deviceDetails));
 				if (requestType.equals("RETRACK")||requestType.equals("HARDRETRACK")) {
-					JSONArray orderDetails=this.orderInfoJsonPreparation(this.orderRepository.findOrdersOnlyByClientService(clientServiceId), this.clientServiceRepository.findOne(clientServiceId), provisioningSystem);
+					JSONArray orderDetails=this.orderInfoJsonPreparation(this.orderRepository.findActiveOrdersOnlyByClientService(clientServiceId), this.clientServiceRepository.findOne(clientServiceId), provisioningSystem);
 					requestMessageObject.put("newOrderList", String.valueOf(orderDetails));
 					requestMessageObject.put("oldOrderList", String.valueOf(orderDetails));					
 					requestMessageObject.put("clientInfo", command.stringValueOfParameterName("clientInfo"));
