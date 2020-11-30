@@ -199,7 +199,10 @@ public class OrderPrice extends AbstractAuditableCustom<AppUser, Long> {
 	}
 
 	public void setInvoiceTillDate(LocalDateTime invoiceTillDate) {
-		this.invoiceTillDate = invoiceTillDate.toDate();
+		if(invoiceTillDate!=null)
+			this.invoiceTillDate = invoiceTillDate.toDate();
+		else
+			this.invoiceTillDate = null;
 	}
 
 	public char isIsDeleted() {

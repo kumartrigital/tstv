@@ -329,7 +329,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
 					message.setSubject("Password reset link ");
 					String BasicBase64format = Base64.encodeBase64String(secretKey.getBytes());
 					message.setText("Dear user please click below link to reset you password"+ "\n" +
-							"http://52.66.208.119:8877/change-password/" + "" + userId + "" + "/" + BasicBase64format);
+							"http://tstv.nextgenerationbilling.com/change-password/" + "" + userId + "" + "/" + BasicBase64format);
 					System.out.println("Sending");
 					Transport.send(message);
 					Calendar calendar = Calendar.getInstance();

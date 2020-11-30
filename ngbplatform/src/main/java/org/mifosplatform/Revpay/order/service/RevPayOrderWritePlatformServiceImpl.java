@@ -72,7 +72,6 @@ public class RevPayOrderWritePlatformServiceImpl implements RevPayOrderWritePlat
 			paymentGatewayRepository.save(PaymentGateway);
 			revorder.put("revorder", "order created sucussfully");
 			revorder.put("callbackUrl", "https://tstv.nextgenerationbilling.com/ngbplatform/api/v1/revpay/orderlock/"+PaymentGateway.getPaymentId()+"/");
-
 			return new CommandProcessingResult(revorder);
 			
 			

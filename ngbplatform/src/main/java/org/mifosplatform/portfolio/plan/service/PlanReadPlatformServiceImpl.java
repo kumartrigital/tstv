@@ -9,8 +9,11 @@ import java.util.List;
 import org.joda.time.LocalDate;
 import org.mifosplatform.billing.planprice.data.PriceData;
 import org.mifosplatform.billing.planprice.service.PriceReadPlatformService;
+import org.mifosplatform.crm.clientprospect.service.SearchSqlQuery;
 import org.mifosplatform.infrastructure.core.data.EnumOptionData;
 import org.mifosplatform.infrastructure.core.domain.JdbcSupport;
+import org.mifosplatform.infrastructure.core.service.Page;
+import org.mifosplatform.infrastructure.core.service.PaginationHelper;
 import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.organisation.partner.data.PartnersData;
@@ -41,6 +44,7 @@ public class PlanReadPlatformServiceImpl implements PlanReadPlatformService {
 	private static PriceReadPlatformService priceReadPlatformService;
 	public final static String POST_PAID = "postpaid";
 	public final static String PREPAID = "prepaid";
+	private final PaginationHelper<PlanData> paginationHelper = new PaginationHelper<PlanData>();
 
 	@Autowired
 	public PlanReadPlatformServiceImpl(final PlatformSecurityContext context,
@@ -51,21 +55,53 @@ public class PlanReadPlatformServiceImpl implements PlanReadPlatformService {
 	}
 
 	@Override
-	public List<PlanData> retrievePlanData(final String planType) {
+	public Page<PlanData> retrievePlanData(final String planType, SearchSqlQuery searchSqlPlan) {
 
 		context.authenticatedUser();
 		String sql = null;
 		PlanDataMapper mapper = new PlanDataMapper(this.priceReadPlatformService);
 
-		if (planType != null && PREPAID.equalsIgnoreCase(planType)) {
-			sql = "select " + mapper.schema() + " AND pm.is_prepaid ='Y' " + "group by pm.id";
-		} else if (planType != null && planType.equalsIgnoreCase(POST_PAID)) {
-			sql = "select " + mapper.schema() + " AND pm.is_prepaid ='N' " + "group by pm.id";
-		} else {
-			sql = "select " + mapper.schema() + "group by pm.id";
+		final StringBuilder sqlBuilder = new StringBuilder(200);
+		if(planType!=null && PREPAID.equalsIgnoreCase(planType)){
+			sqlBuilder.append("select " + mapper.schema()+" AND pm.is_prepaid ='Y' ");
+		}else if(planType!=null && planType.equalsIgnoreCase(POST_PAID)){
+			sqlBuilder.append("select " + mapper.schema()+" AND pm.is_prepaid ='N' ");
+		}else{
+			sqlBuilder.append("select " + mapper.schema());
 		}
 
-		return this.jdbcTemplate.query(sql, mapper, new Object[] {});
+		String sqlSearch = searchSqlPlan.getSqlSearch();
+        String extraCriteria = null;
+	    if (sqlSearch != null) {
+	    	sqlSearch=sqlSearch.trim();
+	    	extraCriteria = " and ( pm.id like '%"+sqlSearch+"%' OR" 
+	    			+ " pm.plan_code like '%"+sqlSearch+"%' OR"
+	    			+ " plan_description like '%"+sqlSearch+"%' OR"
+	    			+ " pm.start_date like '%"+sqlSearch+"%' OR"
+	    			+ " pm.end_date like '%"+sqlSearch+"%' OR"
+	    			+ " pm.plan_status like '%"+sqlSearch+"%' OR"
+	    			+ " pm.is_prepaid like '%"+sqlSearch+"%' OR"
+	    			+ " pm.provision_sys like '%"+sqlSearch+"%' OR"
+	    			+ " pm.plan_type like '%"+sqlSearch+"%')";
+	    }
+	    
+	    if (null != extraCriteria) {
+            sqlBuilder.append(extraCriteria);
+        }
+	    
+	    sqlBuilder.append("group by pm.id");
+	    
+	    if (searchSqlPlan.isLimited()) {
+            sqlBuilder.append(" limit ").append(searchSqlPlan.getLimit());
+        }
+
+        if (searchSqlPlan.isOffset()) {
+            sqlBuilder.append(" offset ").append(searchSqlPlan.getOffset());
+        }
+        
+		//return this.jdbcTemplate.query(sql, mapper, new Object[] {});
+        return this.paginationHelper.fetchPage(this.jdbcTemplate, "SELECT FOUND_ROWS()",sqlBuilder.toString(),
+		        new Object[] {}, mapper);
 	}
 
 	private static final class PlanDataMapper implements RowMapper<PlanData> {
