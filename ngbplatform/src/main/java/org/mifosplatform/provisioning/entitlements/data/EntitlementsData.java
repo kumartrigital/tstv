@@ -74,6 +74,7 @@ public class EntitlementsData {
 	private Long resource_id;
 	private Long client_id;
 	private String command_as_json;
+	private Integer entitlementCount;
 	public EntitlementsData(){
 		
 	}

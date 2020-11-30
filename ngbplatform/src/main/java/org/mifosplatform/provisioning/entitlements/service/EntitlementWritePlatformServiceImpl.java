@@ -183,6 +183,7 @@ public class EntitlementWritePlatformServiceImpl implements EntitlementWritePlat
 		
 		ProvisioningRequest processRequest = this.provisioningRequestRepository.findOne(command.entityId());
 		int version = processRequest.getVersion();
+		Integer entitlementCount = processRequest.getEntitlementCount();
 		/*if(requestType !=null && requestType.equalsIgnoreCase(ProvisioningApiConstants.REQUEST_CREATE_AGENT)){
 			
 			if(agentResourceId !=null ){
@@ -209,12 +210,17 @@ public class EntitlementWritePlatformServiceImpl implements EntitlementWritePlat
 		String requestMessage= null;
 		for(ProvisioningRequestDetail provisioningRequestDetail: provisioningRequestDetails){
 			requestMessage= provisioningRequestDetail.getRequestMessage();
-			break;
+			break;		
 		}
+		
 		if (receiveMessage.contains("failure :")) {
 			status = 'F';
 			processRequest.setVersion(++version);
+			entitlementCount++;
+			processRequest.setEntitlementCount(entitlementCount);
+			this.provisioningRequestRepository.save(processRequest);
 		} else {
+			
 			if(!(requestMessage.contains("Action"))){
 				CommandProcessingResult result = this.crmServices.createBillPlan(processRequest);
 			}
