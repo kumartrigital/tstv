@@ -31,6 +31,7 @@ insert  into m_office_statistics  select id,id,0,0,0,0,0,0 from m_office;
 
 drop  procedure IF EXISTS update_stat3;
 
+
 DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `update_stat3`()
 BEGIN

@@ -74,6 +74,6 @@ public interface OrderReadPlatformService {
 
 	OrderUssdData getOrderDetailsBySerialNo(String orderId);
     
-    
+	List<Long> retrieveClientActiveOrders(Long clientId);
     
 }
