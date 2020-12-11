@@ -5,12 +5,6 @@ Update m_appuser set email='admin@clientmail.com' where id in (0,1,2);
 alter table m_office_balance add wallet_amount decimal(24,4);
 
 
-DROP VIEW IF EXISTS `provisioning_requests_vw`;
-
-Create view provisioning_requests_vw as Select a.id,a.client_id,a.request_type,a.status,a.created_date, 
-b.response_message,b.response_status from b_provisioning_request a,
-b_provisioning_request_detail b where a.id=b.provisioning_req_id ;
-
 DROP TABLE IF EXISTS `m_office_statistics`;
 
 CREATE TABLE IF NOT EXISTS `m_office_statistics` (
@@ -30,6 +24,7 @@ CREATE TABLE IF NOT EXISTS `m_office_statistics` (
 insert  into m_office_statistics  select id,id,0,0,0,0,0,0 from m_office;
 
 drop  procedure IF EXISTS update_stat3;
+
 
 DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `update_stat3`()
@@ -112,7 +107,7 @@ DECLARE v_allocated INTEGER DEFAULT 0;
  DEClARE i_cursor CURSOR FOR
  Select office_id,case when counts=1 then 'Allocated' else 'In Stock' end as stock_status ,
 	count(0) from (select office_id, case when client_id>0 then 1 else 0 end as counts 
-	from b_item_detail where item_master_id=18) x group by 1,2;
+	from b_item_detail where item_master_id in  (select id from b_item_master where item_class=1 and is_deleted = 'n')) x group by 1,2;
 
  DECLARE CONTINUE HANDLER
         FOR NOT FOUND SET v_finished = 1;
@@ -147,9 +142,9 @@ DECLARE v_stock INTEGER DEFAULT 0;
 DECLARE v_allocated INTEGER DEFAULT 0;
 
  DEClARE i_cursor CURSOR FOR
- select c.id,b.status_enum,count(0) counts from b_client_service a, m_client b,m_office c 
- where a.client_id=b.id and b.office_id=c.id and a.status='ACTIVE' and b.status_enum in (300,600) group by b.status_enum,c.id;
- 
+ select c.id,b.status_enum,count(0) counts from b_client_service a, m_client b,m_office c ,b_allocation d
+ where a.client_id=b.id and b.office_id=c.id and a.client_id=d.client_id and a.status='ACTIVE' and d.status='allocated' 
+ and a.service_id>0 and b.status_enum in (300,600) group by 1,2;
  DECLARE CONTINUE HANDLER
         FOR NOT FOUND SET v_finished = 1;
  OPEN i_cursor;
@@ -194,7 +189,7 @@ SET GLOBAL event_scheduler = ON;
 	
 
 CREATE DEFINER=`root`@`localhost` EVENT `dashboard` ON SCHEDULE EVERY
- 30 MINUTE DO call update_stats();
+ 10 MINUTE DO call update_stats();
 
 
 
@@ -253,8 +248,9 @@ DECLARE v_stock INTEGER DEFAULT 0;
 DECLARE v_allocated INTEGER DEFAULT 0;
 
  DEClARE i_cursor CURSOR FOR
- select c.id,a.status,count(0) counts from b_client_service a, m_client b,m_office c 
- where a.client_id=b.id and b.office_id=c.id and a.status='ACTIVE' and b.status_enum in (300,600) group by b.status_enum,c.id;
+ select c.id,b.status_enum,count(0) counts from b_client_service a, m_client b,m_office c ,b_allocation d
+ where a.client_id=b.id and b.office_id=c.id and a.client_id=d.client_id and a.status='ACTIVE' and d.status='allocated' 
+ and a.service_id>0 and b.status_enum in (300,600) group by 1,2;
 
  DECLARE CONTINUE HANDLER
         FOR NOT FOUND SET v_finished = 1;
@@ -265,7 +261,7 @@ DECLARE v_allocated INTEGER DEFAULT 0;
  IF v_finished = 1 THEN
 	LEAVE get_stats;
  END IF;
-	if l_text ='ACTIVE' then
+	if l_text ='300' then
 	 Update m_office_statistics set  client_active=v_stock where office_id = v_officeid;
 	else
 	 Update m_office_statistics set  client_inactive=v_stock where office_id = v_officeid;

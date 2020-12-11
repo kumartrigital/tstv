@@ -1211,5 +1211,35 @@ public class OrderReadPlatformServiceImpl implements OrderReadPlatformService
 		}
 
 	}
+	@Override
+	public List<Long> retrieveClientActiveOrders(Long clientId) {
+
+		try {
+			final ClientActivePlanListMapper mapper = new ClientActivePlanListMapper();
+			String sql = null;
+			
+				sql = "select " + mapper.activeOrderSchema();
+				
+			return jdbcTemplate.query(sql, mapper, new Object[] { clientId });
+		} catch (EmptyResultDataAccessException e) {
+			return null;
+		}
+
+	}
+
+	private static final class ClientActivePlanListMapper implements RowMapper<Long> {
+
+		
+
+		public String activeOrderSchema() {
+			return " plan_id AS planId FROM b_orders o WHERE o.client_id = ? AND o.order_status in (1,4) ";
+		}
+
+		@Override
+		public Long mapRow(final ResultSet rs, final int rowNum) throws SQLException {
+			final Long planId = rs.getLong("planId");
+			return planId;
+		}
+	}
 
 }

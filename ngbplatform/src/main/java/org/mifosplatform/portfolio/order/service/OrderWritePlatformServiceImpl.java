@@ -121,6 +121,7 @@ import org.mifosplatform.portfolio.order.exceptions.OrderNotFoundException;
 import org.mifosplatform.portfolio.order.serialization.OrderCommandFromApiJsonDeserializer;
 import org.mifosplatform.portfolio.plan.domain.Plan;
 import org.mifosplatform.portfolio.plan.domain.PlanRepository;
+import org.mifosplatform.portfolio.plan.exceptions.PlanAlreadyAddedException;
 import org.mifosplatform.portfolio.plan.exceptions.PlanNotFundException;
 import org.mifosplatform.portfolio.plan.service.PlanReadPlatformService;
 import org.mifosplatform.portfolio.product.domain.Product;
@@ -366,6 +367,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 	public CommandProcessingResult createOrder(Long clientId, JsonCommand command, Order oldOrder) {
 
 		try {
+			List<Long> planIds = new ArrayList<Long>();
 			this.fromApiJsonDeserializer.validateForCreate(command.json());
 			String serialnum = command.stringValueOfParameterNamed("serialnumber");
 			String allocationType = command.stringValueOfParameterNamed("allocation_type");
@@ -379,6 +381,9 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 					EventActionConstants.EVENT_CREATE_ORDER, command.json(), userId);
 
 			Plan plan = this.planRepository.findPlanCheckDeletedStatus(command.longValueOfParameterNamed("planCode"));
+			planIds = this.orderReadPlatformService.retrieveClientActiveOrders(clientId);
+			if(planIds.contains(plan.getId()))
+				throw new PlanAlreadyAddedException(plan.getDescription());
 			Order order = this.orderAssembler.assembleOrderDetails(command, clientId, plan);
 			// this condition is for updating order_No for multiple plans
 			if (command.stringValueOfParameterName("orderNo") != null) {
@@ -870,7 +875,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			if (orderDetails.getStatus().equals(StatusTypeEnum.ACTIVE.getValue().longValue())) {
 
 				newStartdate = new LocalDateTime(orderDetails.getEndDate()).plusDays(1);
-				System.out.println("new StartDate" + newStartdate);
+				//System.out.println("new StartDate" + newStartdate);
 				requstStatus = UserActionStatusEnumaration
 						.OrderStatusType(UserActionStatusTypeEnum.RENEWAL_BEFORE_AUTOEXIPIRY).getValue();
 				requestStatusForProv = ProvisioningApiConstants.REQUEST_RENEWAL_BE;
@@ -891,10 +896,10 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				orderDetails.setNextBillableDay(null);
 				orderDetails.setRenewalDate(newStartdate.toDate());
 			}
-			System.out.println("calling " + newStartdate);
+		//	System.out.println("calling " + newStartdate);
 			LocalDateTime renewalEndDate = this.orderAssembler.calculateEndDate(newStartdate,
 					contractDetails.getSubscriptionType(), contractDetails.getUnits());
-			System.out.println("renewalEndDate::" + renewalEndDate);
+			//System.out.println("renewalEndDate::" + renewalEndDate);
 			Configuration configuration = this.configurationRepository
 					.findOneByName(ConfigurationConstants.CONFIG_ALIGN_BIILING_CYCLE);
 
@@ -1259,7 +1264,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 						.retriveActiveClientsInOrg(command.longValueOfParameterNamed("clientServiceId"));
 				for (ClientServiceData clientServiceData : clientServiceDatas) {
 					JsonCommand com = this.provisioningJsonPreparation(command, clientServiceData);
-					System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
+					//System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
 					this.provisioningWritePlatformService.createProvisioningRequestForCommandCenter(com);
 					count++;
 				}
@@ -1289,7 +1294,6 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 						.retrieveClientAndServiceParam(clientServiceId);
 				provisioningObject.addProperty("provisioningSystem", provisioningData.getProvisioningSystem());
 				ClientData clientData = provisioningData.getClientData();
-
 				JSONObject clientJsonObject = new JSONObject();
 				clientJsonObject.put("accountNo", clientData.getAccountNo());
 				clientJsonObject.put("officeId", clientData.getOfficeId());

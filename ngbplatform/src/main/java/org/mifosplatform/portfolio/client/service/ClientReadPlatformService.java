@@ -94,7 +94,8 @@ public interface ClientReadPlatformService {
 	List<ClientData> retrieveClientsForLCO(Long officeId);
 	
 
-	
+	List<ClientData> retrieveRenewalClientsForLCO(Long officeId, String fromDate, String toDate);
+
 
 
 	

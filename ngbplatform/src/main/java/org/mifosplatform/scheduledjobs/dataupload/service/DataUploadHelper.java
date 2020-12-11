@@ -927,8 +927,8 @@ public class DataUploadHelper {
 
 			if (!currentLineData[0].isEmpty()) {
 				final PlanData planData = this.planReadPlatformService.retrievePlanDataPoIdsNew(currentLineData[0]);
-
-				if (planData != null) {
+				Plan plan = this.planRepository.findOne(planData.getId());
+				if (planData != null && plan != null) {
 					if (planData.getPlanPoid() != null) {
 						planObject.put("planPoId", planData.getPlanPoid().toString());
 					}
@@ -937,16 +937,21 @@ public class DataUploadHelper {
 					}
 
 					planObject.put("planDescription", planData.getplanDescription());
-					planObject.put("id", planData.getId());
+					planObject.put("id", planData.getId().toString());
 					planObject.put("planCode", planData.getId().toString());
 
-					if (planData.getIsPrepaid().equalsIgnoreCase("Y")) {
+					if(plan.getIsAdvance() == 'Y' || plan.getIsAdvance() == 'y') {
+						planObject.put("contractPeriod", 1);
+						planObject.put("paytermCode", "Daily");
+					}
+					else if (planData.getIsPrepaid().equalsIgnoreCase("Y")) {
 						planObject.put("contractPeriod", clientbilldata.getBillFrequency());
 						planObject.put("paytermCode", clientbilldata.getBillFrequencyCode());
 					} else {
 						planObject.put("contractPeriod", "1");
 						planObject.put("paytermCode", clientbilldata.getBillFrequencyCode());
 					}
+					
 
 				} else {
 					errorData.add(new MRNErrorData((long) i, "plancode is invalid"));
