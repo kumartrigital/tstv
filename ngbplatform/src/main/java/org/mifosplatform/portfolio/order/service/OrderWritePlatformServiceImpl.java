@@ -1294,7 +1294,6 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 						.retrieveClientAndServiceParam(clientServiceId);
 				provisioningObject.addProperty("provisioningSystem", provisioningData.getProvisioningSystem());
 				ClientData clientData = provisioningData.getClientData();
-
 				JSONObject clientJsonObject = new JSONObject();
 				clientJsonObject.put("accountNo", clientData.getAccountNo());
 				clientJsonObject.put("officeId", clientData.getOfficeId());

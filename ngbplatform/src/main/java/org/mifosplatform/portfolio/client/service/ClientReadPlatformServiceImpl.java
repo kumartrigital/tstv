@@ -1840,5 +1840,61 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 			return clientData;
 		}
 	}
+	@Override
+	public List<ClientData> retrieveRenewalClientsForLCO(Long officeId, 
+			String fromDate, String toDate) {
+		// TODO Auto-generated method stub
+		try {
+			final AppUser currentUser = context.authenticatedUser();
+			//final String hierarchy = currentUser.getOffice().getHierarchy();
+			//final String hierarchySearchString = hierarchy + "%";
+			final RenewalClientLCOMapper renewalClientLCOMapper = new RenewalClientLCOMapper();
+			StringBuilder sql = new StringBuilder("select " + renewalClientLCOMapper.schema());
+			sql.append(
+					" where co.order_status=1 and alloc.status='allocated' and im.item_class=1  and o.id=? and co.end_date >= DATE(NOW()) + INTERVAL datediff(?,?) DAY order by 1");
+			return jdbcTemplate.query(sql.toString(), renewalClientLCOMapper, new Object[] { officeId,toDate,fromDate });
+		} catch (EmptyResultDataAccessException e) {
+			return null;
+		}
+	}
+	private class RenewalClientLCOMapper implements RowMapper<ClientData> {
 
+		public String schema() {
+
+			return " c.id as id,o.id as officeId,co.id as orderId,alloc.serial_no as stbId,c.account_no as accountNo,"
+					+ " c.display_name as displayName,c.phone as phone,b.balance_amount AS balanceAmount, "
+					+ " co.start_date as startDate,"
+					+ "co.end_date as endDate "
+					+ " from m_client c JOIN m_office o ON o.id = c.office_id"
+					+ " LEFT OUTER JOIN b_client_balance b ON b.client_id = c.id"
+					+ " LEFT OUTER JOIN b_orders co ON co.client_id=c.id"
+					+ " LEFT OUTER JOIN b_order_price cop on cop.order_id=co.id"
+					+ " LEFT OUTER JOIN b_allocation alloc on alloc.client_id=c.id"
+					+ " LEFT OUTER JOIN b_item_master im on im.id=alloc.item_master_id";
+
+		}
+
+		@Override
+		public ClientData mapRow(ResultSet rs, int rowNum) throws SQLException {
+
+			final String accountNo = rs.getString("accountNo");
+			final BigDecimal clientBalance = rs.getBigDecimal("balanceAmount");
+			final Long id = JdbcSupport.getLong(rs, "id");
+			final Long officeId = JdbcSupport.getLong(rs, "officeId");
+			final String displayName = rs.getString("displayName");
+			final String phone = rs.getString("phone");
+			final Long orderId = rs.getLong("orderId");
+			final String stbId = rs.getString("stbId");
+			final LocalDate startDate = JdbcSupport.getLocalDate(rs, "startDate");
+			final LocalDate endDate = JdbcSupport.getLocalDate(rs, "endDate");
+			ClientData clientData = ClientData.lcoClient(id, accountNo, displayName, phone, clientBalance, orderId,
+					stbId, startDate, endDate);
+
+			clientData.setOfficeId(officeId);
+
+			return clientData;
+		}
+	}
+
+	
 }

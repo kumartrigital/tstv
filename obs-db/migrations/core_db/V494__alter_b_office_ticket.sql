@@ -32,4 +32,4 @@ END IF;
 END //
 DELIMITER ;
 call columnOfficeType();
-Drop procedure IF EXISTS columnOfficeType;f
+Drop procedure IF EXISTS columnOfficeType;

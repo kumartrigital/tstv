@@ -101,6 +101,19 @@ public class LCOApiResource {
 		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 		return this.toApiJsonSerializer.serialize(clientData);
 	}
-	
+	@GET
+	@Path("/renewallist/{officeId}")//officeId
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String retrieveLcoRenewalClientData(	@PathParam("officeId") final Long officeId,@Context final UriInfo uriInfo,
+			@QueryParam("fromDate") final String fromDate,
+			@QueryParam("toDate") final String toDate) {
+
+		context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+	    /*List<ClientData> clientData = this.clientReadPlatformService.retrieveClientsForLCO(officeId);*/
+	    final ClientData clientData = new ClientData(this.clientReadPlatformService.retrieveRenewalClientsForLCO(officeId,toDate,fromDate));
+		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+		return this.toApiJsonSerializer.serialize(clientData);
+	}
 	
 }
