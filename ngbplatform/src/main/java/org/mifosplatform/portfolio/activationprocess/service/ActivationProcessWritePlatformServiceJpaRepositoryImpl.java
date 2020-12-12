@@ -1276,7 +1276,7 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 		JsonCommand comm = null;
 		String clientServicePoId = null;
 		Set<String> substances = null;
-		System.out.println(command.json());
+		//System.out.println(command.json());
 		try {
 			CommandProcessingResult result = this.crmServices.createClientSimpleActivation(command);
 

@@ -89,8 +89,6 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
 	private String defaultCode = "default";
 	private String GET = "GET";
 	private String POST = "POST";
-	private String inviewname = "admin";
-	private String inviewpassword = "admin";
 
 	@Autowired
 	public TenantAwareBasicAuthenticationFilter(final AuthenticationManager authenticationManager,
@@ -180,8 +178,8 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
 					||(path.contains("/api/v1/revpay/orderlock") && request.getMethod().equalsIgnoreCase(GET))) {
 
 				tenant = getTenantIdentifier(request);
-				String username = "admin";
-				String password = "Tstv2019!";
+				String username = "integration";
+				String password = "integration";
 
 				boolean isValid = this.licenseUpdateService.checkIfKeyIsValid(tenant.getLicensekey(), tenant);
 				if (!isValid) {
@@ -194,8 +192,8 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
 			else if (path.contains("/api/v1/revpay/status") && request.getMethod().equalsIgnoreCase(GET)) {
 
 				tenant = getTenantIdentifier(request);
-				String username = "admin";
-				String password = "Tstv2019!";
+				String username = "integration";
+				String password = "integration";
 
 				boolean isValid = this.licenseUpdateService.checkIfKeyIsValid(tenant.getLicensekey(), tenant);
 				if (!isValid) {
