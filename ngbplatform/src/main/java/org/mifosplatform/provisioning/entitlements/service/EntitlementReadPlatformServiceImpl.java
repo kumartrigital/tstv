@@ -103,7 +103,7 @@ public class EntitlementReadPlatformServiceImpl implements
 				   " LEFT JOIN m_client c ON c.id = p.client_id LEFT JOIN b_clientuser u ON u.client_id = p.client_id "+
 				   " WHERE p.id = pr.provisioning_req_id AND p.status = 'N' ";*/
 			return " p.id as id,p.version as version,pr.id as prDetailsId,p.request_type as requestType,pr.request_message as requestMessage, pr.response_status as taskNo,p.priority as priority from "
-				 + " b_provisioning_request p JOIN b_provisioning_request_detail pr on p.id = pr.provisioning_req_id AND p.status in( 'N','F') and p.entitlement_count<=3 ";
+				 + " b_provisioning_request p JOIN b_provisioning_request_detail pr on p.id = pr.provisioning_req_id AND p.status in( 'N','F') or p.entitlement_count<=3 ";
 		}
 
 	}
