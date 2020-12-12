@@ -111,7 +111,7 @@ public class LCOApiResource {
 
 		context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
 	    /*List<ClientData> clientData = this.clientReadPlatformService.retrieveClientsForLCO(officeId);*/
-	    final ClientData clientData = new ClientData(this.clientReadPlatformService.retrieveRenewalClientsForLCO(officeId,toDate,fromDate));
+	    final ClientData clientData = new ClientData(this.clientReadPlatformService.retrieveRenewalClientsForLCO(officeId,fromDate,toDate));
 		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
 		return this.toApiJsonSerializer.serialize(clientData);
 	}

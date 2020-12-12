@@ -1851,8 +1851,9 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 			final RenewalClientLCOMapper renewalClientLCOMapper = new RenewalClientLCOMapper();
 			StringBuilder sql = new StringBuilder("select " + renewalClientLCOMapper.schema());
 			sql.append(
-					" where co.order_status=1 and alloc.status='allocated' and im.item_class=1  and o.id=? and co.end_date >= DATE(NOW()) + INTERVAL datediff(?,?) DAY order by 1");
-			return jdbcTemplate.query(sql.toString(), renewalClientLCOMapper, new Object[] { officeId,toDate,fromDate });
+					" where co.order_status=1 and alloc.status='allocated' and im.item_class=1  and o.id= "+officeId+""
+					+ " and co.end_date between "+ "'"+fromDate+ "'"+ " and "+"'"+toDate+"'" + " order by 1");
+			return jdbcTemplate.query(sql.toString(), renewalClientLCOMapper, new Object[] { });
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
