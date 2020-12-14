@@ -156,7 +156,7 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
         availableRoles.removeAll(selectedUserRoles);
 
         return AppUserData.instance(user.getId(), user.getUsername(), user.getEmail(), user.getOffice().getId(),
-                user.getOffice().getName(), user.getFirstname(), user.getLastname(), availableRoles, selectedUserRoles);
+                user.getOffice().getName(), user.getFirstname(), user.getLastname(), availableRoles, selectedUserRoles, user.getOffice().getOfficeType());
     }
     @Override
     public AppUserData retrieveUserByUsername(final String username) {
@@ -175,7 +175,7 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
         availableRoles.removeAll(selectedUserRoles);
 
         return AppUserData.instance(user.getId(), user.getUsername(), user.getEmail(), user.getOffice().getId(),
-                user.getOffice().getName(), user.getFirstname(), user.getLastname(), availableRoles, selectedUserRoles);
+                user.getOffice().getName(), user.getFirstname(), user.getLastname(), availableRoles, selectedUserRoles, user.getOffice().getOfficeType());
     }
     @Override
     public AppUserData retrieveUserByEmail(final String email) {
@@ -194,7 +194,7 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
         availableRoles.removeAll(selectedUserRoles);
 
         return AppUserData.instance(user.getId(), user.getUsername(), user.getEmail(), user.getOffice().getId(),
-                user.getOffice().getName(), user.getFirstname(), user.getLastname(), availableRoles, selectedUserRoles);
+                user.getOffice().getName(), user.getFirstname(), user.getLastname(), availableRoles, selectedUserRoles, user.getOffice().getOfficeType());
     }
     
     
@@ -211,13 +211,14 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
             final String email = resultSet.getString("email");
             final Long officeId = JdbcSupport.getLong(resultSet, "officeId");
             final String officeName = resultSet.getString("officeName");
+            final String officeType = resultSet.getString("officeType");
 
-            return AppUserData.instance(id, username, email, officeId, officeName, firstname, lastname, null, null);
+            return AppUserData.instance(id, username, email, officeId, officeName, firstname, lastname, null, null, officeType);
         }
 
         public String schema() {
             return " u.id as id, u.username as username, u.firstname as firstname, u.lastname as lastname, u.email as email,"
-                    + " u.office_id as officeId, o.name as officeName from m_appuser u "
+                    + " u.office_id as officeId, o.name as officeName, o.office_type as officeType from m_appuser u "
                     + " join m_office o on o.id = u.office_id where o.hierarchy like ? and u.is_deleted=0 ";
         }
 
@@ -263,7 +264,7 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
 				throws SQLException {
 			final Long id= rs.getLong("id");
 			final String username = rs.getString("username");
-			return new AppUserData(id,username, username, id, username, username, username, null, null, null);
+			return new AppUserData(id,username, username, id, username, username, username, null, null, null, null);
 		}	
 		
 	}
@@ -290,7 +291,7 @@ public class AppUserReadPlatformServiceImpl implements AppUserReadPlatformServic
 				throws SQLException {
 			final Long id= rs.getLong("id");
 			final String username = rs.getString("username");
-			return new AppUserData(id,username, null, null, null, null, null, null, null, null);
+			return new AppUserData(id,username, null, null, null, null, null, null, null, null, null);
 		}	
 		
 	}

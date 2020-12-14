@@ -202,7 +202,7 @@ public class TicketMappingReadPlatformServiceImpl implements TicketMappingReadPl
 				final Long id= rs.getLong("id");
 				final Long userId = id;
 				final String username = rs.getString("username");
-				AppUserData appUserData= new AppUserData(id,username, username, id, username, username, username, null, null, null);
+				AppUserData appUserData= new AppUserData(id,username, username, id, username, username, username, null, null, null, null);
 				appUserData.setUserId(userId);
 				return appUserData;
 			}	
