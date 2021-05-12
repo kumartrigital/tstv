@@ -328,7 +328,7 @@ public class AppUserWritePlatformServiceJpaRepositoryImpl implements AppUserWrit
 					message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(user.getEmail()));
 					message.setSubject("Password reset link ");
 					String BasicBase64format = Base64.encodeBase64String(secretKey.getBytes());
-					message.setText("Dear user please click below link to reset you password"+ "\n" +
+					message.setText("Dear user please click below link to reset your password"+ "\n" +
 							"http://tstv.nextgenerationbilling.com/change-password/" + "" + userId + "" + "/" + BasicBase64format);
 					System.out.println("Sending");
 					Transport.send(message);

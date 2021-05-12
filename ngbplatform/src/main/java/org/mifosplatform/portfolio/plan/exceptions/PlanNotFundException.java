@@ -18,4 +18,10 @@ public PlanNotFundException(Long planId) {
 
 }
 
+public PlanNotFundException(String string) {
+	// TODO Auto-generated constructor stub
+	super("error.msg.plan.is_advanced.flag.false.error","Plan is not configured with is_advanced flag");
+
+}
+
 }

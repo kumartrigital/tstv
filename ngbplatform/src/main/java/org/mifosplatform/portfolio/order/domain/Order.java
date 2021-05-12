@@ -14,6 +14,7 @@ import javax.persistence.TemporalType;
 
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.domain.AbstractAuditableCustom;
@@ -130,7 +131,7 @@ public class Order extends AbstractAuditableCustom<AppUser, Long> {
     	this.isDeleted='n';
 		this.userAction=userAction;
 		this.orderNo="";
-		this.activeDate=startDate.toDate();
+		//this.activeDate=startDate.toDate();
 		this.billingAlign = isPrepaid == 'N' ? 'Y':'N';
 		this.autoRenew=autoRenew;
 		this.clientServiceId = clientServiceId;
@@ -144,7 +145,7 @@ public Order(Long clientId, Long planId, Long contractPeriod, String paytermCode
 	    this.billingFrequency=paytermCode;
 	    this.billingAlign=billAlign;
 	    this.startDate=startdate.toDate();
-	    this.activeDate=startdate.toDate();
+	   // this.activeDate=startdate.toDate();
 	    this.autoRenew=autoRenew;
 	    this.clientServiceId = clientServiceId;
 	}
@@ -428,6 +429,11 @@ public Order(Long clientId, Long planId, Long contractPeriod, String paytermCode
 
 	public void setOrderNo(String orderNo) {
 		this.orderNo = orderNo;
+	}
+
+
+	public void setActiveDate(LocalDateTime activeDate) {
+		this.activeDate = activeDate.toDate();
 	}
 	
 	

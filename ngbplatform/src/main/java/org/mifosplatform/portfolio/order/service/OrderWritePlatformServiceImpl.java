@@ -385,13 +385,15 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			if(planIds.contains(plan.getId()))
 				throw new PlanAlreadyAddedException(plan.getDescription());
 			Order order = this.orderAssembler.assembleOrderDetails(command, clientId, plan);
+			order.setActiveDate(new LocalDateTime());
+			order.setStartDate(new LocalDateTime());
 			// this condition is for updating order_No for multiple plans
 			if (command.stringValueOfParameterName("orderNo") != null) {
 				order.setOrderNo(command.stringValueOfParameterName("orderNo"));
 			}
 
 			this.orderRepository.save(order);
-
+			
 			boolean isNewPlan = command.booleanPrimitiveValueOfParameterNamed("isNewplan");
 			String requstStatus = UserActionStatusTypeEnum.ACTIVATION.toString();
 
@@ -481,6 +483,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			 * clientId, order.getId().toString(), "ACTIVATION"); }
 			 */
 			Order order1 = this.orderRepository.findOne(order.getId());
+		
 			ClientService clientService = null;
 			clientService = this.clientServiceRepository.findOne(command.longValueOfParameterNamed("clientServiceId"));
 			if (clientService.getStatus().equalsIgnoreCase("NEW")) {
@@ -489,10 +492,13 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				order1.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.PENDING).getId());
 			}
 
-			if ("Y".equalsIgnoreCase(String.valueOf(plan.isPrepaid()))) {
-				order1.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.ACTIVE).getId());
-			}
+			/*
+			 * if ("Y".equalsIgnoreCase(String.valueOf(plan.isPrepaid()))) {
+			 * order1.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.ACTIVE
+			 * ).getId()); }
+			 */
 			order = this.orderRepository.saveAndFlush(order1);
+			
 
 			if (!plan.getProvisionSystem().equalsIgnoreCase("None")) {
 				this.provisioningRequesting(order, oldOrder, plan.isPrepaid());
@@ -1244,7 +1250,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 		Configuration isPaywizard = configurationRepository.findOneByName(ConfigurationConstants.PAYWIZARD_INTEGRATION);
 		try {
 			//System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
-			this.context.authenticatedUser();
+			//this.context.authenticatedUser();
 			int count = 0;
 
 			if (command.stringValueOfParameterName("type").equalsIgnoreCase("group")
