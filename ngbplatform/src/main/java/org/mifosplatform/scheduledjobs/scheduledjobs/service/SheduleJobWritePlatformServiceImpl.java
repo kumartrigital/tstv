@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -90,13 +91,22 @@ import org.mifosplatform.organisation.message.exception.BillingMessageTemplateNo
 import org.mifosplatform.organisation.message.service.BillingMessageDataWritePlatformService;
 import org.mifosplatform.organisation.message.service.BillingMesssageReadPlatformService;
 import org.mifosplatform.organisation.message.service.MessagePlatformEmailService;
+import org.mifosplatform.portfolio.client.data.ClientData;
+import org.mifosplatform.portfolio.client.domain.Client;
+import org.mifosplatform.portfolio.client.domain.ClientRepository;
 import org.mifosplatform.portfolio.client.exception.ClientNotFoundException;
+import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
+import org.mifosplatform.portfolio.clientservice.domain.ClientService;
+import org.mifosplatform.portfolio.clientservice.domain.ClientServiceRepository;
 import org.mifosplatform.portfolio.order.data.OrderData;
+import org.mifosplatform.portfolio.order.data.OrderPriceData;
 import org.mifosplatform.portfolio.order.domain.Order;
 import org.mifosplatform.portfolio.order.domain.OrderPrice;
+import org.mifosplatform.portfolio.order.domain.OrderPriceRepository;
 import org.mifosplatform.portfolio.order.domain.OrderRepository;
 import org.mifosplatform.portfolio.order.service.OrderAddOnsWritePlatformService;
 import org.mifosplatform.portfolio.order.service.OrderReadPlatformService;
+import org.mifosplatform.portfolio.order.service.OrderWritePlatformService;
 import org.mifosplatform.portfolio.plan.domain.Plan;
 import org.mifosplatform.portfolio.plan.domain.PlanRepository;
 import org.mifosplatform.provisioning.entitlements.data.ClientEntitlementData;
@@ -137,6 +147,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import me.legrange.mikrotik.ApiConnection;
 import me.legrange.mikrotik.MikrotikApiException;
@@ -187,6 +198,12 @@ public class SheduleJobWritePlatformServiceImpl implements SheduleJobWritePlatfo
 	private final EventPriceWritePlatformService eventPriceWritePlatformService;
 	private final EventMasterRepository eventMasterRepository;
 	private final EventPriceRepository eventPricingRepository;
+	private final 	 PlatformSecurityContext context;
+	private final ClientReadPlatformService clientReadPlatformService;
+	private final ClientServiceRepository clientServiceRepository;
+	private final OrderWritePlatformService orderWritePlatformService;
+	private final ClientRepository clientRepository;
+	private final OrderPriceRepository orderPriceRepository;
 
 	@Autowired
 	public SheduleJobWritePlatformServiceImpl(final ChargingCustomerOrders invoiceClient,
@@ -223,7 +240,13 @@ public class SheduleJobWritePlatformServiceImpl implements SheduleJobWritePlatfo
 			final MediaAssetWritePlatformService mediaAssetWritePlatformService,
 			final EventMasterWritePlatformService eventMasterWritePlatformService,
 			final EventPriceWritePlatformService eventPriceWritePlatformService, final PlatformSecurityContext context,
-			final EventMasterRepository eventMasterRepository, final EventPriceRepository eventPricingRepository) {
+			final EventMasterRepository eventMasterRepository, 
+			final EventPriceRepository eventPricingRepository,
+			final ClientReadPlatformService clientReadPlatformService,
+			final ClientServiceRepository clientServiceRepository,
+			final OrderWritePlatformService orderWritePlatformService,
+			final ClientRepository clientRepository,
+			final OrderPriceRepository orderPriceRepository) {
 
 		this.sheduleJobReadPlatformService = sheduleJobReadPlatformService;
 		this.invoiceClient = invoiceClient;
@@ -267,6 +290,12 @@ public class SheduleJobWritePlatformServiceImpl implements SheduleJobWritePlatfo
 		this.eventPriceWritePlatformService = eventPriceWritePlatformService;
 		this.eventMasterRepository = eventMasterRepository;
 		this.eventPricingRepository = eventPricingRepository;
+		this.context = context;
+		this.clientReadPlatformService = clientReadPlatformService;
+		this.clientServiceRepository = clientServiceRepository;
+		this.orderWritePlatformService = orderWritePlatformService;
+		this.clientRepository = clientRepository;
+		this.orderPriceRepository = orderPriceRepository;
 	}
 
 	@Override
@@ -965,7 +994,7 @@ public class SheduleJobWritePlatformServiceImpl implements SheduleJobWritePlatfo
 	public void processNotify() {
 
 		try {
-			Long id  = null;
+			Long id = null;
 			System.out.println("Processing Notify Details.......");
 			List<BillingMessageDataForProcessing> billingMessageDataForProcessings = this.billingMesssageReadPlatformService
 					.retrieveMessageDataForProcessing(id);
@@ -2342,7 +2371,7 @@ public class SheduleJobWritePlatformServiceImpl implements SheduleJobWritePlatfo
 										ticketEscalationMessageDetails,
 										BillingMessageTemplateConstants.MESSAGE_TEMPLATE_MESSAGE_TYPE, null);
 								this.billingMessageRepository.save(billingMessage);
-								//this.processNotify(billingMessage.getId());
+								// this.processNotify(billingMessage.getId());
 							} else {
 								throw new BillingMessageTemplateNotFoundException(
 										BillingMessageTemplateConstants.MESSAGE_TEMPLATE_NOTIFY_TICKET_ESCALATION);
@@ -2365,6 +2394,105 @@ public class SheduleJobWritePlatformServiceImpl implements SheduleJobWritePlatfo
 				System.out.println("Ticket Escalation Job is Completed..."
 						+ ThreadLocalContextUtil.getTenant().getTenantIdentifier());
 			}
+		} catch (IOException exception) {
+			System.out.println(exception);
+		} catch (Exception dve) {
+			System.out.println(dve.getMessage());
+			handleCodeDataIntegrityIssues(null, dve);
+		}
+	}
+
+	@Override
+	@CronTarget(jobName = JobName.OSD_MSG_UPCOMING_RENEWAL)
+	public void processingOsdMessageUpcomingRenewal() {
+
+		try {
+			System.out.println("Processing osd renewal Details.......");
+			JobParameterData data = this.sheduleJobReadPlatformService.getJobParameters(JobName.OSD_MSG_UPCOMING_RENEWAL.toString());
+			if (data != null) {
+				MifosPlatformTenant tenant = ThreadLocalContextUtil.getTenant();
+				final DateTimeZone zone = DateTimeZone.forID(tenant.getTimezoneId());
+				LocalTime date = new LocalTime(zone);
+				String dateTime = date.getHourOfDay() + "_" + date.getMinuteOfHour() + "_" + date.getSecondOfMinute();
+				String path = FileUtils.generateLogFileDirectory() + JobName.OSD_MSG_UPCOMING_RENEWAL.toString() + File.separator
+						+ "UpComingRenewals_" + DateUtils.getLocalDateOfTenant().toString().replace("-", "") + "_" + dateTime
+						+ ".log";
+				File fileHandler = new File(path.trim());
+				fileHandler.createNewFile();
+				FileWriter fw = new FileWriter(fileHandler);
+				FileUtils.BILLING_JOB_PATH = fileHandler.getAbsolutePath();
+				fw.append("Processing upcoming renewal Details....... \r\n");
+				/*
+				 * List<ScheduleJobData> sheduleDatas = this.sheduleJobReadPlatformService
+				 * .retrieveSheduleJobParameterDetails(data.getBatchName()); if
+				 * (sheduleDatas.isEmpty()) { fw.append("ScheduleJobData Empty \r\n"); }
+				 */
+
+			/*	
+				for (ScheduleJobData scheduleJobData : sheduleDatas) {
+					fw.append("ScheduleJobData id= " + scheduleJobData.getId() + " ,BatchName= "
+							+ scheduleJobData.getBatchName() + " ,query=" + scheduleJobData.getQuery() + "\r\n");
+*/
+					List<Client> clientList = this.clientRepository.findByStatusEnum(300);	
+				    if (clientList.isEmpty()) {
+						fw.append("no records are found for upcomming renewal  \r\n");
+					}
+				    for(Client clientInfo : clientList ) {
+					    BigDecimal amount = BigDecimal.ZERO;
+					    BigDecimal RenewalPriceForThreeDays = BigDecimal.ZERO;
+				    	ClientData clientData = this.clientReadPlatformService.retrieveOneByClientId("id", clientInfo.getId().toString());
+				    	List<Order> orderList = this.orderRepository.findActiveOrdersOnlyByClientId(clientInfo.getId());
+				    	for(Order orderData : orderList) {
+				    		OrderPrice orderPrice = this.orderPriceRepository.findOrders(orderData);
+				    		//System.out.println("orderId" +orderData.getId());
+				    		//System.out.println("orderPrice"+orderPrice.getPrice());
+				    			amount = amount.add(orderPrice.getPrice());
+				    			//System.out.println("amount" +amount);
+				    	}
+				    	RenewalPriceForThreeDays = amount.multiply(new BigDecimal(3));
+				    	if(RenewalPriceForThreeDays.compareTo(clientData.getBalanceAmount())>0) {
+				    		System.out.println("osd processing");
+						JSONArray clienyArray = new JSONArray();
+
+						JSONObject json = new JSONObject();
+						json.put("requestType","OSD");
+						json.put("provisioningSystem",1);
+						json.put("type","single");
+						json.put("clientId",clientInfo.getId().toString());
+						ClientService clientService = this.clientServiceRepository.findwithClientIdAndService(clientInfo.getId());
+						json.put("clientServiceId",clientService.getId());
+					//	{"requestMessage":[{"priority":"0"},{"message":"you box is getting expire in 3 days"}],"requestType":"OSD","provisioningSystem":1,"type":"single","clientId":"248","clientServiceId":1050}
+						final JsonObject requestMessage1 = new JsonObject();
+						final JsonObject requestMessage2 = new JsonObject();
+
+						requestMessage1.addProperty("priority", "0");
+						
+						requestMessage2.addProperty("message", "Dear Customer your subscription is going to expire in 3 days, Please Recharge your STB to enjoy uninterrupted services");
+						clienyArray.put(requestMessage1);
+						clienyArray.put(requestMessage2);
+						json.put("requestMessage", clienyArray);
+					
+
+						final JsonElement retrackElement = fromApiJsonHelper.parse(json.toString().replace("\"{\\", "{").replace("\\\"}\"", "\"}").replace("\\\":\\\"", "\" : \""));
+
+						final JsonCommand command = new JsonCommand(null, retrackElement.toString(), retrackElement,
+								fromApiJsonHelper, null, clientInfo.getId(), null, null, null, null, null, null, null, null, null,
+								null);
+						this.orderWritePlatformService.retrackOsdMessage(command);
+						System.out.println("osd message sent");
+						fw.append("osd message sent to  client id :" + clientInfo.getId() + "\r\n");
+				    	}
+					}
+					fw.append("OSD for upcoming renewal Job is Completed..." + ThreadLocalContextUtil.getTenant().getTenantIdentifier()
+							+ " . \r\n");
+
+				fw.flush();
+				fw.close();
+				System.out.println(
+						"Auto Exipiry Job is Completed..." + ThreadLocalContextUtil.getTenant().getTenantIdentifier());
+			}
+		
+			
 		} catch (IOException exception) {
 			System.out.println(exception);
 		} catch (Exception dve) {

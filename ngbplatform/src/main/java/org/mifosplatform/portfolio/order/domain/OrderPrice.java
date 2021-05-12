@@ -264,8 +264,8 @@ public class OrderPrice extends AbstractAuditableCustom<AppUser, Long> {
 		}
 	}
 
-	public void setBillStartDate(LocalDateTime startDate) {
-		this.billStartDate = startDate.toDate();
+	public void setBillStartDate(LocalDateTime billstartDate) {
+		this.billStartDate = billstartDate.toDate();
 
 	}
 

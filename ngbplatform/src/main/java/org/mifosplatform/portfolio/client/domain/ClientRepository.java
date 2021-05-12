@@ -5,6 +5,8 @@
  */
 package org.mifosplatform.portfolio.client.domain;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -18,6 +20,9 @@ public interface ClientRepository extends JpaRepository<Client, Long>, JpaSpecif
 	
 	@Query("from Client client where client.email=:email")
 	Client findwithEmail(@Param("email") String email);
+	
+	@Query("from Client client where client.status = :statusEnum")
+	List<Client> findByStatusEnum(@Param("statusEnum") Integer statusEnum);
 	
 
 	

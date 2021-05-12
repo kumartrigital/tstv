@@ -78,7 +78,8 @@ public class ChargingOrderReadPlatformServiceImplementation implements ChargingO
 
 		public String orderIdSchema() {
 
-			return " distinct os.id as orderId,os.plan_id as planId,op.duration_type as durationType, Date_format(IFNULL(op.invoice_tilldate,op.bill_start_date), '%Y-%m-%d') as billStartDate,op.chargeOwner as chargeOwner,"
+			return " distinct os.id as orderId,os.plan_id as planId,op.duration_type as durationType, Date_format(IFNULL(op.invoice_tilldate,op.bill_start_date), "
+					+ "'%Y-%m-%d') as billStartDate,op.chargeOwner as chargeOwner,"
 					+ "ifnull(op.next_billable_day,op.bill_start_date) as  nextBillableDate,os.billing_align as billingAlign,op.invoice_tilldate as invoiceTillDate,"
 					+ " op.charge_code AS chargeCode, op.bill_end_date as billEndDate FROM b_orders os left outer join b_order_price op on os.id = op.order_id "
 					+ " WHERE os.client_id = ? and os.order_status=1 "

@@ -21,6 +21,10 @@ public interface ClientServiceRepository extends JpaRepository<ClientService,Lon
 	@Query("from ClientService clientService where clientService.clientId=:clientId and clientService.status='ACTIVE'")
 	List<ClientService> findwithClientId(@Param("clientId") Long clientId);
 	
+	@Query("from ClientService clientService where clientService.clientId=:clientId and clientService.serviceId=3 and clientService.status='ACTIVE'")
+	ClientService findwithClientIdAndService(@Param("clientId") Long clientId);
+	
+	
 	@Query("from ClientService clientService where clientService.clientId=:clientId and clientService.status='SUSPENDED'")
 	List<ClientService> findwithClientIdSuspend(@Param("clientId") Long clientId);
 	

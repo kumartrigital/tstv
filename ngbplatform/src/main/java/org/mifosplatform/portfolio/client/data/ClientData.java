@@ -8,6 +8,7 @@ package org.mifosplatform.portfolio.client.data;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -1483,6 +1484,7 @@ public static ClientData fromCelcomJson(String result,ClientData clientData) thr
 	public String getClientServicePoId() {
 		return clientServicePoId;
 	}
+	
 
 	public void setClientServicePoId(String clientServicePoId) {
 		this.clientServicePoId = clientServicePoId;

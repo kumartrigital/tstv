@@ -287,15 +287,16 @@ public class OrderAssembler {
 
 		// This method is used to check the client has balance to activate prepaid
 		// service
-		Long count1 = this.orderRepository.findOrdersCount(clientId);
-		if (count1 != 0) {
-			if (plan.getIsPrepaid() == 'Y' || plan.getIsPrepaid() == 'y' || plan.getIsAdvance() == 'y'
-					|| plan.getIsAdvance() == 'Y') {
-
-				this.slabRateWritePlatformService.prepaidService(clientId, totalOrderPrice);
-
-			}
-		}
+		/*
+		 * Long count1 = this.orderRepository.findOrdersCount(clientId); if (count1 !=
+		 * 0) { if (plan.getIsPrepaid() == 'Y' || plan.getIsPrepaid() == 'y' ||
+		 * plan.getIsAdvance() == 'y' || plan.getIsAdvance() == 'Y') {
+		 * 
+		 * this.slabRateWritePlatformService.prepaidService(clientId, totalOrderPrice);
+		 * 
+		 * } }
+		 */
+		 
 
 		if (command.hasParameter("products")) {
 			for (JsonElement productDetail : productDetails) {

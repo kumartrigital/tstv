@@ -96,6 +96,8 @@ public interface ClientReadPlatformService {
 
 	List<ClientData> retrieveRenewalClientsForLCO(Long officeId, String fromDate, String toDate);
 
+	ClientData retrieveOneByClientId(String columnName, String columnValue);
+
 
 
 	
