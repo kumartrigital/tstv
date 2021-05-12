@@ -1241,7 +1241,25 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 			throw new ClientNotFoundException(columnValue);
 		}
 	}
-
+	@Override
+	public ClientData retrieveOneByClientId(String columnName, String columnValue) {
+		try {
+			final ClientMapper clientMapper = new ClientMapper();
+			final String sql = "select " + clientMapper.schema() + " where  c." + columnName
+					+ " = '" + columnValue + "' ";
+			return this.jdbcTemplate.queryForObject(sql, clientMapper, new Object[] { });
+			/*
+			 * final String clientGroupsSql = "select " +
+			 * this.clientGroupsMapper.parentGroupsSchema();
+			 * 
+			 * final Collection<GroupGeneralData> parentGroups =
+			 * this.jdbcTemplate.query(clientGroupsSql, this.clientGroupsMapper,new Object[]
+			 * {}); return ClientData.setParentGroups(clientData, parentGroups);
+			 */
+		} catch (EmptyResultDataAccessException e) {
+			throw new ClientNotFoundException(columnValue);
+		}
+	}
 	@Override
 	public ClientData retrieveClientForcrm(final String columnName, final String columnValue) {
 		final ClientDataMapper mapper = new ClientDataMapper();
@@ -1845,15 +1863,19 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 			String fromDate, String toDate) {
 		// TODO Auto-generated method stub
 		try {
+			
 			final AppUser currentUser = context.authenticatedUser();
 			//final String hierarchy = currentUser.getOffice().getHierarchy();
 			//final String hierarchySearchString = hierarchy + "%";
+			LocalDate fromDate1 = new LocalDate();
+			LocalDate toDate1 = fromDate1.plusDays(3);
+			Long officeId1 = currentUser.getOffice().getId();
+			//fetching list of customer going to expireplans
 			final RenewalClientLCOMapper renewalClientLCOMapper = new RenewalClientLCOMapper();
-			StringBuilder sql = new StringBuilder("select " + renewalClientLCOMapper.schema());
+			StringBuilder sql = new StringBuilder("select  distinct" + renewalClientLCOMapper.schema());
 			sql.append(
-					" where co.order_status=1 and alloc.status='allocated' and im.item_class=1  and o.id= "+officeId+""
-					+ " and co.end_date between "+ "'"+fromDate+ "'"+ " and "+"'"+toDate+"'" + " order by 1");
-			return jdbcTemplate.query(sql.toString(), renewalClientLCOMapper, new Object[] { });
+					" where co.order_status=1 and alloc.status='allocated' and im.item_class=1  and o.id=? and co.end_date <= DATE(NOW()) + INTERVAL datediff(?,?) DAY order by 1");
+			return jdbcTemplate.query(sql.toString(), renewalClientLCOMapper, new Object[] { officeId1,toDate1,fromDate1 });
 		} catch (EmptyResultDataAccessException e) {
 			return null;
 		}
@@ -1895,7 +1917,6 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 
 			return clientData;
 		}
-	}
-
+	}	
 	
 }

@@ -1,7 +1,7 @@
 SET sql_safe_updates=0;
 
 Update m_appuser set email='admin@clientmail.com' where id in (0,1,2);
---alter table m_office_balance add credit_limit decimal(24,4);
+alter table m_office_balance add credit_limit decimal(24,4);
 alter table m_office_balance add wallet_amount decimal(24,4);
 
 
@@ -65,12 +65,12 @@ DECLARE provision_pending INTEGER DEFAULT 0;
 	select c.office_id,count(1) from m_client c 
  JOIN
 `b_orders` `o` ON `c`.`id` = `o`.`client_id`
-LEFT JOIN
+ JOIN
 `b_provisioning_request_detail` `bpr` ON COALESCE(JSON_EXTRACT(request_message,
 '$.newOrderList[0].orderId'),
 JSON_EXTRACT(request_message,
 '$.oldOrderList[0].orderId')) = o.id
-LEFT JOIN
+ JOIN
 `b_provisioning_request` `bp` ON `bp`.`id` = `bpr`.`provisioning_req_id`
 WHERE
 `o`.order_status = 4 
@@ -143,7 +143,7 @@ DECLARE v_allocated INTEGER DEFAULT 0;
 
  DEClARE i_cursor CURSOR FOR
  select c.id,b.status_enum,count(0) counts from b_client_service a, m_client b,m_office c ,b_allocation d
- where a.client_id=b.id and b.office_id=c.id and a.client_id=d.client_id and a.status='ACTIVE' and d.status='allocated' 
+ where a.client_id=b.id and b.office_id=c.id and a.client_id=d.client_id and a.status in ('ACTIVE','SUSPENDED') and d.status='allocated' 
  and a.service_id>0 and b.status_enum in (300,600) group by 1,2;
  DECLARE CONTINUE HANDLER
         FOR NOT FOUND SET v_finished = 1;
@@ -189,7 +189,7 @@ SET GLOBAL event_scheduler = ON;
 	
 
 CREATE DEFINER=`root`@`localhost` EVENT `dashboard` ON SCHEDULE EVERY
- 10 MINUTE DO call update_stats();
+ 20 MINUTE DO call update_stats();
 
 
 

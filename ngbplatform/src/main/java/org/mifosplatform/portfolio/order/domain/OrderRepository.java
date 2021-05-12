@@ -28,6 +28,9 @@ public interface OrderRepository  extends JpaRepository<Order, Long>,
     @Query("from Order order where order.clientServiceId=:clientServiceId and order.status = 1")
  	List<Order> findActiveOrdersOnlyByClientService(@Param("clientServiceId")Long clientServiceId); 
 
+    @Query("from Order order where order.clientId=:clientId and order.status = 1")
+ 	List<Order> findActiveOrdersOnlyByClientId(@Param("clientId")Long clientId); 
+
 
     @Query("from Order order where order.orderNo=:orderNo")
    	Order findOrderByOrderNO(@Param("orderNo")String orderNo);

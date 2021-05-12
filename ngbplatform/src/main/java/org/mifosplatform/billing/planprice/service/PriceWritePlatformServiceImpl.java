@@ -1,5 +1,6 @@
 package org.mifosplatform.billing.planprice.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,7 @@ import org.mifosplatform.organisation.voucher.domain.VoucherRepository;
 import org.mifosplatform.organisation.voucher.exception.AlreadyProcessedException;
 import org.mifosplatform.portfolio.contract.domain.Contract;
 import org.mifosplatform.portfolio.contract.domain.ContractRepository;
+import org.mifosplatform.portfolio.order.domain.OrderPriceRepository;
 import org.mifosplatform.portfolio.plan.data.ServiceData;
 import org.mifosplatform.portfolio.service.serialization.PriceCommandFromApiJsonDeserializer;
 import org.mifosplatform.portfolio.service.service.ServiceMasterWritePlatformServiceImpl;
@@ -46,12 +48,14 @@ public class PriceWritePlatformServiceImpl implements PriceWritePlatformService 
 	 private final VoucherRepository voucherRepository;
 	 private final ChargeCodeRepository chargeCodeRepository;
 	 private final ContractRepository contractRepository;
+	 private final OrderPriceRepository orderPriceRepository;
 	 
 	@Autowired
 	 public PriceWritePlatformServiceImpl(final PlatformSecurityContext context,final PriceReadPlatformService priceReadPlatformService,
 			 final PriceCommandFromApiJsonDeserializer fromApiJsonDeserializer,final PriceRepository priceRepository,
 			 final VoucherRepository voucherRepository, final ChargeCodeRepository chargeCodeRepository,
-			 final ContractRepository contractRepository)
+			 final ContractRepository contractRepository, final OrderPriceRepository orderPriceRepository)
+			 
 		{
 			this.context=context;
 			this.priceReadPlatformService=priceReadPlatformService;
@@ -60,6 +64,7 @@ public class PriceWritePlatformServiceImpl implements PriceWritePlatformService 
 			this.voucherRepository=voucherRepository;
 			this.chargeCodeRepository = chargeCodeRepository;
 			this.contractRepository = contractRepository;
+			this.orderPriceRepository = orderPriceRepository;
 		}
 	
 	@Override
@@ -144,7 +149,12 @@ public class PriceWritePlatformServiceImpl implements PriceWritePlatformService 
 			}
 				
 			final Price price = retrievePriceBy(priceId);
+			
 			final  Map<String, Object> changes = price.update(command);
+			if(changes.containsKey("price")) {
+				final BigDecimal newPrice = command.bigDecimalValueOfParameterNamed("price");
+			this.orderPriceRepository.updateOrderPriceAlongWithPlanPrice(newPrice, price.getPlanCode());
+			}
 			if (changes.containsKey("duration")) {
 				
 				final List<VoucherData> voucherData= this.priceReadPlatformService.retrieveVoucherDatas(priceId);

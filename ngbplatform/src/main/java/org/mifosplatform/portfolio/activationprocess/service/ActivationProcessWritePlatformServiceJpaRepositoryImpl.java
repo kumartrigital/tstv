@@ -447,7 +447,7 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 							e.printStackTrace();
 						}
 						// Number of Days to add
-						c.add(Calendar.DAY_OF_MONTH, 15);
+						c.add(Calendar.MONTH, 1);
 						// Date after adding the days to the given date
 						String endDate = formatter.format(c.getTime());		
 						planDataObject.put("endDate", endDate);
@@ -637,7 +637,7 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 						}
 
 						// Number of Days to add
-						c.add(Calendar.DAY_OF_MONTH, 15);
+						c.add(Calendar.MONTH, 1);
 						// Date after adding the days to the given date
 						String endDate = formatter.format(c.getTime());
 						planDataJson1.put("endDate", endDate);

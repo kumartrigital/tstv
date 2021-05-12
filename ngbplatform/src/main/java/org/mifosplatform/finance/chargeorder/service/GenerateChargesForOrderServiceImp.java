@@ -737,7 +737,6 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 			for (Map.Entry<Long, BillItem> entry : billItemMap.entrySet()) {
 				
 				/*Save item record */
-				
 				billItem = this.billItemRepository.saveAndFlush(entry.getValue());
 				
 				//System.out.println("Save operation" +entry.getValue());
@@ -783,6 +782,8 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 				
 //System.out.println("clientBalance "+clientBalanceObject);
 				this.chargingOrderWritePlatformService.updateClientBalance(clientBalanceCommand);
+				
+				System.out.println("Charging for self" +billItem.getClientId()+ " Amount" +billItem.getInvoiceAmount()+" billitem id" +billItem.getId() +"order id "+orderId);
 				billItemList.add(entry.getValue());
 				billItemMap.clear();
 				

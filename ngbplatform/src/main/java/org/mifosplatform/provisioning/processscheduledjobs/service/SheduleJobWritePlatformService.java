@@ -43,4 +43,6 @@ public interface SheduleJobWritePlatformService {
 
 	void processCatalogue();
 
+	void processingOsdMessageUpcomingRenewal();
+
 }
