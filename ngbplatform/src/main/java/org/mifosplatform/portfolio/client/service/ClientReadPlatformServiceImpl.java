@@ -1461,7 +1461,26 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 		}
 
 	}
-
+	@Override
+	public Boolean refreshdashboard(Long officeId) {
+		try {
+		
+	String  dropEvent = "DROP EVENT  IF EXISTS dashboard";
+	String scheduleron="SET GLOBAL event_scheduler = ON";
+	String createDashBoard = "CREATE DEFINER=`root`@`localhost` EVENT `dashboard` ON SCHEDULE EVERY\n"
+			+ " 20 MINUTE DO call update_stats()";
+	this.jdbcTemplate.execute(dropEvent);
+	this.jdbcTemplate.execute(scheduleron);
+	this.jdbcTemplate.execute(createDashBoard);
+			 return true;
+		}catch(Exception e){
+			e.printStackTrace();
+			return false;
+			
+		}
+		
+	}
+	
 	private static final class UserdeviceinformationMapper implements RowMapper<ClientData> {
 
 		public String Schema(String hierarchy) {

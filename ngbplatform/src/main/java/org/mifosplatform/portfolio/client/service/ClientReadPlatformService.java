@@ -70,7 +70,7 @@ public interface ClientReadPlatformService {
 	
 	ClientData userdeviceinformation(Long officeId);
 
-
+	Boolean refreshdashboard(Long officeId);
 	List<ClientCategoryData> retrievedParentsChild(Long clientId);
 
 	Long retriveMaxClientId();
