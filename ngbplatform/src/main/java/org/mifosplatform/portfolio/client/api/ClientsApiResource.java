@@ -585,5 +585,27 @@ public class ClientsApiResource {
 		return this.toApiJsonSerializer.serialize(settings, clientData, RESPONSE_DATA_PARAMETERS);
 
 	}
+	
+	@GET
+	@Path("refreshdashboard")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String retriveUserrefreshInformnation(@Context final UriInfo uriInfo) {
+		
+		/*
+		 * this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants
+		 * .CLIENT_RESOURCE_NAME);
+		 */
+		AppUser logedInUser = this.context.authenticatedUser();
+		this.clientReadPlatformService.refreshdashboard(logedInUser.getOffice().getId());
+		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper
+				.process(uriInfo.getQueryParameters());
+
+	//	return this.toApiJsonSerializer.serialize(settings, , RESPONSE_DATA_PARAMETERS);
+		return this.toApiJsonSerializer.serialize("success");
+	}
+
+	
+	
 
 }
