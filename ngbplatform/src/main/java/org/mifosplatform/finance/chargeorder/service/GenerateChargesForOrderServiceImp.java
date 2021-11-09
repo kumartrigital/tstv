@@ -78,7 +78,7 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 			final ClientBalanceWritePlatformService clientBalanceWritePlatformService,
 			final ConfigurationRepository configurationRepository,
 			final OfficeReadPlatformService officeReadPlatformService,
-			
+
 			final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
 			@Lazy final SecondarySubscriberDuesWritePlatformService secondarySubscriberDuesWritePlatformService,
 			final ClientReadPlatformService clientReadPlatformService) {
@@ -95,24 +95,25 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 		this.officeReadPlatformService = officeReadPlatformService;
 		this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
 		this.secondarySubscriberDuesWritePlatformService = secondarySubscriberDuesWritePlatformService;
-		this.clientReadPlatformService=clientReadPlatformService;
+		this.clientReadPlatformService = clientReadPlatformService;
 	}
 
 	@Override
 	public List<ChargeData> generatebillingOrder(List<BillingOrderData> products) {
 
+		System.out.println("GenerateChargesForOrderServiceImp.generatebillingOrder() start" + new Date());
 		ChargeData billingOrderCommand = null;
 		List<ChargeData> billingOrderCommands = new ArrayList<ChargeData>();
 
 		if (products.size() != 0) {
+			System.out.println("GenerateChargesForOrderServiceImp.generatebillingOrder()" + products.size());
 
 			for (BillingOrderData billingOrderData : products) {
 				// discount master
 				DiscountMasterData discountMasterData = null;
 				List<DiscountMasterData> discountMasterDatas = chargingOrderReadPlatformService
 						.retrieveDiscountOrders(billingOrderData.getClientOrderId(), billingOrderData.getOderPriceId());
-				
-				
+
 				if (discountMasterDatas.size() != 0) {
 					discountMasterData = discountMasterDatas.get(0);
 				}
@@ -194,6 +195,7 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 		} else {
 			throw new BillingOrderNoRecordsFoundException();
 		}
+		System.out.println("GenerateChargesForOrderServiceImp.generatebillingOrder() end" + new Date());
 
 		return billingOrderCommands;
 	}
@@ -207,60 +209,56 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 		BigDecimal netTaxAmount = BigDecimal.ZERO;
 		ClientBillInfoData clientBillInfoData = null;
 		List<BillItem> invoiceItems = new ArrayList<BillItem>();
-		Map<Long,BillItem> billItemMap = new HashMap<Long,BillItem>();
+		Map<Long, BillItem> billItemMap = new HashMap<Long, BillItem>();
 		Charge charge = null;
 
-		
 		for (ChargeData billingOrderCommand : billingOrderCommands) {
 			BillItem invoice = null;
 			OfficeData officeData = null;
-			
-			if(billingOrderCommand.getChargeOwner()!=null && billingOrderCommand.getChargeOwner().equalsIgnoreCase("self") )
-			{
-				if(billItemMap.containsKey(billingOrderCommand.getClientId()))
-				{
-			 invoice = billItemMap.get(billingOrderCommand.getClientId());
-					}else {
-					 invoice = new BillItem(billingOrderCommand.getClientId(),
-							DateUtils.getLocalDateOfTenant().toDate(), invoiceAmount, invoiceAmount, netTaxAmount, "active");
-					 billItemMap.put(billingOrderCommand.getClientId(), invoice);
-				}
-			}else 
-			{
-				 officeData = this.officeReadPlatformService.retriveOfficeDetail(billingOrderCommand.getClientId());
 
-				if(billItemMap.containsKey(officeData.getClientId())) {
-				 invoice = billItemMap.get(officeData.getClientId());
-				}else 
-				{
-					 invoice = new BillItem(officeData.getClientId(),
-							DateUtils.getLocalDateOfTenant().toDate(), invoiceAmount, invoiceAmount, netTaxAmount, "active");
-					 billItemMap.put(officeData.getClientId(), invoice);
+			if (billingOrderCommand.getChargeOwner() != null
+					&& billingOrderCommand.getChargeOwner().equalsIgnoreCase("self")) {
+				if (billItemMap.containsKey(billingOrderCommand.getClientId())) {
+					invoice = billItemMap.get(billingOrderCommand.getClientId());
+				} else {
+					invoice = new BillItem(billingOrderCommand.getClientId(), DateUtils.getLocalDateOfTenant().toDate(),
+							invoiceAmount, invoiceAmount, netTaxAmount, "active");
+					billItemMap.put(billingOrderCommand.getClientId(), invoice);
+				}
+			} else {
+				officeData = this.officeReadPlatformService.retriveOfficeDetail(billingOrderCommand.getClientId());
+
+				if (billItemMap.containsKey(officeData.getClientId())) {
+					invoice = billItemMap.get(officeData.getClientId());
+				} else {
+					invoice = new BillItem(officeData.getClientId(), DateUtils.getLocalDateOfTenant().toDate(),
+							invoiceAmount, invoiceAmount, netTaxAmount, "active");
+					billItemMap.put(officeData.getClientId(), invoice);
 				}
 			}
 			clientBillInfoData = this.clientBillInfoReadPlatformService
 					.retrieveClientBillInfoDetails(billingOrderCommand.getClientId());
-			
-			/*if(billingOrderCommand.getChargeOwner().equalsIgnoreCase("self"))
-			{*/
+
+			/*
+			 * if(billingOrderCommand.getChargeOwner().equalsIgnoreCase("self")) {
+			 */
 			BigDecimal conversionPrice = this.clientBalanceWritePlatformService.conversion(
 					billingOrderCommand.getCurrencyId(), clientBillInfoData.getBillCurrency(),
 					billingOrderCommand.getPrice());
-			/*}else if(billingOrderCommand.getChargeOwner().equalsIgnoreCase("parent")
-					{	
-			if(collectionBy != null){
-				OfficeBalance officeBalance =this.officeBalanceRepository.findOneByOfficeId(collectionBy);
-				
-				if(officeBalance != null){
-					officeBalance.updateBalance("CREDIT",officePayments.getAmountPaid());
-				
-				}else if(officeBalance == null){
-					
-	                    BigDecimal balance=BigDecimal.ZERO.subtract(officePayments.getAmountPaid());
-	                    officeBalance =OfficeBalance.create(collectionBy,balance);
-				}
-				this.officeBalanceRepository.saveAndFlush(officeBalance);
-		}*/
+			/*
+			 * }else if(billingOrderCommand.getChargeOwner().equalsIgnoreCase("parent") {
+			 * if(collectionBy != null){ OfficeBalance officeBalance
+			 * =this.officeBalanceRepository.findOneByOfficeId(collectionBy);
+			 * 
+			 * if(officeBalance != null){
+			 * officeBalance.updateBalance("CREDIT",officePayments.getAmountPaid());
+			 * 
+			 * }else if(officeBalance == null){
+			 * 
+			 * BigDecimal balance=BigDecimal.ZERO.subtract(officePayments.getAmountPaid());
+			 * officeBalance =OfficeBalance.create(collectionBy,balance); }
+			 * this.officeBalanceRepository.saveAndFlush(officeBalance); }
+			 */
 			BigDecimal netChargeTaxAmount = BigDecimal.ZERO;
 			BigDecimal discountAmount = BigDecimal.ZERO;
 			BigDecimal netChargeAmount = conversionPrice;
@@ -274,22 +272,24 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 			}
 
 			List<ChargeTaxCommand> chargeTaxCommands = billingOrderCommand.getListOfTax();
-			if(billingOrderCommand.getChargeOwner()!=null && billingOrderCommand.getChargeOwner().equalsIgnoreCase("self")) {
-			 charge = new Charge(billingOrderCommand.getClientId(), billingOrderCommand.getClientOrderId(),
-					billingOrderCommand.getOrderPriceId(), billingOrderCommand.getChargeCode(),
-					billingOrderCommand.getChargeType(), discountCode, conversionPrice, discountAmount, netChargeAmount,
-					billingOrderCommand.getStartDate(), billingOrderCommand.getEndDate(),
-					clientBillInfoData.getBillCurrency(),billingOrderCommand.getChargeOwner());
-			}else {
-				//ClientData clientData = this.clientReadPlatformService.retrieveOne(billingOrderCommand.getClientId());
-				 charge = new Charge(clientBillInfoData.getOfficeClientId(), billingOrderCommand.getClientOrderId(),
+			if (billingOrderCommand.getChargeOwner() != null
+					&& billingOrderCommand.getChargeOwner().equalsIgnoreCase("self")) {
+				charge = new Charge(billingOrderCommand.getClientId(), billingOrderCommand.getClientOrderId(),
 						billingOrderCommand.getOrderPriceId(), billingOrderCommand.getChargeCode(),
-						billingOrderCommand.getChargeType(), discountCode, conversionPrice, discountAmount, netChargeAmount,
-						billingOrderCommand.getStartDate(), billingOrderCommand.getEndDate(),
-						clientBillInfoData.getBillCurrency(),billingOrderCommand.getChargeOwner());
-				 
+						billingOrderCommand.getChargeType(), discountCode, conversionPrice, discountAmount,
+						netChargeAmount, billingOrderCommand.getStartDate(), billingOrderCommand.getEndDate(),
+						clientBillInfoData.getBillCurrency(), billingOrderCommand.getChargeOwner());
+			} else {
+				// ClientData clientData =
+				// this.clientReadPlatformService.retrieveOne(billingOrderCommand.getClientId());
+				charge = new Charge(clientBillInfoData.getOfficeClientId(), billingOrderCommand.getClientOrderId(),
+						billingOrderCommand.getOrderPriceId(), billingOrderCommand.getChargeCode(),
+						billingOrderCommand.getChargeType(), discountCode, conversionPrice, discountAmount,
+						netChargeAmount, billingOrderCommand.getStartDate(), billingOrderCommand.getEndDate(),
+						clientBillInfoData.getBillCurrency(), billingOrderCommand.getChargeOwner());
+
 			}
-			
+
 			if (!chargeTaxCommands.isEmpty()) {
 
 				for (ChargeTaxCommand chargeTaxCommand : chargeTaxCommands) {
@@ -322,21 +322,19 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 			invoice.setTaxAmount(netTaxAmount);
 			invoice.setInvoiceAmount(invoiceAmount);
 			invoice.setCurrencyId(clientBillInfoData.getBillCurrency());
-			if(billingOrderCommand.getChargeOwner()!=null && billingOrderCommand.getChargeOwner().equalsIgnoreCase("self"))
-			{
+			if (billingOrderCommand.getChargeOwner() != null
+					&& billingOrderCommand.getChargeOwner().equalsIgnoreCase("self")) {
 				billItemMap.put(billingOrderCommand.getClientId(), invoice);
-			}else
-			{
+			} else {
 				billItemMap.put(officeData.getClientId(), invoice);
 			}
-			//return this.billItemRepository.saveAndFlush(invoice);
+			// return this.billItemRepository.saveAndFlush(invoice);
 		}
 		for (Map.Entry<Long, BillItem> entry : billItemMap.entrySet()) {
 			this.billItemRepository.saveAndFlush(entry.getValue());
 			invoiceItems.add(entry.getValue());
-	    }
-		
-		
+		}
+
 		return invoiceItems;
 	}
 
@@ -361,11 +359,16 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 	@Override
 	public Map<String, List<Charge>> createNewChargesForServices(List<ChargeData> billingOrderCommands,
 			Map<String, List<Charge>> groupOfCharges) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+		Date end = new Date();
+		String strDate = sdf.format(end);
+		System.out.println(
+				"ChargingCustomerOrders.GenerateChargesForOrderServiceImp() balance createNewChargesForServices start"
+						+ strDate);
 
 		LinkedList<Charge> listOfCharges = new LinkedList<Charge>();
 		Charge charge = null;
 		for (ChargeData billingOrderCommand : billingOrderCommands) {
-
 
 			ClientBillInfoData clientBillInfoData = this.clientBillInfoReadPlatformService
 					.retrieveClientBillInfoDetails(billingOrderCommand.getClientId());
@@ -390,24 +393,24 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 				}
 
 				List<ChargeTaxCommand> invoiceTaxCommands = billingOrderCommand.getListOfTax();
-				if(billingOrderCommand.getChargeOwner()!=null && billingOrderCommand.getChargeOwner().equalsIgnoreCase("self")) {
+				if (billingOrderCommand.getChargeOwner() != null
+						&& billingOrderCommand.getChargeOwner().equalsIgnoreCase("self")) {
 					charge = new Charge(billingOrderCommand.getClientId(), billingOrderCommand.getClientOrderId(),
 							billingOrderCommand.getOrderPriceId(), billingOrderCommand.getChargeCode(),
 							billingOrderCommand.getChargeType(), discountCode, conversionPrice, discountAmount,
 							netChargeAmount, billingOrderCommand.getStartDate(), billingOrderCommand.getEndDate(),
-							clientBillInfoData.getBillCurrency(),billingOrderCommand.getChargeOwner());
+							clientBillInfoData.getBillCurrency(), billingOrderCommand.getChargeOwner());
 
-					}else {
-						//ClientData clientData = this.clientReadPlatformService.retrieveOne(billingOrderCommand.getClientId());
-						charge = new Charge(clientBillInfoData.getOfficeClientId(), billingOrderCommand.getClientOrderId(),
-								billingOrderCommand.getOrderPriceId(), billingOrderCommand.getChargeCode(),
-								billingOrderCommand.getChargeType(), discountCode, conversionPrice, discountAmount,
-								netChargeAmount, billingOrderCommand.getStartDate(), billingOrderCommand.getEndDate(),
-								clientBillInfoData.getBillCurrency(),billingOrderCommand.getChargeOwner());
+				} else {
+					// ClientData clientData =
+					// this.clientReadPlatformService.retrieveOne(billingOrderCommand.getClientId());
+					charge = new Charge(clientBillInfoData.getOfficeClientId(), billingOrderCommand.getClientOrderId(),
+							billingOrderCommand.getOrderPriceId(), billingOrderCommand.getChargeCode(),
+							billingOrderCommand.getChargeType(), discountCode, conversionPrice, discountAmount,
+							netChargeAmount, billingOrderCommand.getStartDate(), billingOrderCommand.getEndDate(),
+							clientBillInfoData.getBillCurrency(), billingOrderCommand.getChargeOwner());
 
-					}
-				
-				
+				}
 
 				for (ChargeTaxCommand invoiceTaxCommand : invoiceTaxCommands) {
 
@@ -460,7 +463,7 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 
 				LocalDate convertedDate = new LocalDate(date);
 				LocalDate lastDayOfMonth = convertedDate.dayOfMonth().withMaximumValue();
-				clientBalanceObject.addProperty("validTo",lastDayOfMonth.toString());
+				clientBalanceObject.addProperty("validTo", lastDayOfMonth.toString());
 
 				final JsonElement clientServiceElementNew = fromJsonHelper.parse(clientBalanceObject.toString());
 				JsonCommand clientBalanceCommand = new JsonCommand(null, clientServiceElementNew.toString(),
@@ -470,19 +473,32 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 			}
 
 		}
+		end = new Date();
+		strDate = sdf.format(end);
+		System.out.println(
+				"ChargingCustomerOrders.GenerateChargesForOrderServiceImp() balance createNewChargesForServices start"
+						+ strDate);
+
 		return groupOfCharges;
 	}
+
 	@Override
 	public Map<String, List<Charge>> calculateNewChargesForServices(List<ChargeData> billingOrderCommands,
 			Map<String, List<Charge>> groupOfCharges) {
 
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+		Date end = new Date();
+		String strDate = sdf.format(end);
+		System.out.println("GenerateChargesForOrderServiceImp.calculateNewChargesForServices  start" + strDate);
+		System.out.println("GenerateChargesForOrderServiceImp.calculateNewChargesForServices  billingOrderCommands"
+				+ billingOrderCommands.size());
+
 		LinkedList<Charge> listOfCharges = new LinkedList<Charge>();
 		Charge charge = null;
 		for (ChargeData billingOrderCommand : billingOrderCommands) {
-
-
 			ClientBillInfoData clientBillInfoData = this.clientBillInfoReadPlatformService
 					.retrieveClientBillInfoDetails(billingOrderCommand.getClientId());
+			System.out.println("GenerateChargesForOrderServiceImp.calculateNewChargesForServices() clientBillInfoData:"+clientBillInfoData);
 
 			if (billingOrderCommand.getCurrencyId() <= 1000) {
 
@@ -504,24 +520,24 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 				}
 
 				List<ChargeTaxCommand> invoiceTaxCommands = billingOrderCommand.getListOfTax();
-				if(billingOrderCommand.getChargeOwner()!=null && billingOrderCommand.getChargeOwner().equalsIgnoreCase("self")) {
+				if (billingOrderCommand.getChargeOwner() != null
+						&& billingOrderCommand.getChargeOwner().equalsIgnoreCase("self")) {
 					charge = new Charge(billingOrderCommand.getClientId(), billingOrderCommand.getClientOrderId(),
 							billingOrderCommand.getOrderPriceId(), billingOrderCommand.getChargeCode(),
 							billingOrderCommand.getChargeType(), discountCode, conversionPrice, discountAmount,
 							netChargeAmount, billingOrderCommand.getStartDate(), billingOrderCommand.getEndDate(),
-							clientBillInfoData.getBillCurrency(),billingOrderCommand.getChargeOwner());
+							clientBillInfoData.getBillCurrency(), billingOrderCommand.getChargeOwner());
 
-					}else {
-						//ClientData clientData = this.clientReadPlatformService.retrieveOne(billingOrderCommand.getClientId());
-						charge = new Charge(clientBillInfoData.getOfficeClientId(), billingOrderCommand.getClientOrderId(),
-								billingOrderCommand.getOrderPriceId(), billingOrderCommand.getChargeCode(),
-								billingOrderCommand.getChargeType(), discountCode, conversionPrice, discountAmount,
-								netChargeAmount, billingOrderCommand.getStartDate(), billingOrderCommand.getEndDate(),
-								clientBillInfoData.getBillCurrency(),billingOrderCommand.getChargeOwner());
+				} else {
+					// ClientData clientData =
+					// this.clientReadPlatformService.retrieveOne(billingOrderCommand.getClientId());
+					charge = new Charge(clientBillInfoData.getOfficeClientId(), billingOrderCommand.getClientOrderId(),
+							billingOrderCommand.getOrderPriceId(), billingOrderCommand.getChargeCode(),
+							billingOrderCommand.getChargeType(), discountCode, conversionPrice, discountAmount,
+							netChargeAmount, billingOrderCommand.getStartDate(), billingOrderCommand.getEndDate(),
+							clientBillInfoData.getBillCurrency(), billingOrderCommand.getChargeOwner());
 
-					}
-				
-				
+				}
 
 				for (ChargeTaxCommand invoiceTaxCommand : invoiceTaxCommands) {
 
@@ -566,10 +582,9 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 				SimpleDateFormat formatter1 = new SimpleDateFormat("dd MMMM yyyy");
 				clientBalanceObject.addProperty("validFrom", formatter1.format(date));
 
-
 				LocalDate convertedDate = new LocalDate(date);
 				LocalDate lastDayOfMonth = convertedDate.dayOfMonth().withMaximumValue();
-				clientBalanceObject.addProperty("validTo",lastDayOfMonth.toString());
+				clientBalanceObject.addProperty("validTo", lastDayOfMonth.toString());
 
 				final JsonElement clientServiceElementNew = fromJsonHelper.parse(clientBalanceObject.toString());
 				JsonCommand clientBalanceCommand = new JsonCommand(null, clientServiceElementNew.toString(),
@@ -578,7 +593,13 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 
 			}
 		}
+		end = new Date();
+		strDate = sdf.format(end);
+
+		System.out.println(
+				"GenerateChargesForOrderServiceImp.calculateNewChargesForServices() groupOfCharges: " + groupOfCharges);
 		return groupOfCharges;
+
 	}
 
 	@Override
@@ -589,15 +610,13 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 		OfficeData officeData = this.officeReadPlatformService.retriveOfficeDetail(clientId);
 		List<BillItem> billItemList = null;
 		BillItem billItem = null;
-	    billItemList = new ArrayList<BillItem>();
-	    BigDecimal invoiceAmount_local = null;
-		Map<Long,BillItem> billItemMap = new HashMap<Long,BillItem>();
+		billItemList = new ArrayList<BillItem>();
+		BigDecimal invoiceAmount_local = null;
+		Map<Long, BillItem> billItemMap = new HashMap<Long, BillItem>();
 
 		Long orderId = null;
 
-			
 		for (Entry<String, List<Charge>> key : mappedCharges.entrySet()) {
-			
 
 			ClientBillInfoData clientBillInfoData = this.clientBillInfoReadPlatformService
 					.retrieveClientBillInfoDetails(clientId);
@@ -632,120 +651,109 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 				BigDecimal netTaxAmount = BigDecimal.ZERO;
 				BigDecimal invoiceAmount = BigDecimal.ZERO;
 				BigDecimal totalChargeAmount = BigDecimal.ZERO;
-			
-				if(charge.getChargeOwner()!=null && charge.getChargeOwner().equalsIgnoreCase("self"))
-				{
-					
+
+				if (charge.getChargeOwner() != null && charge.getChargeOwner().equalsIgnoreCase("self")) {
+
 					for (ChargeTax chargeTax : charge.getChargeTaxs()) {
 						netTaxAmount = netTaxAmount.add(chargeTax.getTaxAmount());
 					}
-					if(billItemMap.containsKey(charge.getClientId()))
-					{
-						
+					if (billItemMap.containsKey(charge.getClientId())) {
 
 						BigDecimal netTaxAmount_local = BigDecimal.ZERO;
-						 invoiceAmount_local = BigDecimal.ZERO;
-						BigDecimal totalChargeAmount_local = BigDecimal.ZERO;						
+						invoiceAmount_local = BigDecimal.ZERO;
+						BigDecimal totalChargeAmount_local = BigDecimal.ZERO;
 						billItem = billItemMap.get(charge.getClientId());
-						
+
 						for (ChargeTax chargeTax : charge.getChargeTaxs()) {
 							chargeTax.setBillItem(billItem);
 						}
-						
-											
-						//invoiceAmount_local = billItem.getInvoiceAmount();
+
+						// invoiceAmount_local = billItem.getInvoiceAmount();
 						invoiceAmount_local = charge.getChargeAmount();
 						netTaxAmount_local = billItem.getTaxAmount();
-						//totalChargeAmount_local = billItem.getNetChargeAmount();
-						
+						// totalChargeAmount_local = billItem.getNetChargeAmount();
+
 						totalChargeAmount_local = totalChargeAmount_local.add(charge.getNetChargeAmount());
 						netTaxAmount_local = netTaxAmount_local.add(netTaxAmount);
-						invoiceAmount_local = totalChargeAmount_local.add(netTaxAmount_local);						
-						orderId = charge.getOrderId();	
-						System.out.println("order id" +orderId);
+						invoiceAmount_local = totalChargeAmount_local.add(netTaxAmount_local);
+						orderId = charge.getOrderId();
+						System.out.println("order id" + orderId);
 						billItem.setNetChargeAmount(totalChargeAmount_local);
 						billItem.setTaxAmount(netTaxAmount_local);
 						billItem.setInvoiceAmount(invoiceAmount_local);
-						
-					}else
-					{
+
+					} else {
 						invoiceAmount = BigDecimal.ZERO;
 						totalChargeAmount = totalChargeAmount.add(charge.getNetChargeAmount());
 						invoiceAmount = totalChargeAmount.add(netTaxAmount);
-						billItem = new BillItem(clientId, DateUtils.getLocalDateOfTenant().toDate(), invoiceAmount, invoiceAmount,
-								netTaxAmount, "active");
+						billItem = new BillItem(clientId, DateUtils.getLocalDateOfTenant().toDate(), invoiceAmount,
+								invoiceAmount, netTaxAmount, "active");
 						for (ChargeTax chargeTax : charge.getChargeTaxs()) {
 							chargeTax.setBillItem(billItem);
-						}				
-						
+						}
+
 					}
-					
-					
-				}else
-				{
-					officeData =
-							  this.officeReadPlatformService.retriveOfficeDetail(charge.
-							  getClientId());
-					if(billItemMap.containsKey(officeData.getClientId())) {
+
+				} else {
+					officeData = this.officeReadPlatformService.retriveOfficeDetail(charge.getClientId());
+					if (billItemMap.containsKey(officeData.getClientId())) {
 						BigDecimal netTaxAmount_local = BigDecimal.ZERO;
-						 invoiceAmount_local = BigDecimal.ZERO;
-						BigDecimal totalChargeAmount_local = BigDecimal.ZERO;	
+						invoiceAmount_local = BigDecimal.ZERO;
+						BigDecimal totalChargeAmount_local = BigDecimal.ZERO;
 						billItem = billItemMap.get(officeData.getClientId());
 						for (ChargeTax chargeTax : charge.getChargeTaxs()) {
 							chargeTax.setBillItem(billItem);
 						}
-											
+
 						invoiceAmount_local = billItem.getInvoiceAmount();
 						netTaxAmount_local = billItem.getTaxAmount();
 						totalChargeAmount_local = billItem.getNetChargeAmount();
-						
+
 						totalChargeAmount_local = totalChargeAmount_local.add(charge.getNetChargeAmount());
 						netTaxAmount_local = netTaxAmount_local.add(netTaxAmount);
-						invoiceAmount_local = invoiceAmount_local.add(totalChargeAmount_local.add(netTaxAmount_local));						
-						orderId = charge.getOrderId();	
+						invoiceAmount_local = invoiceAmount_local.add(totalChargeAmount_local.add(netTaxAmount_local));
+						orderId = charge.getOrderId();
 						billItem.setNetChargeAmount(totalChargeAmount_local);
 						billItem.setTaxAmount(netTaxAmount_local);
 						billItem.setInvoiceAmount(invoiceAmount_local);
-						}else {
-							invoiceAmount = BigDecimal.ZERO;
+					} else {
+						invoiceAmount = BigDecimal.ZERO;
 
-							totalChargeAmount = totalChargeAmount.add(charge.getNetChargeAmount());
-							invoiceAmount = totalChargeAmount.add(netTaxAmount);
-							billItem = new BillItem(officeData.getClientId(), DateUtils.getLocalDateOfTenant().toDate(), invoiceAmount, invoiceAmount,
-									netTaxAmount, "active");
-									
-							for (ChargeTax chargeTax : charge.getChargeTaxs()) {
-								chargeTax.setBillItem(billItem);
-							}
+						totalChargeAmount = totalChargeAmount.add(charge.getNetChargeAmount());
+						invoiceAmount = totalChargeAmount.add(netTaxAmount);
+						billItem = new BillItem(officeData.getClientId(), DateUtils.getLocalDateOfTenant().toDate(),
+								invoiceAmount, invoiceAmount, netTaxAmount, "active");
 
+						for (ChargeTax chargeTax : charge.getChargeTaxs()) {
+							chargeTax.setBillItem(billItem);
 						}
-					
+
+					}
+
 				}
-				
+
 				orderId = charge.getOrderId();
 				billItem.setCurrencyId(clientBillInfoData.getBillCurrency());
 				billItem.addCharges(charge);
-				if(charge.getChargeOwner()!=null && charge.getChargeOwner().equalsIgnoreCase("self"))
-				{
+				if (charge.getChargeOwner() != null && charge.getChargeOwner().equalsIgnoreCase("self")) {
 					billItemMap.put(charge.getClientId(), billItem);
-				}else
-				{
+				} else {
 					billItemMap.put(officeData.getClientId(), billItem);
 				}
 
 			}
 			for (Map.Entry<Long, BillItem> entry : billItemMap.entrySet()) {
-				
-				/*Save item record */
+
+				/* Save item record */
 				billItem = this.billItemRepository.saveAndFlush(entry.getValue());
-				
-				//System.out.println("Save operation" +entry.getValue());
+
+				// System.out.println("Save operation" +entry.getValue());
 				/*
 				 * for(Charge charge : billItem.getCharges()) { //System.out.println("Charge Id"
 				 * +charge.getId()); }
 				 */
-				//this.billItemRepository.saveAndFlush(entry.getValue());
-				
+				// this.billItemRepository.saveAndFlush(entry.getValue());
+
 				List<OrderData> orderData = this.orderReadPlatformService.orderDetailsForClientBalance(orderId);
 
 				if (prepaidConfiguration.isEnabled()) {
@@ -753,7 +761,8 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 						if (officeData.getSubscriberDues()) {
 							if (orderData.get(0).getIsPrepaid().equalsIgnoreCase("Y")) {
 								CommandProcessingResult result = this.secondarySubscriberDuesWritePlatformService
-										.secondarySubscriberDues(clientId, officeData.getId(), billItem.getInvoiceAmount());
+										.secondarySubscriberDues(clientId, officeData.getId(),
+												billItem.getInvoiceAmount());
 							}
 						} else {
 							throw new PlatformDataIntegrityException("No SubscriberDue", "No SubscriberDue",
@@ -763,11 +772,11 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 				}
 
 				JsonObject clientBalanceObject = new JsonObject();
-				clientBalanceObject.addProperty("id",billItem.getId());
-				
+				clientBalanceObject.addProperty("id", billItem.getId());
+
 				clientBalanceObject.addProperty("clientId", billItem.getClientId());
 				clientBalanceObject.addProperty("amount", billItem.getInvoiceAmount());
-				//clientBalanceObject.addProperty("amount",invoiceAmount_local);
+				// clientBalanceObject.addProperty("amount",invoiceAmount_local);
 				clientBalanceObject.addProperty("isWalletEnable", false);
 				clientBalanceObject.addProperty("clientServiceId", orderData.get(0).getClientServiceId());
 				clientBalanceObject.addProperty("currencyId", billItem.getCurrencyId());
@@ -775,21 +784,18 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 
 				final JsonElement clientServiceElementNew = fromJsonHelper.parse(clientBalanceObject.toString());
 				JsonCommand clientBalanceCommand = new JsonCommand(null, clientServiceElementNew.toString(),
-						clientServiceElementNew, fromJsonHelper, null, null, null, null, null, null, null, null, null, null,
-						null, null);
-				
-				//check client balance 
-				
-//System.out.println("clientBalance "+clientBalanceObject);
+						clientServiceElementNew, fromJsonHelper, null, null, null, null, null, null, null, null, null,
+						null, null, null);
+
 				this.chargingOrderWritePlatformService.updateClientBalance(clientBalanceCommand);
-				
-				System.out.println("Charging for self" +billItem.getClientId()+ " Amount" +billItem.getInvoiceAmount()+" billitem id" +billItem.getId() +"order id "+orderId);
+
+				System.out.println("Charging for self" + billItem.getClientId() + " Amount"
+						+ billItem.getInvoiceAmount() + " billitem id" + billItem.getId() + "order id " + orderId);
 				billItemList.add(entry.getValue());
 				billItemMap.clear();
-				
-		    }
-			
-			
+
+			}
+
 			/*
 			 * invoiceAmount = totalChargeAmount.add(netTaxAmount);
 			 * billItem.setNetChargeAmount(totalChargeAmount);
@@ -797,40 +803,38 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 			 * billItem.setInvoiceAmount(invoiceAmount);
 			 * billItem.setCurrencyId(clientBillInfoData.getBillCurrency());
 			 */
-			//billItem = this.billItemRepository.saveAndFlush(billItem);
+			// billItem = this.billItemRepository.saveAndFlush(billItem);
 
 		}
 
-	return billItemList;
+		return billItemList;
 
 	}
-	
+
 	public BigDecimal calculateChargeBillItemRecords(Map<String, List<Charge>> mappedCharges, Long clientId) {
 
-	
-		BigDecimal totalInvoiceAmount =  BigDecimal.ZERO;;
+		BigDecimal totalInvoiceAmount = BigDecimal.ZERO;
+		;
 
 		for (Entry<String, List<Charge>> key : mappedCharges.entrySet()) {
-			
+
 			for (Charge charge : key.getValue()) {
 				BigDecimal netTaxAmount = BigDecimal.ZERO;
 				BigDecimal invoiceAmount = BigDecimal.ZERO;
 				BigDecimal totalChargeAmount = BigDecimal.ZERO;
-			
-					
+
 				for (ChargeTax chargeTax : charge.getChargeTaxs()) {
-						netTaxAmount = netTaxAmount.add(chargeTax.getTaxAmount());
+					netTaxAmount = netTaxAmount.add(chargeTax.getTaxAmount());
 				}
 
 				invoiceAmount = BigDecimal.ZERO;
 				totalChargeAmount = totalChargeAmount.add(charge.getNetChargeAmount());
 				invoiceAmount = totalChargeAmount.add(netTaxAmount);
-				totalInvoiceAmount = totalInvoiceAmount.add(invoiceAmount);				
-		    }
-		}		
+				totalInvoiceAmount = totalInvoiceAmount.add(invoiceAmount);
+			}
+		}
 
 		return totalInvoiceAmount;
 	}
 
-	
 }

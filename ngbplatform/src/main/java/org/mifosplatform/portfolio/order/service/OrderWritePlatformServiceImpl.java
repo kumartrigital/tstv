@@ -127,6 +127,8 @@ import org.mifosplatform.portfolio.plan.service.PlanReadPlatformService;
 import org.mifosplatform.portfolio.product.domain.Product;
 import org.mifosplatform.portfolio.product.domain.ProductRepository;
 import org.mifosplatform.portfolio.service.domain.ServiceMasterRepository;
+import org.mifosplatform.portfolio.slabRate.service.SlabRateReadPlatformServiceImpl;
+import org.mifosplatform.portfolio.slabRate.service.SlabRateWritePlatformService;
 import org.mifosplatform.provisioning.preparerequest.domain.PrepareRequest;
 import org.mifosplatform.provisioning.preparerequest.domain.PrepareRequsetRepository;
 import org.mifosplatform.provisioning.preparerequest.exception.PrepareRequestActivationException;
@@ -235,6 +237,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 	private final VoucherReadPlatformService voucherReadPlatformService;
 	private final ItemDetailsRepository itemDetailsRepository;
 	private final EventPriceReadPlatformService eventPriceReadPlatformService;
+	private final SlabRateWritePlatformService slabRateReadPlatformService;
 	private final static String VALUE_PINTYPE = "VALUE";
 	private final static String PRODUCT_PINTYPE = "PRODUCT";
 
@@ -291,7 +294,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			final VoucherReadPlatformService voucherReadPlatformService,
 			final ItemDetailsRepository itemDetailsRepository,
 			final EventPriceReadPlatformService eventPriceReadPlatformService,
-			final ChargingOrderApiResourse chargingOrderApiResourse) {
+			final ChargingOrderApiResourse chargingOrderApiResourse,
+			final SlabRateWritePlatformService slabRateReadPlatformService) {
 
 		this.context = context;
 		this.reverseInvoice = reverseInvoice;
@@ -360,6 +364,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 		this.voucherReadPlatformService = voucherReadPlatformService;
 		this.itemDetailsRepository = itemDetailsRepository;
 		this.eventPriceReadPlatformService = eventPriceReadPlatformService;
+		this.slabRateReadPlatformService = slabRateReadPlatformService;
 	}
 
 	@Override
@@ -367,6 +372,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 	public CommandProcessingResult createOrder(Long clientId, JsonCommand command, Order oldOrder) {
 
 		try {
+
 			List<Long> planIds = new ArrayList<Long>();
 			this.fromApiJsonDeserializer.validateForCreate(command.json());
 			String serialnum = command.stringValueOfParameterNamed("serialnumber");
@@ -382,9 +388,11 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 
 			Plan plan = this.planRepository.findPlanCheckDeletedStatus(command.longValueOfParameterNamed("planCode"));
 			planIds = this.orderReadPlatformService.retrieveClientActiveOrders(clientId);
-			if(planIds.contains(plan.getId()))
+			if (planIds.contains(plan.getId()))
 				throw new PlanAlreadyAddedException(plan.getDescription());
+
 			Order order = this.orderAssembler.assembleOrderDetails(command, clientId, plan);
+			System.out.println("OrderWritePlatformServiceImpl.createOrder( :)" + order.getEndDate());
 			order.setActiveDate(new LocalDateTime());
 			order.setStartDate(new LocalDateTime());
 			// this condition is for updating order_No for multiple plans
@@ -392,8 +400,10 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				order.setOrderNo(command.stringValueOfParameterName("orderNo"));
 			}
 
+			System.out.println("OrderWritePlatformServiceImpl.createOrder( :)" + order.getEndDate());
+
 			this.orderRepository.save(order);
-			
+
 			boolean isNewPlan = command.booleanPrimitiveValueOfParameterNamed("isNewplan");
 			String requstStatus = UserActionStatusTypeEnum.ACTIVATION.toString();
 
@@ -428,32 +438,6 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 
 			}
 
-			// For Plan And HardWare Association
-			/*
-			 * Configuration configurationProperty = this.configurationRepository
-			 * .findOneByName(ConfigurationConstants. CONFIG_PROPERTY_IMPLICIT_ASSOCIATION);
-			 * 
-			 * if (configurationProperty.isEnabled() && serialnum == null) {
-			 * 
-			 * if (plan.isHardwareReq() == 'Y') { List<AllocationDetailsData>
-			 * allocationDetailsDatas =
-			 * this.allocationReadPlatformService.retrieveHardWareDetailsByItemCode
-			 * (clientId, plan.getPlanCode());
-			 * 
-			 * if (allocationDetailsDatas.size() == 1) {
-			 * this.associationWriteplatformService .createNewHardwareAssociation(clientId,
-			 * plan.getId(), allocationDetailsDatas.get(0).getSerialNo(), order.getId(),
-			 * allocationDetailsDatas.get(0).getAllocationType()); } }
-			 * 
-			 * } else if (serialnum != null && configurationProperty.isEnabled()) {
-			 * 
-			 * // List<AllocationDetailsData>
-			 * allocationDetailsDatas=this.allocationReadPlatformService
-			 * .retrieveHardWareDetailsByItemCode(clientId,plan.getPlanCode()); this
-			 * .associationWriteplatformService.createNewHardwareAssociation( clientId,
-			 * plan.getId(), serialnum, order.getId(), allocationType); }
-			 */
-
 			if (plan.getIsAdvance() == 'Y' || plan.getIsAdvance() == 'y') {
 				// charging
 				JSONObject jsonObject = new JSONObject();
@@ -463,6 +447,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 					jsonObject.put("locale", "en");
 					jsonObject.put("systemDate", dateFormat.format(order.getStartDate()));
 					this.chargingOrderApiResourse.createChargesToOrders(order.getClientId(), jsonObject.toString());
+
 				} catch (Exception e) {
 					throw new PlatformDataIntegrityException("error.msg.charge.exception",
 							"error.message.charging.exception");
@@ -483,7 +468,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			 * clientId, order.getId().toString(), "ACTIVATION"); }
 			 */
 			Order order1 = this.orderRepository.findOne(order.getId());
-		
+
 			ClientService clientService = null;
 			clientService = this.clientServiceRepository.findOne(command.longValueOfParameterNamed("clientServiceId"));
 			if (clientService.getStatus().equalsIgnoreCase("NEW")) {
@@ -497,8 +482,9 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			 * order1.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.ACTIVE
 			 * ).getId()); }
 			 */
+			System.out.println("OrderWritePlatformServiceImpl.createOrder( :)" + order.getEndDate());
+
 			order = this.orderRepository.saveAndFlush(order1);
-			
 
 			if (!plan.getProvisionSystem().equalsIgnoreCase("None")) {
 				this.provisioningRequesting(order, oldOrder, plan.isPrepaid());
@@ -881,7 +867,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			if (orderDetails.getStatus().equals(StatusTypeEnum.ACTIVE.getValue().longValue())) {
 
 				newStartdate = new LocalDateTime(orderDetails.getEndDate()).plusDays(1);
-				//System.out.println("new StartDate" + newStartdate);
+				// System.out.println("new StartDate" + newStartdate);
 				requstStatus = UserActionStatusEnumaration
 						.OrderStatusType(UserActionStatusTypeEnum.RENEWAL_BEFORE_AUTOEXIPIRY).getValue();
 				requestStatusForProv = ProvisioningApiConstants.REQUEST_RENEWAL_BE;
@@ -902,10 +888,10 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				orderDetails.setNextBillableDay(null);
 				orderDetails.setRenewalDate(newStartdate.toDate());
 			}
-		//	System.out.println("calling " + newStartdate);
+			// System.out.println("calling " + newStartdate);
 			LocalDateTime renewalEndDate = this.orderAssembler.calculateEndDate(newStartdate,
 					contractDetails.getSubscriptionType(), contractDetails.getUnits());
-			//System.out.println("renewalEndDate::" + renewalEndDate);
+			// System.out.println("renewalEndDate::" + renewalEndDate);
 			Configuration configuration = this.configurationRepository
 					.findOneByName(ConfigurationConstants.CONFIG_ALIGN_BIILING_CYCLE);
 
@@ -1249,12 +1235,12 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 	public CommandProcessingResult retrackOsdMessage(final JsonCommand command) {
 		Configuration isPaywizard = configurationRepository.findOneByName(ConfigurationConstants.PAYWIZARD_INTEGRATION);
 		try {
-			//System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
-			//this.context.authenticatedUser();
+			// System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
+			// this.context.authenticatedUser();
 			int count = 0;
 
 			if (command.stringValueOfParameterName("type").equalsIgnoreCase("group")
-			 && command.booleanPrimitiveValueOfParameterNamed("isGroupSupported") ) {
+					&& command.booleanPrimitiveValueOfParameterNamed("isGroupSupported")) {
 				Map<String, Object> changes = new HashMap<>();
 				List<ClientServiceData> clientServiceDatas = this.clientServiceReadPlatformService
 						.retriveActiveClientsInOrgOfficeId(command.longValueOfParameterNamed("officeId"));
@@ -1270,7 +1256,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 						.retriveActiveClientsInOrg(command.longValueOfParameterNamed("clientServiceId"));
 				for (ClientServiceData clientServiceData : clientServiceDatas) {
 					JsonCommand com = this.provisioningJsonPreparation(command, clientServiceData);
-					//System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
+					// System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
 					this.provisioningWritePlatformService.createProvisioningRequestForCommandCenter(com);
 					count++;
 				}
@@ -2324,6 +2310,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 	public CommandProcessingResult createMultipleOrder(Long clientId, JsonCommand command, Order oldOrder) {
 
 		try {
+
 			CommandProcessingResult commandProcessingResult = this.crmServices.addPlans(command);
 			String[] substancesArray = null;
 			if (commandProcessingResult != null) {
@@ -2342,8 +2329,14 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				planElement = planObject;
 				newCommand = new JsonCommand(null, planElement.toString(), planElement, this.fromJsonHelper, null, null,
 						null, null, null, null, null, null, null, null, null, null);
-				
+
+				// check client balance
+				Price price = priceRepository
+						.findoneByPlanID(Long.parseLong(newCommand.stringValueOfParameterName("id")));
+				this.slabRateReadPlatformService.prepaidService(clientId, price.getPrice());
+
 				this.createOrder(clientId, newCommand, oldOrder);
+
 				i++;
 			}
 			/* return new CommandProcessingResult((long) 0); */

@@ -29,4 +29,5 @@
     </bean>
                                
     <jee:jndi-lookup jndi-name="java:comp/env/jdbc/obsplatform-tenants" id="tenantDataSourceJndi" />
+    
 </beans>

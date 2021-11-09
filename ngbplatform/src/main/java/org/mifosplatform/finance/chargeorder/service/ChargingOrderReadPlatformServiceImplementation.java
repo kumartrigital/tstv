@@ -44,11 +44,15 @@ public class ChargingOrderReadPlatformServiceImplementation implements ChargingO
 	 */
 	@Override
 	public List<BillingOrderData> retrieveOrderIds(final Long clientId, final LocalDateTime processDate) {
-		//System.out.println("ngb product");
 		final OrderIdMapper orderIdMapper = new OrderIdMapper();
 		final String sql = "select" + orderIdMapper.orderIdSchema();
-		List<BillingOrderData> BillingOrderData = this.jdbcTemplate.query(sql, orderIdMapper,
-				new Object[] { clientId, processDate.minusDays(1).toDate(), processDate.toDate() });
+		List<BillingOrderData> BillingOrderData = null;
+		try {
+			BillingOrderData = this.jdbcTemplate.query(sql, orderIdMapper,
+					new Object[] { clientId, processDate.minusDays(1).toDate(), processDate.toDate() });
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		return BillingOrderData;
 	}
@@ -59,7 +63,7 @@ public class ChargingOrderReadPlatformServiceImplementation implements ChargingO
 		public BillingOrderData mapRow(ResultSet resultSet, int rowNum) throws SQLException {
 
 			final Long orderId = resultSet.getLong("orderId");
-			//System.out.println("orderid" + orderId);
+			// System.out.println("orderid" + orderId);
 			final String durationType = resultSet.getString("durationType");
 			final DateTime billStartDate = JdbcSupport.getDateTime(resultSet, "billStartDate");
 			final DateTime nextBillableDate = JdbcSupport.getDateTime(resultSet, "nextBillableDate");
@@ -69,11 +73,11 @@ public class ChargingOrderReadPlatformServiceImplementation implements ChargingO
 			final String chargeCode = resultSet.getString("chargeCode");
 			final String chargeOwner = resultSet.getString("chargeOwner");
 			final Long planId = resultSet.getLong("planId");
-			
+
 			// System.out.println("chargeOwner::"+chargeOwner);
 
 			return new BillingOrderData(orderId, durationType, billStartDate, nextBillableDate, invoiceTillDate,
-					billingAlign, chargeCode, chargeOwner,planId,billEndDate);
+					billingAlign, chargeCode, chargeOwner, planId, billEndDate);
 		}
 
 		public String orderIdSchema() {
@@ -99,7 +103,6 @@ public class ChargingOrderReadPlatformServiceImplementation implements ChargingO
 
 	public List<BillingOrderData> retrieveBillingOrderData(final Long clientId, final LocalDateTime date,
 			final Long orderId) {
-
 		final BillingOrderMapper billingOrderMapper = new BillingOrderMapper();
 		final String sql = "select " + billingOrderMapper.billingOrderSchema();
 		return this.jdbcTemplate.query(sql, billingOrderMapper,

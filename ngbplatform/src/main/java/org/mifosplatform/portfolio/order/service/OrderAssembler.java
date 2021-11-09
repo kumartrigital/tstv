@@ -85,8 +85,7 @@ public class OrderAssembler {
 			final OfficeReadPlatformService officeReadPlatformService,
 			final ClientReadPlatformService clientReadPlatformService,
 			final SlabRateWritePlatformService SlabRateWritePlatformService, final OrderRepository orderRepository,
-			final PlanRepository planRepository,
-			final OrderPriceRepository orderPriceRepository) {
+			final PlanRepository planRepository, final OrderPriceRepository orderPriceRepository) {
 
 		this.orderDetailsReadPlatformServices = orderDetailsReadPlatformServices;
 		this.contractRepository = contractRepository;
@@ -171,8 +170,13 @@ public class OrderAssembler {
 		// Calculate EndDate
 		if (plan.getIsAdvance() == 'y' || plan.getIsAdvance() == 'Y') {
 			endDate = command.localDateTimeValueOfParameterNamed("endDate");
+System.out.println("OrderAssembler.assembleOrderDetails() :" +endDate + "planId :" + plan.getId());
+			if (plan.getId()==99l) {
+				LocalDateTime date = new LocalDateTime();
+				endDate = date.plusMonths(1);
+			}
+			
 		} else {
-
 			endDate = calculateEndDate(startDate, contractData.getSubscriptionType(), contractData.getUnits());
 
 		}
@@ -185,13 +189,13 @@ public class OrderAssembler {
 		Configuration configuration = this.configurationRepository
 				.findOneByName(ConfigurationConstants.CONFIG_ALIGN_BIILING_CYCLE);
 
-		if (configuration != null && plan.isPrepaid() == 'N' ) {
+		if (configuration != null && plan.isPrepaid() == 'N') {
 			order.setBillingAlign(configuration.isEnabled() ? 'Y' : 'N');
-			if (configuration.isEnabled() && endDate != null ) {
+			if (configuration.isEnabled() && endDate != null) {
 				if (plan.getIsAdvance() == 'N' || plan.getIsAdvance() == 'N') {
-				order.setEndDate(endDate.dayOfMonth().withMaximumValue());
+					order.setEndDate(endDate.dayOfMonth().withMaximumValue());
 				}
-			
+
 			} else {
 				order.setEndDate(endDate);
 			}
@@ -296,7 +300,6 @@ public class OrderAssembler {
 		 * 
 		 * } }
 		 */
-		 
 
 		if (command.hasParameter("products")) {
 			for (JsonElement productDetail : productDetails) {
@@ -345,16 +348,18 @@ public class OrderAssembler {
 		LocalDateTime endDate = null;
 		Contract contract = this.contractRepository.findOne(order.getContarctPeriod());
 		Plan plan = this.planRepository.findOne(order.getPlanId());
-		if(plan != null  ) {
-			if((plan.getIsAdvance() == 'N'  || plan.getIsAdvance() == 'N') && (plan.getIsPrepaid() == 'Y' || plan.getIsPrepaid() == 'y')) {
-				 endDate = this.calculateEndDate(startDate, contract.getSubscriptionType(), contract.getUnits());
+		if (plan != null) {
+			if ((plan.getIsAdvance() == 'N' || plan.getIsAdvance() == 'N')
+					&& (plan.getIsPrepaid() == 'Y' || plan.getIsPrepaid() == 'y')) {
+				endDate = this.calculateEndDate(startDate, contract.getSubscriptionType(), contract.getUnits());
 			}
 		}
 		order.setStartDate(startDate);
-		if ((order.getbillAlign() == 'Y' && endDate != null) || (order.getbillAlign() == 'Y' && order.getEndDate() != null) ) {
+		if ((order.getbillAlign() == 'Y' && endDate != null)
+				|| (order.getbillAlign() == 'Y' && order.getEndDate() != null)) {
 			if (plan.getIsAdvance() == 'N' || plan.getIsAdvance() == 'N') {
-			order.setEndDate(endDate.dayOfMonth().withMaximumValue());
-			}else {
+				order.setEndDate(endDate.dayOfMonth().withMaximumValue());
+			} else {
 				order.setEndDate(order.getEndDate());
 			}
 		} else {
@@ -367,8 +372,8 @@ public class OrderAssembler {
 			// end date is null for rc
 			if (orderPrice.getChargeType().equalsIgnoreCase("RC") && order.getEndDate() != null) {
 				if (plan.getIsAdvance() == 'N' || plan.getIsAdvance() == 'N') {
-				orderPrice.setBillEndDate(new LocalDateTime(order.getEndDate()));
-				}else {
+					orderPrice.setBillEndDate(new LocalDateTime(order.getEndDate()));
+				} else {
 					orderPrice.setBillEndDate(new LocalDateTime(order.getEndDate()));
 				}
 			} else if (endDate == null) {

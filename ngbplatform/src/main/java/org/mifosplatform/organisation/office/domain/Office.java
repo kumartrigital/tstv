@@ -30,6 +30,7 @@ import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
 import org.apache.commons.lang.StringUtils;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 import org.joda.time.LocalDate;
@@ -46,6 +47,7 @@ import org.springframework.data.jpa.domain.AbstractPersistable;
 @Entity
 @Table(name = "m_office", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }, name = "name_org"),
         @UniqueConstraint(columnNames = { "external_id" }, name = "externalid_org") })
+@JsonIgnoreProperties("children")
 public class Office extends AbstractPersistable<Long> {
 	
     /**

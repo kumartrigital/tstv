@@ -54,7 +54,9 @@ import org.mifosplatform.portfolio.order.data.OrderLineData;
 import org.mifosplatform.portfolio.order.data.OrderPriceData;
 import org.mifosplatform.portfolio.order.data.OrderUssdData;
 import org.mifosplatform.portfolio.order.domain.Order;
+import org.mifosplatform.portfolio.order.domain.OrderChargeRepository;
 import org.mifosplatform.portfolio.order.domain.OrderRepository;
+import org.mifosplatform.portfolio.order.domain.OrdersCharge;
 import org.mifosplatform.portfolio.order.service.OrderAddOnsReadPlaformService;
 import org.mifosplatform.portfolio.order.service.OrderReadPlatformService;
 import org.mifosplatform.portfolio.order.service.OrderWritePlatformService;
@@ -98,6 +100,9 @@ public class OrdersApiResource {
 	private final NetworkElementReadPlatformService networkElementReadPlatformService;
 	private final ClientReadPlatformService clientReadPlatformService;
 	private final MediaAssetRepository mediaAssetRepository;
+	
+
+	private final OrderChargeRepository orderChargeRepository;
 
 	@Autowired
 	public OrdersApiResource(final PlatformSecurityContext context,
@@ -117,7 +122,8 @@ public class OrdersApiResource {
 			final ClientReadPlatformService clientReadPlatformService,
 			final DefaultToApiJsonSerializer<OrderUssdData> toApiJsonSerializerussd,
 			final DefaultToApiJsonSerializer<MediaAsset> toApiJsonSerializerMovie,
-			final MediaAssetRepository mediaAssetRepository) {
+			final MediaAssetRepository mediaAssetRepository,
+			 final OrderChargeRepository orderChargeRepository) {
 
 		this.context = context;
 		this.toApiJsonSerializer = toApiJsonSerializer;
@@ -138,6 +144,7 @@ public class OrdersApiResource {
 		this.toApiJsonSerializerussd = toApiJsonSerializerussd;
 		this.toApiJsonSerializerMovie = toApiJsonSerializerMovie;
 		this.mediaAssetRepository = mediaAssetRepository;
+		this.orderChargeRepository = orderChargeRepository;
 
 	}
 
@@ -664,6 +671,19 @@ public class OrdersApiResource {
 				.process(uriInfo.getQueryParameters());
 		return this.toApiJsonSerializer.serialize(settings, orderData, RESPONSE_DATA_PARAMETERS);
 	}
+
+	@GET
+	@Path("orderid/{orderId}")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public OrdersCharge order(@PathParam("orderId") final Long orderId, @Context final UriInfo uriInfo) {
+		System.out.println("OrdersApiResource.order()" + orderId);
+		OrdersCharge order = this.orderChargeRepository.findOne(orderId);
+		System.out.println("OrdersApiResource.order()" +order.toString());
+		return order;
+
+	}
+
 	/*
 	 * @GET
 	 * 

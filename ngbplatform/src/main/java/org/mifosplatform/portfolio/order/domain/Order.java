@@ -59,7 +59,6 @@ public class Order extends AbstractAuditableCustom<AppUser, Long> {
 	@Column(name = "start_date")
 	private Date startDate;
 
-	
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "active_date")
 	private Date activeDate;

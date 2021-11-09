@@ -21,39 +21,50 @@ import org.springframework.stereotype.Component;
 
 import com.google.gson.JsonElement;
 
-
 @Path("/chargingorder")
 @Component
 @Scope("singleton")
 public class ChargingOrderApiResourse {
 
-    private final DefaultToApiJsonSerializer<CodeData> toApiJsonSerializer;
-    private final ChargingCustomerOrders chargingCustomerOrders;
-    private final FromJsonHelper fromApiJsonHelper;
-    
+	private final DefaultToApiJsonSerializer<CodeData> toApiJsonSerializer;
+	private final ChargingCustomerOrders chargingCustomerOrders;
+	private final FromJsonHelper fromApiJsonHelper;
+
 	@Autowired
-	public ChargingOrderApiResourse(final DefaultToApiJsonSerializer<CodeData> toApiJsonSerializer,final ChargingCustomerOrders chargingCustomerOrders,
-			final FromJsonHelper fromApiJsonHelper){
-		
-        this.toApiJsonSerializer = toApiJsonSerializer;
-		this.chargingCustomerOrders=chargingCustomerOrders;
-		this.fromApiJsonHelper=fromApiJsonHelper;
+	public ChargingOrderApiResourse(final DefaultToApiJsonSerializer<CodeData> toApiJsonSerializer,
+			final ChargingCustomerOrders chargingCustomerOrders, final FromJsonHelper fromApiJsonHelper) {
+
+		this.toApiJsonSerializer = toApiJsonSerializer;
+		this.chargingCustomerOrders = chargingCustomerOrders;
+		this.fromApiJsonHelper = fromApiJsonHelper;
 	}
-	
+
 	@POST
 	@Path("{clientId}")
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
-	public String createChargesToOrders(@PathParam("clientId") final Long clientId,final String apiRequestBodyAsJson) {
-	
-		final CommandWrapper wrapper = new CommandWrapperBuilder().createCharge(clientId).withJson(apiRequestBodyAsJson).build();
-		 final JsonElement parsedCommand = this.fromApiJsonHelper.parse(wrapper.getJson());
-		 final JsonCommand command = JsonCommand.from(wrapper.getJson(),parsedCommand,this.fromApiJsonHelper, wrapper.getEntityName(),
-						wrapper.getEntityId(), wrapper.getSubentityId(),wrapper.getGroupId(), wrapper.getClientId(),
-						wrapper.getLoanId(), wrapper.getSavingsId(),wrapper.getCodeId(), wrapper.getSupportedEntityType(),
-						wrapper.getSupportedEntityId(), wrapper.getTransactionId(),null);
-		final CommandProcessingResult result=this.chargingCustomerOrders.createNewCharges(command); 
-		return this.toApiJsonSerializer.serialize(result);
+	public String createChargesToOrders(@PathParam("clientId") final Long clientId, final String apiRequestBodyAsJson) {
+		try {
+			System.out.println("start ChargingOrderApiResourse.createChargesToOrders()" + apiRequestBodyAsJson + "client id :"
+					+ clientId);
+
+			final CommandWrapper wrapper = new CommandWrapperBuilder().createCharge(clientId)
+					.withJson(apiRequestBodyAsJson).build();
+			final JsonElement parsedCommand = this.fromApiJsonHelper.parse(wrapper.getJson());
+			final JsonCommand command = JsonCommand.from(wrapper.getJson(), parsedCommand, this.fromApiJsonHelper,
+					wrapper.getEntityName(), wrapper.getEntityId(), wrapper.getSubentityId(), wrapper.getGroupId(),
+					wrapper.getClientId(), wrapper.getLoanId(), wrapper.getSavingsId(), wrapper.getCodeId(),
+					wrapper.getSupportedEntityType(), wrapper.getSupportedEntityId(), wrapper.getTransactionId(), null);
+			final CommandProcessingResult result = this.chargingCustomerOrders.createNewCharges(command);
+			System.out.println("end ChargingOrderApiResourse.createChargesToOrders() client id :"
+					+ clientId);
+
+			return this.toApiJsonSerializer.serialize(result);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+
 	}
-	
+
 }

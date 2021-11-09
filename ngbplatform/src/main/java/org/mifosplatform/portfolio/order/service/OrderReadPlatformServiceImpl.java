@@ -1141,6 +1141,7 @@ public class OrderReadPlatformServiceImpl implements OrderReadPlatformService
 
 	}
 
+
 	@Override
 	public OrderData getRenewalOrdersByClient(Long clientId, Long planType) {
 		final RenewalOrderMapper renewalOrderMapper = new RenewalOrderMapper();
@@ -1211,15 +1212,16 @@ public class OrderReadPlatformServiceImpl implements OrderReadPlatformService
 		}
 
 	}
+
 	@Override
 	public List<Long> retrieveClientActiveOrders(Long clientId) {
 
 		try {
 			final ClientActivePlanListMapper mapper = new ClientActivePlanListMapper();
 			String sql = null;
-			
-				sql = "select " + mapper.activeOrderSchema();
-				
+
+			sql = "select " + mapper.activeOrderSchema();
+
 			return jdbcTemplate.query(sql, mapper, new Object[] { clientId });
 		} catch (EmptyResultDataAccessException e) {
 			return null;
@@ -1228,8 +1230,6 @@ public class OrderReadPlatformServiceImpl implements OrderReadPlatformService
 	}
 
 	private static final class ClientActivePlanListMapper implements RowMapper<Long> {
-
-		
 
 		public String activeOrderSchema() {
 			return " plan_id AS planId FROM b_orders o WHERE o.client_id = ? AND o.order_status in (1,4) ";
