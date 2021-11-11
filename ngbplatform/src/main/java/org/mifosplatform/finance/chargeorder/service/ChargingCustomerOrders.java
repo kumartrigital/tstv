@@ -95,11 +95,11 @@ public class ChargingCustomerOrders {
 	public CommandProcessingResult createNewCharges(JsonCommand command) {
 
 		try {
-			System.out.println("start ChargingCustomerOrders.createNewCharges()");
+			//System.out.println("start ChargingCustomerOrders.createNewCharges()");
 			this.apiJsonDeserializer.validateForCreate(command.json());
 			LocalDateTime processDate = ProcessDate.fromJsonDateTime(command);
 			List<BillItem> invoice = this.invoicingSingleClient(command.entityId(), processDate);
-			System.out.println("end ChargingCustomerOrders.createNewCharges()");
+			//System.out.println("end ChargingCustomerOrders.createNewCharges()");
 
 			return new CommandProcessingResultBuilder().withCommandId(command.commandId())
 					.withEntityId(invoice.get(0).getId()).build();
@@ -111,7 +111,7 @@ public class ChargingCustomerOrders {
 
 	public List<BillItem> invoicingSingleClient(Long clientId, LocalDateTime processDate) {
 
-		System.out.println("start ChargingCustomerOrders.invoicingSingleClient() processDate :" + processDate);
+		//System.out.println("start ChargingCustomerOrders.invoicingSingleClient() processDate :" + processDate);
 		LocalDateTime initialProcessDate = processDate;
 		DateTime nextBillableDate = null;
 		Map<String, List<Charge>> groupOfCharges = null;
@@ -120,7 +120,7 @@ public class ChargingCustomerOrders {
 		List<BillingOrderData> billingOrderDatas = chargingOrderReadPlatformService.retrieveOrderIds(clientId,
 				processDate);
 
-		System.out.println("ChargingCustomerOrders.billingOrderDatas:" + billingOrderDatas.size());
+		//System.out.println("ChargingCustomerOrders.billingOrderDatas:" + billingOrderDatas.size());
 
 		if (billingOrderDatas.size() != 0) {
 
@@ -136,17 +136,17 @@ public class ChargingCustomerOrders {
 			// flag
 
 			if (null != isAdvance && isAdvance.isEnabled()) {
-				System.out.println("ChargingCustomerOrders.invoicingSingleClient() is advance");
+			//	System.out.println("ChargingCustomerOrders.invoicingSingleClient() is advance");
 
 				for (BillingOrderData billingOrderData : billingOrderDatas) {
-					System.out.println("ChargingCustomerOrders.invoicingSingleClient().orderID" + billingOrderData.getOrderId());
+				//	System.out.println("ChargingCustomerOrders.invoicingSingleClient().orderID" + billingOrderData.getOrderId());
 					
 					if(billingOrderData.getOrderId()==688186) {
-						System.out.println("ChargingCustomerOrders.bug()");
+					//	System.out.println("ChargingCustomerOrders.bug()");
 					}
 					if (billingOrderData.getBillEndDate() != null
 							&& processDate.isAfter(billingOrderData.getBillEndDate().toLocalDateTime())) {
-						System.out.println("ChargingCustomerOrders.invoicingSingleClient().if condition");
+					//	System.out.println("ChargingCustomerOrders.invoicingSingleClient().if condition");
 
 						JSONObject disconnectCommand = new JSONObject();
 						try {
@@ -172,14 +172,14 @@ public class ChargingCustomerOrders {
 
 					} // returnin
 					else {
-						System.out.println("ChargingCustomerOrders.invoicingSingleClient().else condition");
+						//System.out.println("ChargingCustomerOrders.invoicingSingleClient().else condition");
 
 						nextBillableDate = billingOrderData.getNextBillableDate();
-						System.out.println("ChargingCustomerOrders.invoicingSingleClient() nextBillableDate :" +nextBillableDate);
+					//	System.out.println("ChargingCustomerOrders.invoicingSingleClient() nextBillableDate :" +nextBillableDate);
 
 						if (prorataWithNextBillFlag && ("Y".equalsIgnoreCase(billingOrderData.getBillingAlign()))
 								&& billingOrderData.getInvoiceTillDate() == null) {
-							System.out.println("ChargingCustomerOrders.invoicingSingleClient() if :" +nextBillableDate);
+							//System.out.println("ChargingCustomerOrders.invoicingSingleClient() if :" +nextBillableDate);
 
 							LocalDateTime alignEndDate = new LocalDateTime(nextBillableDate).dayOfMonth()
 									.withMaximumValue();
@@ -187,7 +187,7 @@ public class ChargingCustomerOrders {
 							if (!processDate.toDate().after(alignEndDate.toDate()))
 								processDate = alignEndDate.plusDays(2);
 						} else {
-							System.out.println("ChargingCustomerOrders.invoicingSingleClient() else :" +nextBillableDate);
+							//System.out.println("ChargingCustomerOrders.invoicingSingleClient() else :" +nextBillableDate);
 
 							processDate = initialProcessDate;
 						}
@@ -195,7 +195,7 @@ public class ChargingCustomerOrders {
 						while (processDate.toDateTime().isAfter(nextBillableDate)
 								|| processDate.toDateTime().compareTo(nextBillableDate) == 0) {
 							
-							System.out.println("ChargingCustomerOrders.invoicingSingleClient() processDate :" +processDate +" and  nextBillableDate: "+nextBillableDate);
+							//System.out.println("ChargingCustomerOrders.invoicingSingleClient() processDate :" +processDate +" and  nextBillableDate: "+nextBillableDate);
 
 							Plan plan = planRepository.findOne(billingOrderData.getPlanId());
 
@@ -203,7 +203,7 @@ public class ChargingCustomerOrders {
 
 								groupOfAdvanceCharges = getChargeLinesForServices(billingOrderData, clientId,
 										processDate, groupOfAdvanceCharges);
-								System.out.println("ChargingCustomerOrders.invoicingSingleClient() groupOfAdvanceCharges :" +groupOfAdvanceCharges);
+							//	System.out.println("ChargingCustomerOrders.invoicingSingleClient() groupOfAdvanceCharges :" +groupOfAdvanceCharges);
 
 							} else {
 								//throw new PlanNotFundException("Plan is not enabled with is_Advance Flag");
@@ -311,7 +311,7 @@ public class ChargingCustomerOrders {
 				}
 
 			}
-			System.out.println("Group of charges" + groupOfCharges.toString());
+			//System.out.println("Group of charges" + groupOfCharges.toString());
 
 			return this.generateChargesForOrderService.createBillItemRecords(groupOfCharges, clientId);
 
