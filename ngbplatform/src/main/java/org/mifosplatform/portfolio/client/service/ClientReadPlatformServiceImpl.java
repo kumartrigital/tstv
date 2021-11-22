@@ -1059,7 +1059,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 		// end of change
 
 		final StringBuilder sqlBuilder = new StringBuilder(200);
-		sqlBuilder.append("select distinct SQL_CALC_FOUND_ROWS ");
+		sqlBuilder.append("select  SQL_CALC_FOUND_ROWS ");
 
 		sqlBuilder.append(clientMapper.schema());
 		sqlBuilder.append(" where o.hierarchy like ?");
@@ -1096,7 +1096,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 					+ " order by item_master_id limit 1) HW_Serial, "
 					+ " b.wallet_amount As walletAmount ,bp.amount_paid AS paidAmount, bp.payment_date as lastPaymentDate,bbm.Due_amount AS lastBillAmount "
 					+ " FROM m_client c JOIN m_office o ON o.id = c.office_id "
-					+ " JOIN b_client_address ca on ca.client_id=c.id"
+					+ " JOIN b_client_address ca on ca.client_id=c.id and ca.address_key='PRIMARY'"
 					+ " LEFT OUTER JOIN b_client_balance b ON b.client_id = c.id "
 					+ " LEFT OUTER JOIN b_clientuser cu ON cu.client_id = c.id "
 					+ " LEFT OUTER JOIN b_payments bp ON bp.client_id = c.id and bp.id=(select max(bsp.id) from b_payments bsp where bp.client_id=bsp.client_id) "
