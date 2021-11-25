@@ -89,7 +89,7 @@ public class FinancialTransactionApiResource {
 	
 	final SearchSqlQuery searchFinancialTransaction =SearchSqlQuery.forSearch(sqlSearch, offset,limit );
 	this.crmServices.getClientBills(key,clientId.toString());
-	Page<FinancialTransactionsData> transactionData = this.billMasterReadPlatformService.retrieveInvoiceFinancialData(searchFinancialTransaction,clientId);
+	Page<FinancialTransactionsData> transactionData = this.billMasterReadPlatformService.retrieveInvoiceFinancialnewData(searchFinancialTransaction,clientId,limit,offset);
 	return this.toApiJsonSerializer.serialize(transactionData);    
 	}
 	

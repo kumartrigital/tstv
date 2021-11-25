@@ -104,6 +104,45 @@ public class BillMasterReadPlatformServiceImplementation implements BillMasterRe
 		            new Object[] {clientId}, financialTransactionsMapper);
 			
 	}
+	
+	@Override
+	public Page<FinancialTransactionsData> retrieveInvoiceFinancialnewData(final SearchSqlQuery searchTransactionHistory, final Long clientId,final Integer limit,final Integer offset) {
+		
+		final FinancialInvoiceTransactionsnewMapper financialTransactionsnewMapper = new FinancialInvoiceTransactionsnewMapper();
+		StringBuilder sqlBuilder = new StringBuilder(200);
+	        sqlBuilder.append("(select SQL_CALC_FOUND_ROWS ");
+	        sqlBuilder.append(financialTransactionsnewMapper.financialTransactionsnewSchema(clientId,limit,offset));
+	        String sqlSearch = searchTransactionHistory.getSqlSearch();
+	        String extraCriteria = "";
+		    if (sqlSearch != null) {
+		    	sqlSearch=sqlSearch.trim();
+		    	/*extraCriteria = " and (v.transType like '%"+sqlSearch+"%' OR "
+		    				+ " DATE_FORMAT(v.transDate,'%d %M %Y') like '%"+sqlSearch+"%' OR v.tran_type like '%"+sqlSearch+"%' OR "
+		    				+" v.dr_amt like '%"+sqlSearch+"%' OR v.cr_amt like '%"+sqlSearch+"%' )" ;
+		    				*/
+		    	extraCriteria = " and (transType like '%"+sqlSearch+"%' OR "
+				+ " DATE_FORMAT(transDate,'%d %M %Y') like '%"+sqlSearch+"%' OR tran_type like '%"+sqlSearch+"%' OR "
+				+" dr_amt like '%"+sqlSearch+"%' OR cr_amt like '%"+sqlSearch+"%' )" ;
+				
+		    }
+		    
+	        sqlBuilder.append(extraCriteria);
+	        
+	        sqlBuilder.append(" order by  transId desc ");
+	        
+	        if (searchTransactionHistory.isLimited()) {
+	            sqlBuilder.append(" limit ").append(searchTransactionHistory.getLimit());
+	        }
+
+	        if (searchTransactionHistory.isOffset()) {
+	            sqlBuilder.append(" offset ").append(searchTransactionHistory.getOffset());
+	        }
+		
+			return this.paginationHelper.fetchPage(this.jdbcTemplate, "SELECT FOUND_ROWS()", sqlBuilder.toString(),
+		            new Object[] {}, financialTransactionsnewMapper);
+			
+	}
+	
 
 	private static final class FinancialInvoiceTransactionsMapper implements
 			RowMapper<FinancialTransactionsData> {
@@ -128,8 +167,57 @@ public class BillMasterReadPlatformServiceImplementation implements BillMasterRe
 
 			return " SQL_CALC_FOUND_ROWS v.* from  fin_trans_vw  v where v.client_id=? ";
 		}
+		
 	}
 
+	
+	private static final class FinancialInvoiceTransactionsnewMapper implements
+	RowMapper<FinancialTransactionsData> {
+
+@Override
+public FinancialTransactionsData mapRow(final ResultSet resultSet, final int rowNum)
+				throws SQLException {
+	final Long transactionId = resultSet.getLong("TransId");
+	final String transactionType = resultSet.getString("TransType");
+	final BigDecimal debitAmount = resultSet.getBigDecimal("Dr_amt");
+	final BigDecimal creditAmount = resultSet.getBigDecimal("Cr_amt");
+	final String userName = resultSet.getString("username");
+	final String transactionCategory = resultSet.getString("tran_type");
+	final boolean flag = resultSet.getBoolean("flag");
+	final LocalDate transDate = JdbcSupport.getLocalDate(resultSet,"TransDate");
+
+	return new FinancialTransactionsData(null ,null,transactionId, transDate, transactionType, debitAmount, creditAmount, null, userName, 
+			transactionCategory, flag, null, null);
+}
+
+
+public String financialTransactionsnewSchema(Long clientId,Integer limit,Integer offset) {
+
+	return " `b_bill_item`.`id` AS `transId`,`m_appuser`.`username` AS `username`,`b_bill_item`.`client_id` AS `client_id`,CASE WHEN `b_charge`.`charge_type` = 'NRC' THEN 'Once' ELSE 'Periodic'END AS `tran_type`,\r\n"
+			+ "CAST(`b_bill_item`.`invoice_date` AS DATE) AS `transDate`,'INVOICE' AS `transType`,IF((`b_bill_item`.`invoice_amount` > 0),`b_bill_item`.`invoice_amount`,0) AS `dr_amt`,IF((`b_bill_item`.`invoice_amount` < 0),ABS(`b_bill_item`.`invoice_amount`),0) AS `cr_amt`,1 AS `flag`\r\n"
+			+ "FROM `b_bill_item` LEFT JOIN `m_appuser` ON `b_bill_item`.`createdby_id` = `m_appuser`.`id` LEFT JOIN `b_charge` ON `b_bill_item`.`id` = `b_charge`.`billitem_id`\r\n"
+			+ "WHERE `b_bill_item`.`invoice_date` <= NOW() AND `b_bill_item`.`client_id` = " +clientId+"  LIMIT " +limit+" offset "+offset+")\r\n"
+			+ "UNION ALL (SELECT `b_adjustments`.`id` AS `transId`,`m_appuser`.`username` AS `username`, `b_adjustments`.`client_id` AS `client_id`, `m_code_value`.`code_value` AS `tran_type`,\r\n"
+			+ "CAST(`b_adjustments`.`adjustment_date` AS DATE) AS `transdate`, 'ADJUSTMENT' AS `transType`,(CASE `b_adjustments`.`adjustment_type` WHEN 'DEBIT' THEN `b_adjustments`.`adjustment_amount`ELSE 0 END) AS `dr_amount`,(CASE`b_adjustments`.`adjustment_type` \r\n"
+			+ "WHEN 'CREDIT' THEN `b_adjustments`.`adjustment_amount`ELSE 0 END) AS `cr_amount`, 1 AS `flag` FROM `b_adjustments` LEFT JOIN `m_appuser` ON `b_adjustments`.`createdby_id` = `m_appuser`.`id`LEFT JOIN `m_code_value` ON \r\n"
+			+ "`b_adjustments`.`adjustment_code` = `m_code_value`.`id` WHERE `b_adjustments`.`adjustment_date` <= NOW() AND `m_code_value`.`code_id` = 12 \r\n"
+			+ "AND `b_adjustments`.`client_id` = " +clientId+"  LIMIT " +limit+ " offset "+offset+ ") \r\n"
+			+ "UNION ALL (SELECT `b_payments`.`id` AS `transId`, `m_appuser`.`username` AS `username`, `b_payments`.`client_id` AS `client_id`,`m_code_value`.`code_value` AS `tran_type`, CAST(`b_payments`.`payment_date` AS DATE) AS `transDate`, 'PAYMENT' AS `transType`,0 AS `dr_amt`,\r\n"
+			+ "`b_payments`.`amount_paid` AS `cr_amount`, `b_payments`.`is_deleted` AS `flag` FROM `b_payments` LEFT JOIN `m_appuser` ON `b_payments`.`createdby_id` = `m_appuser`.`id` LEFT JOIN `m_code_value` ON `b_payments`.`paymode_id` = `m_code_value`.`id` WHERE ISNULL(`b_payments`.`ref_id`) AND `b_payments`.`payment_date` <= NOW() \r\n"
+			+ "AND `b_payments`.`client_id` = " +clientId+"  LIMIT " +limit+ " offset "+offset+ " ) \r\n"
+			+ "UNION ALL (SELECT `b_payments`.`id` AS `transId`,`m_appuser`.`username` AS `username`,`b_payments`.`client_id` AS `client_id`, `m_code_value`.`code_value` AS `tran_type`, CAST(`b_payments`.`payment_date` AS DATE) AS `transDate`,'PAYMENT CANCELED' AS `transType`, ABS(`b_payments`.`amount_paid`) AS `dr_amt`,  \r\n"
+			+ "0 AS `cr_amount`,  `b_payments`.`is_deleted` AS `flag` FROM  `b_payments`LEFT JOIN `m_appuser` ON `b_payments`.`createdby_id` = `m_appuser`.`id`LEFT JOIN `m_code_value` ON \r\n"
+			+ "`b_payments`.`paymode_id` = `m_code_value`.`id`WHERE`b_payments`.`is_deleted` = 1 AND `b_payments`.`ref_id` IS NOT NULL AND `b_payments`.`createdby_id` = `m_appuser`.`id` AND `b_payments`.`payment_date` <= NOW() \r\n"
+			+ "AND `b_payments`.`client_id` = " +clientId+"  LIMIT " +limit+ " offset "+offset+ ")\r\n"
+			+ "UNION ALL(SELECT `bjt`.`id` AS `transId`, `ma`.`username` AS `username`, `bjt`.`client_id` AS `client_id`, 'Event Journal' AS `tran_type`, CAST(`bjt`.`jv_date` AS DATE) AS `transDate`,\r\n"
+			+ "'JOURNAL VOUCHER' AS `transType`,IFNULL(`bjt`.`debit_amount`, 0) AS `dr_amt`, IFNULL(`bjt`.`credit_amount`, 0) AS `cr_amount`,1 AS `flag` FROM `b_jv_transactions` `bjt`JOIN `m_appuser` `ma` ON`bjt`.`createdby_id` = `ma`.`id` AND `bjt`.`jv_date` <= NOW()\r\n"
+			+ " AND `bjt`.`client_id` = " +clientId+"  LIMIT " +limit+ " offset "+offset+ ") \r\n"
+			+ "UNION ALL(SELECT `bdr`.`id` AS `transId`,`m_appuser`.`username` AS `username`,`bdr`.`client_id` AS `client_id`,`bdr`.`description` AS `tran_type`, CAST(`bdr`.`transaction_date` AS DATE) AS `transDate`,'DEPOSIT&REFUND' AS `transType`,IFNULL(`bdr`.`debit_amount`, 0) AS `dr_amt`,IFNULL(`bdr`.`credit_amount`, 0) AS `cr_amount`,\r\n"
+			+ " `bdr`.`is_refund` AS `flag` FROM`b_deposit_refund` `bdr` LEFT JOIN `m_appuser` ON `bdr`.`createdby_id` = `m_appuser`.`id` WHERE `bdr`.`transaction_date` <= NOW() \r\n"
+			+ " AND `bdr`.`client_id` = " +clientId+"  ORDER BY `transId` , `username` LIMIT " +limit+ " offset "+offset+" ) ";
+}
+}
+	
 	@Override
 	public Page<FinancialTransactionsData> retrieveInvoiceFinancialDataByOfficeId(final SearchSqlQuery searchTransactionHistory, final Long officeId) {
 		
