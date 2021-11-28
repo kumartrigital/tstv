@@ -1059,7 +1059,7 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 		// end of change
 
 		final StringBuilder sqlBuilder = new StringBuilder(200);
-		sqlBuilder.append("select  SQL_CALC_FOUND_ROWS ");
+		sqlBuilder.append("select distinct SQL_CALC_FOUND_ROWS ");
 
 		sqlBuilder.append(clientMapper.schema());
 		sqlBuilder.append(" where o.hierarchy like ?");
