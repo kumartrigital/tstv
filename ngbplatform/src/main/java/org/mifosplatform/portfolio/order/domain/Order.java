@@ -434,6 +434,82 @@ public Order(Long clientId, Long planId, Long contractPeriod, String paytermCode
 	public void setActiveDate(LocalDateTime activeDate) {
 		this.activeDate = activeDate.toDate();
 	}
+
+
+	public char getAutoRenew() {
+		return autoRenew;
+	}
+
+
+	public void setAutoRenew(char autoRenew) {
+		this.autoRenew = autoRenew;
+	}
+
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
+
+
+	public void setClientId(Long clientId) {
+		this.clientId = clientId;
+	}
+
+
+	public void setPlanId(Long planId) {
+		this.planId = planId;
+	}
+
+
+	public void setTransactionType(String transactionType) {
+		this.transactionType = transactionType;
+	}
+
+
+	public void setBillingFrequency(String billingFrequency) {
+		this.billingFrequency = billingFrequency;
+	}
+
+
+	public void setActiveDate(Date activeDate) {
+		this.activeDate = activeDate;
+	}
+
+
+	public void setContarctPeriod(Long contarctPeriod) {
+		this.contarctPeriod = contarctPeriod;
+	}
+
+
+	public void setIsDeleted(char isDeleted) {
+		this.isDeleted = isDeleted;
+	}
+
+
+	public void setDisconnectReason(String disconnectReason) {
+		this.disconnectReason = disconnectReason;
+	}
+
+
+	public void setUserAction(String userAction) {
+		this.userAction = userAction;
+	}
+
+
+	public void setServices(List<OrderLine> services) {
+		this.services = services;
+	}
+
+
+	public void setPrice(List<OrderPrice> price) {
+		this.price = price;
+	}
+
+
+	public void setOrderDiscount(List<OrderDiscount> orderDiscount) {
+		this.orderDiscount = orderDiscount;
+	}
+	
 	
 	
 	

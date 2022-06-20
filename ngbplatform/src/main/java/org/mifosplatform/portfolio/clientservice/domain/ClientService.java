@@ -12,6 +12,9 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.mifosplatform.infrastructure.core.api.JsonCommand;
 import org.mifosplatform.infrastructure.core.domain.AbstractAuditableCustom;
 import org.mifosplatform.organisation.office.domain.Office;
@@ -117,6 +120,6 @@ public class ClientService extends AbstractAuditableCustom<AppUser, Long>{
 	public void setServiceParameters(List<ServiceParameters> serviceParameters) {
 		this.serviceParameters = serviceParameters;
 	}
-		
+	
 	
 }

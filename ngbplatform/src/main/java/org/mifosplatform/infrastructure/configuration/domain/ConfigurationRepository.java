@@ -7,15 +7,10 @@ package org.mifosplatform.infrastructure.configuration.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
 
-public interface ConfigurationRepository extends JpaRepository<Configuration, Long>,
-        JpaSpecificationExecutor<Configuration> {
+public interface ConfigurationRepository
+		extends JpaRepository<Configuration, Long>, JpaSpecificationExecutor<Configuration> {
 
-    Configuration findOneByName(String name);
-    
+	Configuration findOneByName(String name);
 
-
-    
-    
 }

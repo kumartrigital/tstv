@@ -139,6 +139,8 @@ public class ConfigurationConstants {
 	public static final String CONFIG_VOUCHERPIN_VALUES= "voucherPins";
 	public static final String CONFIG_MAX_ACTIVE_SESSIONS= "max_active_sessions";
 	public static final String PAYWIZARD_INTEGRATION= "paywizard_integration";
+	public static final String AGREEGATER= "billing_aggregater";
+
 	public static final String Restrict_To_Hierarchy= "restrictToHierarchy";
 	public static final String REQUIRE_ENTITY_ITEM = "requireEntityItem";
 	public static final String IS_ADVANCE = "isAdvance";
