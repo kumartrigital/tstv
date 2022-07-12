@@ -261,7 +261,7 @@ public class ChargingCustomerOrders {
 						//for (BillingOrderData billingOrderDataNow : billingOrderDatas) {
 
 						for (Order order : orders) {
-							if(order.getPlanId().equals(bpkgId)) {
+							if(!order.getPlanId().equals(bpkgId)) {
 								JSONObject disconnectCommand = new JSONObject();
 								try {
 
