@@ -14,6 +14,7 @@ import javax.persistence.EntityExistsException;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
+import org.joda.time.Period;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -137,6 +138,9 @@ import org.mifosplatform.provisioning.preparerequest.service.PrepareRequestReadp
 import org.mifosplatform.provisioning.processrequest.domain.ProcessRequestRepository;
 import org.mifosplatform.provisioning.provisioning.api.ProvisioningApiConstants;
 import org.mifosplatform.provisioning.provisioning.data.ProvisioningData;
+import org.mifosplatform.provisioning.provisioning.domain.ProvisioningRequest;
+import org.mifosplatform.provisioning.provisioning.domain.ProvisioningRequestRepository;
+import org.mifosplatform.provisioning.provisioning.exceptions.ProvisioningRequestNotFoundException;
 import org.mifosplatform.provisioning.provisioning.service.ProvisioningReadPlatformService;
 import org.mifosplatform.provisioning.provisioning.service.ProvisioningWritePlatformService;
 import org.mifosplatform.useradministration.domain.AppUser;
@@ -239,6 +243,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 	private final ItemDetailsRepository itemDetailsRepository;
 	private final EventPriceReadPlatformService eventPriceReadPlatformService;
 	private final SlabRateWritePlatformService slabRateReadPlatformService;
+	private final ProvisioningRequestRepository provisioningRequestRepository;
 	private final static String VALUE_PINTYPE = "VALUE";
 	private final static String PRODUCT_PINTYPE = "PRODUCT";
 
@@ -296,7 +301,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			final ItemDetailsRepository itemDetailsRepository,
 			final EventPriceReadPlatformService eventPriceReadPlatformService,
 			final ChargingOrderApiResourse chargingOrderApiResourse,
-			final SlabRateWritePlatformService slabRateReadPlatformService) {
+			final SlabRateWritePlatformService slabRateReadPlatformService,
+			final ProvisioningRequestRepository provisioningRequestRepository) {
 
 		this.context = context;
 		this.reverseInvoice = reverseInvoice;
@@ -366,6 +372,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 		this.itemDetailsRepository = itemDetailsRepository;
 		this.eventPriceReadPlatformService = eventPriceReadPlatformService;
 		this.slabRateReadPlatformService = slabRateReadPlatformService;
+		this.provisioningRequestRepository = provisioningRequestRepository;
 	}
 
 	@Override
@@ -1251,6 +1258,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 	@SuppressWarnings("unused")
 	@Override
 	public CommandProcessingResult retrackOsdMessage(final JsonCommand command) {
+
 		Configuration isPaywizard = configurationRepository.findOneByName(ConfigurationConstants.PAYWIZARD_INTEGRATION);
 		try {
 			// System.out.println("OrderWritePlatformServiceImpl.retrackOsdMessage()");
@@ -1269,6 +1277,25 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				}
 
 			} else {
+
+				Long clientServiceId = command.longValueOfParameterNamed("clientServiceId");
+
+				ProvisioningRequest requestDetails = provisioningRequestRepository
+						.findLatestRetrackRequest(clientServiceId);
+				
+				DateTime requestTime = new DateTime(requestDetails.getStartDate());
+
+				
+				DateTime dateTime = new DateTime();
+				Period p = new Period(dateTime, requestTime);
+				int hours = p.getHours();
+				
+				if(hours<2) {
+					throw new ProvisioningRequestNotFoundException("retrack not able to process please try after sometime");
+				}
+				
+				
+
 				Map<String, Object> changes = new HashMap<>();
 				List<ClientServiceData> clientServiceDatas = this.clientServiceReadPlatformService
 						.retriveActiveClientsInOrg(command.longValueOfParameterNamed("clientServiceId"));
@@ -2443,8 +2470,8 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
 				String strDate = formatter.format(new Date());
 
-				planObject.put("id", "170");
-				planObject.put("planCode", "170");
+				planObject.put("id", "5001");
+				planObject.put("planCode", "5001");
 				planObject.put("planDescription", "Billing Package");
 				planObject.put("planPoId", 0);
 				planObject.put("dealPoId", 0);

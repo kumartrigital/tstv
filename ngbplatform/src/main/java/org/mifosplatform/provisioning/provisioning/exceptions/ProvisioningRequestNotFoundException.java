@@ -9,5 +9,10 @@ public class ProvisioningRequestNotFoundException extends AbstractPlatformDomain
 		super("error.msg.provisioning.request.not.found.with.this.identifier","provisioning request not found with this identifier",provisionId);
 		
 	}
+	
+	public ProvisioningRequestNotFoundException(String message) {
+		super("error.msg.provisioning.request.not.process.with.this.identifier","provisioning request not able to process",message);
+		
+	}
 
 }
