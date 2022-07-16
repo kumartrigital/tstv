@@ -699,6 +699,8 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 			// JsonArray allocateData = fromJsonHelper.extractJsonArrayNamed("allocate",
 			// element);
 			JsonArray bookOrder = fromJsonHelper.extractJsonArrayNamed("bookorder", element);
+			
+			
 			// create client service
 			JSONObject clientServiceObject = null;
 
@@ -775,6 +777,7 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 			}
 
 			for (JsonElement order : bookOrder) {
+				
 				JsonObject orderr = order.getAsJsonObject();
 				orderr.addProperty("clientServiceId", newClientServiceId);
 				order = orderr;

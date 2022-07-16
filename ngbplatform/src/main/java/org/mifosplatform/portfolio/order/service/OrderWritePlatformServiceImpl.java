@@ -380,6 +380,13 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 
 		try {
 
+			Configuration billingPackageConfig = configurationRepository
+					.findOneByName(ConfigurationConstants.BILLINGPLANID);
+
+			Long bpkgId = Long.parseLong(billingPackageConfig.getValue());
+
+			Order baseOrder = orderRepository.findOrderByClientIdAndPlanId(clientId, bpkgId);
+
 			List<Long> planIds = new ArrayList<Long>();
 			this.fromApiJsonDeserializer.validateForCreate(command.json());
 			String serialnum = command.stringValueOfParameterNamed("serialnumber");
@@ -394,6 +401,14 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 					EventActionConstants.EVENT_CREATE_ORDER, command.json(), userId);
 
 			Plan plan = this.planRepository.findPlanCheckDeletedStatus(command.longValueOfParameterNamed("planCode"));
+
+			if (bpkgId.equals(plan.getId())) {
+				if (baseOrder != null) {
+					return new CommandProcessingResult(baseOrder.getId(), baseOrder.getClientId());
+
+				}
+			}
+
 			planIds = this.orderReadPlatformService.retrieveClientActiveOrders(clientId);
 			if (planIds.contains(plan.getId()))
 				throw new PlanAlreadyAddedException(plan.getDescription());
@@ -474,14 +489,14 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			 * processNotifyMessages(EventActionConstants.EVENT_NOTIFY_TECHNICALTEAM,
 			 * clientId, order.getId().toString(), "ACTIVATION"); }
 			 */
-			Order order1 = this.orderRepository.findOne(order.getId());
+			Order orderDetails = this.orderRepository.findOne(order.getId());
 
 			ClientService clientService = null;
 			clientService = this.clientServiceRepository.findOne(command.longValueOfParameterNamed("clientServiceId"));
 			if (clientService.getStatus().equalsIgnoreCase("NEW")) {
-				order1.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.NEW).getId());
+				orderDetails.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.NEW).getId());
 			} else {
-				order1.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.PENDING).getId());
+				orderDetails.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.PENDING).getId());
 			}
 
 			/*
@@ -489,15 +504,13 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			 * order1.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.ACTIVE
 			 * ).getId()); }
 			 */
-			System.out.println("OrderWritePlatformServiceImpl.createOrder( :)" + order.getEndDate());
-			Configuration billingPackageConfig = configurationRepository
-					.findOneByName(ConfigurationConstants.BILLINGPLANID);
-			Long bpkgId = Long.parseLong(billingPackageConfig.getValue());
-			if (order1.getPlanId().equals(bpkgId))
+
+			if (orderDetails.getPlanId().equals(bpkgId))// 4
 				if (plan.getProvisionSystem().equalsIgnoreCase("None")) {
-					order1.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.ACTIVE).getId());
+					orderDetails.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.ACTIVE).getId());
 				}
-			order = this.orderRepository.saveAndFlush(order1);
+
+			order = this.orderRepository.saveAndFlush(orderDetails);// New
 
 			if (!plan.getProvisionSystem().equalsIgnoreCase("None")) {
 				this.provisioningRequesting(order, oldOrder, plan.isPrepaid());
@@ -510,13 +523,14 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			/** Logic for daily billing.-Start */
 
 			Configuration is_aggregater = configurationRepository.findOneByName(ConfigurationConstants.AGGREGATER);
+
 			if (null != is_aggregater && is_aggregater.isEnabled()) {
-				updateNextBillableDate(order, bpkgId);
+				updateNextBillableDate(order, bpkgId); // working
 				checkAndIncludeBaseBillingPackage(bpkgId, clientId, (order.getPrice().get(0).getPrice().doubleValue()));
 			}
 
 			/** Logic for daily billing.-End */
-			return new CommandProcessingResult(order1.getId(), order1.getClientId());
+			return new CommandProcessingResult(orderDetails.getId(), orderDetails.getClientId());
 
 		} catch (DataIntegrityViolationException dve) {
 			handleCodeDataIntegrityIssues(command, dve);
