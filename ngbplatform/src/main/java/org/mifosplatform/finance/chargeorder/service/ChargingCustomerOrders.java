@@ -65,6 +65,7 @@ public class ChargingCustomerOrders {
 	private final FromJsonHelper fromApiJsonHelper;
 	private final OrderRepository orderRepository;
 	private final ClientServiceRepository clientServiceRepository;
+	private final ConfigurationRepository configurationRepository;
 
 	@Autowired
 	public ChargingCustomerOrders(final ChargingOrderReadPlatformService chargingOrderReadPlatformService,
@@ -75,7 +76,8 @@ public class ChargingCustomerOrders {
 			final OrderReadPlatformService orderReadPlatformService, final FromJsonHelper fromJsonHelper,
 			final PlanRepository planRepository, final SlabRateWritePlatformService slabRateWritePlatformService,
 			final @Lazy OrderWritePlatformService orderWritePlatformService, final FromJsonHelper fromApiJsonHelper,
-			final OrderRepository orderRepository, final ClientServiceRepository clientServiceRepository) {
+			final OrderRepository orderRepository, final ClientServiceRepository clientServiceRepository,
+			final ConfigurationRepository configurationRepository) {
 
 		this.chargingOrderReadPlatformService = chargingOrderReadPlatformService;
 		this.generateChargesForOrderService = generateChargesForOrderService;
@@ -90,6 +92,7 @@ public class ChargingCustomerOrders {
 		this.fromApiJsonHelper = fromApiJsonHelper;
 		this.orderRepository = orderRepository;
 		this.clientServiceRepository = clientServiceRepository;
+		this.configurationRepository = configurationRepository;
 
 	}
 
@@ -114,6 +117,7 @@ public class ChargingCustomerOrders {
 
 	public List<BillItem> invoicingSingleClient(Long clientId, LocalDateTime processDate) {
 
+		logger.info("ClientId : " + clientId);
 		logger.info("start ChargingCustomerOrders.invoicingSingleClient() processDate :" + processDate);
 		// System.out.println("start ChargingCustomerOrders.invoicingSingleClient()
 		// processDate :" + processDate);
@@ -137,9 +141,15 @@ public class ChargingCustomerOrders {
 																									// to control
 			Configuration isAdvance = this.globalConfigurationRepository
 					.findOneByName(ConfigurationConstants.IS_ADVANCE); // isadvance plan
+
+			Configuration billingPackageConfig = configurationRepository
+					.findOneByName(ConfigurationConstants.BILLINGPLANID);
+			Long bpkgId = Long.parseLong(billingPackageConfig.getValue());
+
 			// flag
 
-			if (null != isAdvance && isAdvance.isEnabled()) {
+			if (true) {
+				// if (null != isAdvance && isAdvance.isEnabled()) {
 				logger.info("ChargingCustomerOrders.invoicingSingleClient() is advance");
 
 				for (BillingOrderData billingOrderData : billingOrderDatas) {
@@ -258,9 +268,7 @@ public class ChargingCustomerOrders {
 						// for (BillingOrderData billingOrderDataNow : billingOrderDatas) {
 
 						for (Order order : orders) {
-
-							if (order.getPlanId() != 3) {
-
+							if (!order.getPlanId().equals(bpkgId)) {
 								JSONObject disconnectCommand = new JSONObject();
 								try {
 
@@ -283,8 +291,8 @@ public class ChargingCustomerOrders {
 										null, null, null, null, null, null, null, null, null, null, null);
 
 								orderWritePlatformService.disconnectOrder(disconnectCommandJson, order.getId());
-
 							}
+
 						} // returning a message json message
 						throw new PlatformDataIntegrityException("Insufficient client balance",
 								"Insufficient client balance", "Insufficient client balance");

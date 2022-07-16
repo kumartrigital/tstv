@@ -113,7 +113,7 @@ public final class OrderCommandFromApiJsonDeserializer {
 		
 	}
 
-	public void validateForDisconnectOrder(String json) {
+	public void validateForDisconnectOrder(String json, Long planId, Long BillingPkgId) {
 		 if (StringUtils.isBlank(json)) { throw new InvalidJsonException(); }
 
 	        final Type typeOfMap = new TypeToken<Map<String, Object>>() {}.getType();
@@ -132,6 +132,8 @@ public final class OrderCommandFromApiJsonDeserializer {
 	        final String dataFormat = fromApiJsonHelper.extractStringNamed("dateFormat", element);
 
 	        baseDataValidator.reset().parameter("dataFormat").value(dataFormat).notNull();
+	        
+	        baseDataValidator.reset().notBaseBillingPlan(planId,BillingPkgId);
 
 	        throwExceptionIfValidationWarningsExist(dataValidationErrors);
 		
