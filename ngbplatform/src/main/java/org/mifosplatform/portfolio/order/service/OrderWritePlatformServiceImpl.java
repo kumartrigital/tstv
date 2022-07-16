@@ -485,7 +485,9 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			Configuration billingPackageConfig =configurationRepository.findOneByName(ConfigurationConstants.BILLINGPLANID);
 			Long bpkgId = Long.parseLong(billingPackageConfig.getValue());
 			if(order1.getPlanId().equals(bpkgId))
+				if (plan.getProvisionSystem().equalsIgnoreCase("None")) {
 			order1.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.ACTIVE).getId());
+				}
 			order = this.orderRepository.saveAndFlush(order1);
 
 			if (!plan.getProvisionSystem().equalsIgnoreCase("None")) {
