@@ -563,7 +563,7 @@ public class PlanReadPlatformServiceImpl implements PlanReadPlatformService {
 			 * append(" AND p.plan_id in (Select plan_id from b_sales_cataloge_mapping scm join b_sales_cataloge sd on scm.cataloge_id = sd.id where sd.sales_plan_category_id = "
 			 * +salesPlanCategoryId+" and scm.is_deleted = 'N') ");
 			 */
-			sql.append(
+			/*sql.append(
 					"SELECT DISTINCT s.id AS id, s.plan_code AS planCode, s.plan_description as planDescription, s.is_prepaid AS isPrepaid, s.plan_poid AS planpoid,p.price as planPrice,");
 			sql.append(
 					"(select distinct(deal_poid) from b_plan_detail x where s.id=x.plan_id) AS dealpoid,co.code_value AS planTypeName,(select billfrequency_code from b_charge_codes bcc where bcc.charge_code=p.charge_code) AS chargeCycle,");
@@ -594,8 +594,39 @@ public class PlanReadPlatformServiceImpl implements PlanReadPlatformService {
 							+ clientServiceId + ") ");
 			sql.append(
 					" AND p.plan_id in (Select plan_id from b_sales_cataloge_mapping scm join b_sales_cataloge sd on scm.cataloge_id = sd.id where sd.id = "
-							+ salesCatalogeId + " and scm.is_deleted = 'N') ");
-
+							+ salesCatalogeId + " and scm.is_deleted = 'N') ");	*/
+			//Query optimized on 06/14/2022
+			sql.append(
+                    "SELECT DISTINCT s.id AS id, s.plan_code AS planCode, s.plan_description AS planDescription, s.is_prepaid AS isPrepaid, s.plan_poid AS planpoid,p.price AS planPrice, ");
+            sql.append(
+                    "(SELECT DISTINCT (deal_poid) FROM b_plan_detail x WHERE s.id = x.plan_id) AS dealpoid,co.code_value AS planTypeName, (SELECT billfrequency_code FROM b_charge_codes bcc WHERE bcc.charge_code = p.charge_code) AS chargeCycle,");
+            sql.append(
+                    " (SELECT id FROM b_contract_period cp WHERE cp.contract_period = p.duration) AS contractPeriodId ");
+            sql.append(
+                    " FROM b_plan_master s, b_plan_pricing p,b_priceregion_master prd,b_priceregion_detail pd,b_client_address cd,b_state bs,m_code_value co ");
+            sql.append(
+            		" WHERE s.plan_status = 1 AND s.is_deleted = 'n' AND s.id != " + planId
+                    + " AND prd.id = pd.priceregion_id	AND p.price_region_id = pd.priceregion_id AND p.is_deleted = 'n' AND ");
+            sql.append(
+                    " (pd.state_id = ifnull((SELECT DISTINCT c.id FROM b_plan_pricing a,b_priceregion_detail b,b_state c,b_charge_codes cc,b_client_address d ");
+            sql.append(
+                    " WHERE b.priceregion_id = a.price_region_id AND b.state_id = c.id AND a.price_region_id = b.priceregion_id AND d.STATE = c.state_name ");
+            sql.append(
+                    " AND cc.charge_code = a.charge_code AND cc.charge_code = p.charge_code	AND d.address_key = 'PRIMARY' AND d.client_id = "
+							+ clientId + " ");
+			sql.append(" AND a.plan_id != " + planId
+					+ " AND a.is_deleted = 'n'), 0) AND pd.country_id IN ((SELECT DISTINCT c.id FROM b_plan_pricing a, b_priceregion_detail b, b_country c,");
+			sql.append(
+					" b_charge_codes cc,b_client_address d WHERE b.priceregion_id = a.price_region_id AND b.country_id = c.id AND cc.charge_code = a.charge_code ");
+			sql.append(
+					" AND cc.charge_code = p.charge_code AND a.price_region_id = b.priceregion_id AND c.country_name = d.country AND d.address_key = 'PRIMARY' ");
+			sql.append(" AND d.client_id = " + clientId + " AND a.plan_id != " + planId
+					+ " AND a.is_deleted = 'n'),0))	AND s.id = p.plan_id AND s.plan_type = co.id AND cd.client_id = "
+					+ clientId + " ");
+			sql.append(
+					" AND p.plan_id IN (Select A.plan_id from (SELECT plan_id FROM b_sales_cataloge_mapping scm JOIN b_sales_cataloge sd ON scm.cataloge_id = sd.id WHERE sd.id = 1 AND scm.is_deleted = 'N') A ");
+			sql.append(
+					" LEFT JOIN( SELECT DISTINCT plan_id FROM b_orders WHERE is_deleted = 'n' AND order_status = 1 AND client_service_id = "+ clientServiceId +" ) B ON A.plan_id=B.plan_id WHERE B.plan_id is null) ");
 		}
 
 		RowMapper<PlanCodeData> rm = new PlanDataForAddPlans();

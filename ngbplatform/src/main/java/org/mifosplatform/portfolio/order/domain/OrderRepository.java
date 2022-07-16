@@ -20,7 +20,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 	Order findOrderByClientId(@Param("clientId") Long clientId);
 	
 	
-	@Query("from Order order where order.clientId=:clientId and order.planId=:planId and order.status = 1")
+	@Query(value ="select * from  b_orders where client_id=:clientId and plan_id=:planId and (order_status = 1 or order_status = 4 or order_status = 9)", nativeQuery = true)
 	Order findOrderByClientIdAndPlanId(@Param("clientId") Long clientId  , @Param("planId") Long planId);
 
 	@Query("from Order order where order.clientId=:clientId")

@@ -799,6 +799,16 @@ public class DataValidatorBuilder {
 		        }
 		        return this;
 		  }
-		
-    
+		 
+		 public DataValidatorBuilder notBaseBillingPlan(final Long planId, final Long BillingPkgId) {
+			 if (planId.equals(BillingPkgId)) {
+				 StringBuilder validationErrorCode = new StringBuilder("validation.msg.").append(
+						 "base.billing.package.cannot.be.disconnected.");
+		         StringBuilder defaultEnglishMessage = new StringBuilder("the base billing package cannot be disconnected.");
+		         ApiParameterError error = ApiParameterError.parameterError(validationErrorCode.toString(), defaultEnglishMessage.toString(),
+		                    parameter);
+		         dataValidationErrors.add(error);
+			 }
+			 return this;
+		 }	
 }

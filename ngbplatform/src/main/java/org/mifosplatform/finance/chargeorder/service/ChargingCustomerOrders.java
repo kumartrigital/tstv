@@ -30,6 +30,7 @@ import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.portfolio.clientservice.domain.ClientService;
 import org.mifosplatform.portfolio.clientservice.domain.ClientServiceRepository;
 import org.mifosplatform.portfolio.order.data.OrderData;
+import org.mifosplatform.portfolio.order.domain.Order;
 import org.mifosplatform.portfolio.order.domain.OrderRepository;
 import org.mifosplatform.portfolio.order.service.OrderReadPlatformService;
 import org.mifosplatform.portfolio.order.service.OrderWritePlatformService;
@@ -64,6 +65,7 @@ public class ChargingCustomerOrders {
 	private final FromJsonHelper fromApiJsonHelper;
 	private final OrderRepository orderRepository;
 	private final ClientServiceRepository clientServiceRepository;
+	private final ConfigurationRepository configurationRepository;
 
 	@Autowired
 	public ChargingCustomerOrders(final ChargingOrderReadPlatformService chargingOrderReadPlatformService,
@@ -74,7 +76,8 @@ public class ChargingCustomerOrders {
 			final OrderReadPlatformService orderReadPlatformService, final FromJsonHelper fromJsonHelper,
 			final PlanRepository planRepository, final SlabRateWritePlatformService slabRateWritePlatformService,
 			final @Lazy OrderWritePlatformService orderWritePlatformService, final FromJsonHelper fromApiJsonHelper,
-			final OrderRepository orderRepository, final ClientServiceRepository clientServiceRepository) {
+			final OrderRepository orderRepository, final ClientServiceRepository clientServiceRepository,
+			final ConfigurationRepository configurationRepository) {
 
 		this.chargingOrderReadPlatformService = chargingOrderReadPlatformService;
 		this.generateChargesForOrderService = generateChargesForOrderService;
@@ -89,6 +92,7 @@ public class ChargingCustomerOrders {
 		this.fromApiJsonHelper = fromApiJsonHelper;
 		this.orderRepository = orderRepository;
 		this.clientServiceRepository = clientServiceRepository;
+		this.configurationRepository = configurationRepository;
 
 	}
 
@@ -107,12 +111,13 @@ public class ChargingCustomerOrders {
 					.withEntityId(invoice.get(0).getId()).build();
 		} catch (Exception dve) {
 			return new CommandProcessingResult(Long.valueOf(-1));
-		}
+		} 
 
 	}
 
 	public List<BillItem> invoicingSingleClient(Long clientId, LocalDateTime processDate) {
 
+		logger.info("ClientId : "+clientId);
 		logger.info("start ChargingCustomerOrders.invoicingSingleClient() processDate :" + processDate);
 		//System.out.println("start ChargingCustomerOrders.invoicingSingleClient() processDate :" + processDate);
 		LocalDateTime initialProcessDate = processDate;
@@ -123,7 +128,6 @@ public class ChargingCustomerOrders {
 		List<BillingOrderData> billingOrderDatas = chargingOrderReadPlatformService.retrieveOrderIds(clientId,
 				processDate);
         logger.info("ChargingCustomerOrders.billingOrderDatas:" + billingOrderDatas.size());
-		//System.out.println("ChargingCustomerOrders.billingOrderDatas:" + billingOrderDatas.size());
 
 		if (billingOrderDatas.size() != 0) {
 
@@ -136,24 +140,26 @@ public class ChargingCustomerOrders {
 																									// to control
 			Configuration isAdvance = this.globalConfigurationRepository
 					.findOneByName(ConfigurationConstants.IS_ADVANCE); // isadvance plan
+			
+			Configuration billingPackageConfig =configurationRepository.findOneByName(ConfigurationConstants.BILLINGPLANID);
+			Long bpkgId = Long.parseLong(billingPackageConfig.getValue());
+			
 			// flag
 
-			if (null != isAdvance && isAdvance.isEnabled()) {
+			if (true) {
+			//if (null != isAdvance && isAdvance.isEnabled()) {
 				logger.info("ChargingCustomerOrders.invoicingSingleClient() is advance");
-			//	System.out.println("ChargingCustomerOrders.invoicingSingleClient() is advance");
 
 				for (BillingOrderData billingOrderData : billingOrderDatas) {
 					logger.info("ChargingCustomerOrders.invoicingSingleClient().orderID" + billingOrderData.getOrderId());
-				//	System.out.println("ChargingCustomerOrders.invoicingSingleClient().orderID" + billingOrderData.getOrderId());
 					
 					if(billingOrderData.getOrderId()==68186) {
 						logger.info("ChargingCustomerOrders.bug()");
-					//	System.out.println("ChargingCustomerOrders.bug()");
 					}
-					if (billingOrderData.getBillEndDate() != null
-							&& processDate.isAfter(billingOrderData.getBillEndDate().toLocalDateTime())) {
+					
+					if (billingOrderData.getBillEndDate() != null && processDate.isAfter(billingOrderData.getBillEndDate().toLocalDateTime())) {
+						
 						logger.info("ChargingCustomerOrders.invoicingSingleClient().if condition");
-					//	System.out.println("ChargingCustomerOrders.invoicingSingleClient().if condition");
 
 						JSONObject disconnectCommand = new JSONObject();
 						try {
@@ -177,19 +183,17 @@ public class ChargingCustomerOrders {
 						throw new ProcessDateGreaterThanPlanEndDateException("Process Date:: " + processDate
 								+ "is greater than plan end date:: " + billingOrderData.getEndDate());
 
-					} // returnin
+					} 
 					else {
 						logger.info("ChargingCustomerOrders.invoicingSingleClient().else condition");
-						//System.out.println("ChargingCustomerOrders.invoicingSingleClient().else condition");
 
 						nextBillableDate = billingOrderData.getNextBillableDate();
 						logger.info("ChargingCustomerOrders.invoicingSingleClient() nextBillableDate :" +nextBillableDate);
-					//	System.out.println("ChargingCustomerOrders.invoicingSingleClient() nextBillableDate :" +nextBillableDate);
 
 						if (prorataWithNextBillFlag && ("Y".equalsIgnoreCase(billingOrderData.getBillingAlign()))
 								&& billingOrderData.getInvoiceTillDate() == null) {
+							
 							logger.info("ChargingCustomerOrders.invoicingSingleClient() if :" +nextBillableDate);
-							//System.out.println("ChargingCustomerOrders.invoicingSingleClient() if :" +nextBillableDate);
 
 							LocalDateTime alignEndDate = new LocalDateTime(nextBillableDate).dayOfMonth()
 									.withMaximumValue();
@@ -198,7 +202,6 @@ public class ChargingCustomerOrders {
 								processDate = alignEndDate.plusDays(2);
 						} else {
 							logger.info("ChargingCustomerOrders.invoicingSingleClient() else :" +nextBillableDate);
-							//System.out.println("ChargingCustomerOrders.invoicingSingleClient() else :" +nextBillableDate);
 
 							processDate = initialProcessDate;
 						}
@@ -216,12 +219,9 @@ public class ChargingCustomerOrders {
 								groupOfAdvanceCharges = getChargeLinesForServices(billingOrderData, clientId,
 										processDate, groupOfAdvanceCharges);
 								logger.info("ChargingCustomerOrders.invoicingSingleClient() groupOfAdvanceCharges :" +groupOfAdvanceCharges);
-							//	System.out.println("ChargingCustomerOrders.invoicingSingleClient() groupOfAdvanceCharges :" +groupOfAdvanceCharges);
 
 							} else {
-								//throw new PlanNotFundException("Plan is not enabled with is_Advance Flag");
 								logger.info("Plan is not enabled with is_Advance Flag");
-								System.out.println("Plan is not enabled with is_Advance Flag");
 							}
 
 							if (!groupOfAdvanceCharges.isEmpty()
@@ -255,34 +255,38 @@ public class ChargingCustomerOrders {
 							}
 						}
 					} catch (PlatformDataIntegrityException e) {
-						logger.info("insufficent balance" + e);
 
-						for (BillingOrderData billingOrderDataNow : billingOrderDatas) {
+						List<Order> orders  = orderRepository.findActiveOrdersOnlyByClientId(clientId);
+									
+						//for (BillingOrderData billingOrderDataNow : billingOrderDatas) {
 
-							JSONObject disconnectCommand = new JSONObject();
+						for (Order order : orders) {
+							if(!order.getPlanId().equals(bpkgId)) {
+								JSONObject disconnectCommand = new JSONObject();
+								try {
 
-							try {
+									disconnectCommand.put("dateFormat", "dd MMMM yyyy");
+									SimpleDateFormat formatter = new SimpleDateFormat("dd MMMM yyyy");
+									String disconnectedDate = formatter.format(new Date());
 
-								disconnectCommand.put("dateFormat", "dd MMMM yyyy");
-								SimpleDateFormat formatter = new SimpleDateFormat("dd MMMM yyyy");
-								String disconnectedDate = formatter.format(new Date());
+									disconnectCommand.put("disconnectionDate", disconnectedDate);
+									disconnectCommand.put("disconnectReason", "Insufficient client balance");
+									disconnectCommand.put("locale", "en");
 
-								disconnectCommand.put("disconnectionDate", disconnectedDate);
-								disconnectCommand.put("disconnectReason", "Insufficient client balance");
-								disconnectCommand.put("locale", "en");
+								} catch (Exception e1) {
+									e1.printStackTrace();
+								}
+								final JsonElement renwalCommandElement = fromApiJsonHelper
+										.parse(disconnectCommand.toString());
 
-							} catch (Exception e1) {
-								e1.printStackTrace();
+								JsonCommand disconnectCommandJson = new JsonCommand(null, renwalCommandElement.toString(),
+										renwalCommandElement, fromApiJsonHelper, null, null, null, null, null, null, null,
+										null, null, null, null, null);
+
+								orderWritePlatformService.disconnectOrder(disconnectCommandJson,
+										order.getId());								
 							}
-							final JsonElement renwalCommandElement = fromApiJsonHelper
-									.parse(disconnectCommand.toString());
-
-							JsonCommand disconnectCommandJson = new JsonCommand(null, renwalCommandElement.toString(),
-									renwalCommandElement, fromApiJsonHelper, null, null, null, null, null, null, null,
-									null, null, null, null, null);
-
-							orderWritePlatformService.disconnectOrder(disconnectCommandJson,
-									billingOrderDataNow.getOrderId());
+							
 
 						} // returning a message json message
 						throw new PlatformDataIntegrityException("Insufficient client balance",

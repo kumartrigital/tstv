@@ -11,7 +11,6 @@ import java.util.Set;
 
 import javax.persistence.EntityExistsException;
 
-import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.json.JSONArray;
@@ -62,9 +61,9 @@ import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityExce
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.core.service.DateTimeUtils;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
+import org.mifosplatform.infrastructure.core.service.TenantAwareRoutingDataSource;
 import org.mifosplatform.infrastructure.security.service.PlatformSecurityContext;
 import org.mifosplatform.inview.service.InviewWritePlatformService;
-import org.mifosplatform.logistics.item.data.ItemData;
 import org.mifosplatform.logistics.item.service.ItemReadPlatformService;
 import org.mifosplatform.logistics.itemdetails.domain.ItemDetails;
 import org.mifosplatform.logistics.itemdetails.domain.ItemDetailsRepository;
@@ -128,7 +127,6 @@ import org.mifosplatform.portfolio.plan.service.PlanReadPlatformService;
 import org.mifosplatform.portfolio.product.domain.Product;
 import org.mifosplatform.portfolio.product.domain.ProductRepository;
 import org.mifosplatform.portfolio.service.domain.ServiceMasterRepository;
-import org.mifosplatform.portfolio.slabRate.service.SlabRateReadPlatformServiceImpl;
 import org.mifosplatform.portfolio.slabRate.service.SlabRateWritePlatformService;
 import org.mifosplatform.provisioning.preparerequest.domain.PrepareRequest;
 import org.mifosplatform.provisioning.preparerequest.domain.PrepareRequsetRepository;
@@ -373,7 +371,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 	public CommandProcessingResult createOrder(Long clientId, JsonCommand command, Order oldOrder) {
 
 		try {
-
+			
 			List<Long> planIds = new ArrayList<Long>();
 			this.fromApiJsonDeserializer.validateForCreate(command.json());
 			String serialnum = command.stringValueOfParameterNamed("serialnumber");
@@ -386,7 +384,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			// Check for Custome_Validation
 			this.eventValidationReadPlatformService.checkForCustomValidations(clientId,
 					EventActionConstants.EVENT_CREATE_ORDER, command.json(), userId);
-
+			
 			Plan plan = this.planRepository.findPlanCheckDeletedStatus(command.longValueOfParameterNamed("planCode"));
 			planIds = this.orderReadPlatformService.retrieveClientActiveOrders(clientId);
 			if (planIds.contains(plan.getId()))
@@ -403,7 +401,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 
 			System.out.println("OrderWritePlatformServiceImpl.createOrder( :)" + order.getEndDate());
 
-			this.orderRepository.save(order);
+			this.orderRepository.saveAndFlush(order);
 
 			boolean isNewPlan = command.booleanPrimitiveValueOfParameterNamed("isNewplan");
 			String requstStatus = UserActionStatusTypeEnum.ACTIVATION.toString();
@@ -484,19 +482,32 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			 * ).getId()); }
 			 */
 			System.out.println("OrderWritePlatformServiceImpl.createOrder( :)" + order.getEndDate());
-
+			Configuration billingPackageConfig =configurationRepository.findOneByName(ConfigurationConstants.BILLINGPLANID);
+			Long bpkgId = Long.parseLong(billingPackageConfig.getValue());
+			if(order1.getPlanId().equals(bpkgId))
+				if (plan.getProvisionSystem().equalsIgnoreCase("None")) {
+			order1.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.ACTIVE).getId());
+				}
 			order = this.orderRepository.saveAndFlush(order1);
 
 			if (!plan.getProvisionSystem().equalsIgnoreCase("None")) {
 				this.provisioningRequesting(order, oldOrder, plan.isPrepaid());
 			} else {
 				clientService = this.clientServiceRepository.findOne(order.getClientServiceId());
-
 				clientService.setStatus("ACTIVE");
 				clientService = this.clientServiceRepository.saveAndFlush(clientService);
-
+			}
+			
+			
+			/** Logic for daily billing.-Start */
+			
+			Configuration is_aggregater = configurationRepository.findOneByName(ConfigurationConstants.AGGREGATER);
+			if (null != is_aggregater && is_aggregater.isEnabled()) {
+				updateNextBillableDate(order,bpkgId);
+				checkAndIncludeBaseBillingPackage(bpkgId, clientId,(order.getPrice().get(0).getPrice().doubleValue()));	
 			}
 
+			/** Logic for daily billing.-End */
 			return new CommandProcessingResult(order1.getId(), order1.getClientId());
 
 		} catch (DataIntegrityViolationException dve) {
@@ -650,9 +661,13 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 	public CommandProcessingResult disconnectOrder(final JsonCommand command, final Long orderId) {
 
 		try {
-			this.fromApiJsonDeserializer.validateForDisconnectOrder(command.json());
+			Configuration billingPackageConfig =configurationRepository.findOneByName(ConfigurationConstants.BILLINGPLANID);
+			Long BillingPkgId = Long.parseLong(billingPackageConfig.getValue());
+			
 			Order order = this.orderRepository.findOne(orderId);
-
+			
+			this.fromApiJsonDeserializer.validateForDisconnectOrder(command.json(),order.getPlanId(),BillingPkgId);
+			
 			final LocalDateTime disconnectionDate = command.localDateTimeValueOfParameterNamed("disconnectionDate");
 			LocalDate currentDate = DateUtils.getLocalDateOfTenant();
 			currentDate.toDate();
@@ -725,24 +740,32 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			final OrderHistory orderHistory = new OrderHistory(order.getId(), DateTimeUtils.getLocalDateTimeOfTenant(),
 					DateTimeUtils.getLocalDateTimeOfTenant(), processingResultId, requstStatus, getUserId(), null);
 			this.orderHistoryRepository.save(orderHistory);
-
-			Configuration is_aggregater = configurationRepository.findOneByName(ConfigurationConstants.AGREEGATER);
+           
+			/** Code for Charging start*/
+			Configuration is_aggregater = configurationRepository.findOneByName(ConfigurationConstants.AGGREGATER);
 
 			if (null != is_aggregater && is_aggregater.isEnabled()) {
 
-				Long baseBillingPlanId = 170l;// TODO: get billing package id from global configurations
+				String baseBillingPlanId = configurationRepository.findOneByName(ConfigurationConstants.BILLINGPLANID).getValue();
 
 				Order orderDetails = orderRepository.findOrderByClientIdAndPlanId(order.getClientId(),
-						baseBillingPlanId);
-
-				OrderPrice orderprice = orderPriceRepository.findOrders(order);
-				BigDecimal disconnectedOrderPrice = order.getPrice().get(0).getPrice();
+						Long.parseLong(baseBillingPlanId));
 
 				if (orderDetails != null) {
-					orderprice.setPrice(orderprice.getPrice().subtract(disconnectedOrderPrice));
-					orderPriceRepository.save(orderprice);
+					if(order.getPlanId()!=Long.parseLong(baseBillingPlanId)) {
+						
+						OrderPrice orderprice = orderDetails.getPrice().get(0);
+
+						BigDecimal disconnectedOrderPrice = order.getPrice().get(0).getPrice();
+						
+						orderprice.setPrice(orderprice.getPrice().subtract(disconnectedOrderPrice));
+						orderPriceRepository.saveAndFlush(orderprice);
+					}
 				}
 			}
+			/** Code for Charging end*/
+
+			
 			return new CommandProcessingResult(Long.valueOf(order.getId()), order.getClientId());
 		} catch (DataIntegrityViolationException dve) {
 			handleCodeDataIntegrityIssues(null, dve);
@@ -2328,9 +2351,6 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 	public CommandProcessingResult createMultipleOrder(Long clientId, JsonCommand command, Order oldOrder) {
 
 		try {
-
-			Double sumOfOrders = null;
-
 			CommandProcessingResult commandProcessingResult = this.crmServices.addPlans(command);
 			String[] substancesArray = null;
 			if (commandProcessingResult != null) {
@@ -2356,31 +2376,11 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				Price price = priceRepository
 						.findoneByPlanID(Long.parseLong(newCommand.stringValueOfParameterName("id")));
 
-				sumOfOrders = sumOfOrders + price.getPrice().doubleValue();
-
 				this.slabRateReadPlatformService.prepaidService(clientId, price.getPrice());
 
-				result = this.createOrder(clientId, newCommand, oldOrder);
-				commandProcessingResultList.add(result);
-
+				this.createOrder(clientId, newCommand, oldOrder);
 				i++;
 			}
-
-			/** Logic for daily billing.-Start */
-
-			Configuration is_aggregater = configurationRepository.findOneByName(ConfigurationConstants.AGREEGATER);
-
-			if (null != is_aggregater && is_aggregater.isEnabled()) {
-
-				Long billingPkgId = 170l;// TODO: get billing package id from global configurations
-
-				updateNextBillableDate(commandProcessingResultList);
-
-				checkAndIncludeBaseBillingPackage(billingPkgId, clientId, sumOfOrders);
-
-			}
-
-			/** Logic for daily billing.-End */
 
 			/* return new CommandProcessingResult((long) 0); */
 			return new CommandProcessingResultBuilder().withClientId(clientId).build();
@@ -2390,61 +2390,57 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 		}
 	}
 
-	private void updateNextBillableDate(List<CommandProcessingResult> commandProcessingResultList) {
+	private void updateNextBillableDate(Order order,Long billingPackageId) {
 
-		if (!commandProcessingResultList.isEmpty()) {
-			for (CommandProcessingResult result : commandProcessingResultList) {
-				Long orderId = result.getResourceId();
-				Order order = this.orderRepository.findOne(orderId);
+		if(!order.getPlanId().equals(billingPackageId)) {
+			LocalDateTime nxtBDate = new LocalDateTime(order.getStartDate());
+			nxtBDate = nxtBDate.plusYears(30);
+			order.setNextBillableDay(nxtBDate.toDate());
+			orderRepository.saveAndFlush(order);
 
-				LocalDateTime nxtBDate = new LocalDateTime(order.getStartDate());
-				nxtBDate.plusYears(30);
-				order.setNextBillableDay(nxtBDate.toDate());
-				orderRepository.saveAndFlush(order);
-
-				for (OrderPrice orderPrice : order.getPrice()) {
-					orderPrice.setNextBillableDay(nxtBDate.toDate());
-					orderPrice.setInvoiceTillDate(nxtBDate);
-					orderPriceRepository.saveAndFlush(orderPrice);
-				}
+			for (OrderPrice orderPrice : order.getPrice()) {
+				orderPrice.setNextBillableDay(nxtBDate.toDate());
+				orderPrice.setInvoiceTillDate(nxtBDate);
+				orderPriceRepository.saveAndFlush(orderPrice);
 			}
 		}
-
 	}
 
 	static Double existingSumOfOrders = null;
 
-	private void checkAndIncludeBaseBillingPackage(Long baseBillingPlanId, Long clientId, Double sumOfOrders) {
+	private void checkAndIncludeBaseBillingPackage(Long billingPkgId, Long clientId, Double sumOfOrders) {
 		try {
-			Long clientServiceId = clientServiceRepository.findwithClientId(clientId).get(0).getServiceId();
+			Long clientServiceId = clientServiceRepository.findwithClientId1(clientId).get(0).getId();
 
-			Order order = orderRepository.findOrderByClientIdAndPlanId(clientId, baseBillingPlanId);
+			Order order = orderRepository.findOrderByClientIdAndPlanId(clientId,billingPkgId);
 
 			OrderPrice orderprice = orderPriceRepository.findOrders(order);
 
 			if (order != null && orderprice != null) {
+				
+				if (order != null && orderprice != null) {
 
-				if (sumOfOrders == 0) {
-					sumOfOrders = existingSumOfOrders;
-				}
-
+					if (sumOfOrders == 0) {
+						sumOfOrders = existingSumOfOrders;
+						existingSumOfOrders=0.0;
+					}
+				
 				orderprice.setPrice(orderprice.getPrice().add(new BigDecimal(sumOfOrders)));
-				orderPriceRepository.save(orderprice);
-
+				orderPriceRepository.saveAndFlush(orderprice);
+				}	
 			} else {
-
+				
 				existingSumOfOrders = sumOfOrders;
 
 				JSONArray plans = new JSONArray();
-
 				JSONObject planObject = new JSONObject();
 
 				String dateFormat = "dd MMMM yyyy";
 				SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
 				String strDate = formatter.format(new Date());
 
-				planObject.put("id", "170");
-				planObject.put("planCode", "170");
+				planObject.put("id", billingPkgId);
+				planObject.put("planCode",billingPkgId);
 				planObject.put("planDescription", "Billing Package");
 				planObject.put("planPoId", 0);
 				planObject.put("dealPoId", 0);
@@ -2458,9 +2454,12 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 				planObject.put("start_date", strDate);
 				planObject.put("isNewplan", true);
 
-				plans.put("plans");
-
-				final JsonElement orderCreateElement = fromApiJsonHelper.parse(plans.toString());
+				plans.put(planObject);
+				
+				JSONObject plansObject = new JSONObject();
+				plansObject.put("plans",plans);
+				
+				final JsonElement orderCreateElement = fromApiJsonHelper.parse(plansObject.toString());
 
 				JsonCommand multipleOrderJson = new JsonCommand(null, orderCreateElement.toString(), orderCreateElement,
 						fromApiJsonHelper, null, null, null, null, null, null, null, null, null, null, null, null);

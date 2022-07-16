@@ -386,6 +386,7 @@ public class SheduleJobWritePlatformServiceImpl implements SheduleJobWritePlatfo
 								.getClientIds(scheduleJobData.getQuery(), data);
 						if (!clientIds.isEmpty()) {
 							fw.append("Charging the customer services..... \r\n");
+							fw.append("Charging started at :  "+ dateTime+"\r\n");
 							for (Long clientId : clientIds) {
 								try {
 									if ("Y".equalsIgnoreCase(data.isDynamic())) {
@@ -409,6 +410,11 @@ public class SheduleJobWritePlatformServiceImpl implements SheduleJobWritePlatfo
 									handleCodeDataIntegrityIssues(null, dve);
 								}
 							}
+							
+							LocalTime date1 = new LocalTime(zone);
+							String dateTime1 = date1.getHourOfDay() + "_" + date1.getMinuteOfHour() + "_" + date1.getSecondOfMinute();
+							fw.append("Charging ended at :  "+ dateTime1+"\r\n");
+							
 						} else {
 							fw.append("Clients are not found \r\n");
 						}
