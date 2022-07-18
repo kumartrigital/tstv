@@ -392,6 +392,18 @@ public class ProvisioningApiResource {
 		
 	}
 	
+	@GET
+	@Path("provisioningfailure/{clientId}")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String retrieveprovisioning(@PathParam("clientId") final Long clientId, @Context final UriInfo uriInfo, @QueryParam("limit") final String limit,@QueryParam("offset") final String offset){
+		this.context.authenticatedUser().validateHasReadPermission(resourceNameForPermissions);
+		final Page<ProvisioningData>provisioning = this.provisioningReadPlatformService.retriveprovisioningfailureforClient(clientId,limit ,offset);
+		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper.process(uriInfo.getQueryParameters());
+		return this.toApiJsonSerializer.serialize(provisioning);
+		
+	}
+	
 	
 	
 

@@ -678,5 +678,67 @@ public ProvisioningData mapRow(final ResultSet rs, final int rowNum) throws SQLE
 			
 	
 }
+
 }
+
+	@Override
+	public Page<ProvisioningData> retriveprovisioningfailureforClient(Long clientId, String limit , String offset) {
+	
+	    final ProvisioningfailforClientMapper pm = new ProvisioningfailforClientMapper();
+	  
+	    final StringBuilder sqlBuilder = new StringBuilder(200);
+	    sqlBuilder.append("select SQL_CALC_FOUND_ROWS ");
+	    
+	    sqlBuilder.append(pm.schema()+" and client_id = ? order by id desc ");
+	   
+	    if (limit!=null) {
+	        sqlBuilder.append(" limit "+limit);
+	    }
+
+	    if (offset!=null) {
+	        sqlBuilder.append(" offset "+offset);
+	    }
+	     
+	    final String sqlCountRows = "SELECT FOUND_ROWS()";
+	    return this.paginationHelper.fetchPage(this.jdbcTemplate, sqlCountRows, sqlBuilder.toString(),
+	            new Object[] {clientId  }, pm);
+	}
+
+	
+	private static final class ProvisioningfailforClientMapper implements
+	RowMapper<ProvisioningData> {
+
+public String schema() {
+	return "id,client_id,request_type,serial_no,status ,created_date,response_message,response_status from provisioning_requests_vw where status='F' "; //order by id desc";
+}
+
+@Override
+public ProvisioningData mapRow(final ResultSet rs, final int rowNum) throws SQLException {
+	
+	final Long id = rs.getLong("id");
+	final Long client_id = rs.getLong("client_id");
+	final String request_type = rs.getString("request_type");
+	final String status = rs.getString("status");
+    final LocalDate created_date = JdbcSupport.getLocalDate(rs, "created_date");
+	final String responsemessage = rs.getString("response_message");
+	final String responsestatus = rs.getString("response_status");
+	final String serial_no = rs.getString("serial_no");
+	
+	//final String paramNotes = rs.getString("paramNotes");
+	
+	/*return new ProvisioningData(id, provisioningSystem, commandName, status,provisioningSystemName);*/
+	ProvisioningData  provisioningData =new ProvisioningData(null);
+	provisioningData.setId(id);
+	provisioningData.setClient_id(client_id);
+	provisioningData.setRequest_type(request_type);
+	provisioningData.setStatus(status);
+	provisioningData.setCreated_date(created_date);
+	provisioningData.setResponse_message(responsemessage);
+	provisioningData.setResponse_status(responsestatus);
+	provisioningData.setSerial_no(serial_no);
+	return provisioningData;
+}
+
+}
+
 }
