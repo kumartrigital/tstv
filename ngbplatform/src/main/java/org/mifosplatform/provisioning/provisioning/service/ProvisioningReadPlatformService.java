@@ -52,4 +52,6 @@ public interface ProvisioningReadPlatformService {
 	
 	Page<ProvisioningData> retriveprovisioningfailure(String limit , String offset);
 	
+	Page<ProvisioningData> retriveprovisioningfailureforClient(Long clientId,String limit ,String offset);
+	
 }

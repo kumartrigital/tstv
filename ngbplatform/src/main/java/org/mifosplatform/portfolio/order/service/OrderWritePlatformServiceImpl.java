@@ -1321,16 +1321,17 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 
 				ProvisioningRequest requestDetails = provisioningRequestRepository
 						.findLatestRetrackRequest(clientServiceId);
-
+				if (requestDetails != null) {
 				DateTime requestTime = new DateTime(requestDetails.getStartDate());
 
 				DateTime dateTime = new DateTime();
-				Period p = new Period(dateTime, requestTime);
+				Period p = new Period(requestTime,dateTime);
 				int hours = p.getHours();
 
 				if (hours < 2) {
 					throw new ProvisioningRequestNotFoundException(
 							"retrack not able to process please try after sometime");
+				}
 				}
 
 				Map<String, Object> changes = new HashMap<>();
