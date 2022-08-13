@@ -460,7 +460,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 
 			}
 
-			if (plan.getIsAdvance() == 'Y' || plan.getIsAdvance() == 'y') {
+			if ((plan.getIsAdvance() == 'Y' || plan.getIsAdvance() == 'y') && (!plan.getId().equals(bpkgId)) ) {
 				// charging
 				JSONObject jsonObject = new JSONObject();
 				SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy HH:mm:ss");
