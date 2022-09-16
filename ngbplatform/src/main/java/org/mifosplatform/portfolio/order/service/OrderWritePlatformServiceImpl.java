@@ -510,6 +510,12 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 					orderDetails.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.ACTIVE).getId());
 				}
 
+			/**kbs demo purpose- Service without device activation */
+			if (plan.getProvisionSystem().equalsIgnoreCase("None")) {
+				orderDetails.setStatus(OrderStatusEnumaration.OrderStatusType(StatusTypeEnum.ACTIVE).getId());
+			}
+			/**kbs demo purpose- Service without device activation */
+			
 			order = this.orderRepository.saveAndFlush(orderDetails);// New
 
 			if (!plan.getProvisionSystem().equalsIgnoreCase("None")) {
