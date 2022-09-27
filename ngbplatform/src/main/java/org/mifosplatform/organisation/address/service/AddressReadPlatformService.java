@@ -9,6 +9,7 @@ import org.mifosplatform.organisation.address.data.AddressData;
 import org.mifosplatform.organisation.address.data.AddressLocationDetails;
 import org.mifosplatform.organisation.address.data.CityDetailsData;
 import org.mifosplatform.organisation.address.data.CountryDetails;
+import org.mifosplatform.organisation.address.data.StateDetailsData;
 
 public interface AddressReadPlatformService {
 
@@ -44,6 +45,10 @@ public interface AddressReadPlatformService {
 	List<CityDetailsData> retrieveAddressDetailsByCityName(String cityName);
 
 	AddressData retriveAddressByCity(String city);
+
+	List<StateDetailsData> retrieveStatewithCodeDetails(Long clientId);
+
+	List<AddressData> retrieveClientStateCode(Long clientId);
 	
 	
 	

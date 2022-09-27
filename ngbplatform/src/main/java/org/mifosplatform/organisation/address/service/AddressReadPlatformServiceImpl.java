@@ -15,6 +15,7 @@ import org.mifosplatform.organisation.address.data.AddressData;
 import org.mifosplatform.organisation.address.data.AddressLocationDetails;
 import org.mifosplatform.organisation.address.data.CityDetailsData;
 import org.mifosplatform.organisation.address.data.CountryDetails;
+import org.mifosplatform.organisation.address.data.StateDetailsData;
 import org.mifosplatform.organisation.address.domain.AddressEnum;
 import org.mifosplatform.portfolio.order.data.AddressStatusEnumaration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -294,6 +295,20 @@ public class AddressReadPlatformServiceImpl implements AddressReadPlatformServic
 			}
 		
 		@Override
+		public List<AddressData> retrieveClientStateCode(final Long clientId) {
+			try{
+				context.authenticatedUser();
+				final AddressMapper mapper = new AddressMapper();
+
+				final String sql = "select " + mapper.schema()+" where a.is_deleted='n' and a.client_id=?";
+
+				return this.jdbcTemplate.query(sql, mapper, new Object[] {clientId});
+				}catch (final EmptyResultDataAccessException e) {
+					return null;
+				}
+			}
+		
+		@Override
 		public Page<AddressLocationDetails> retrieveAllAddressLocations(final SearchSqlQuery searchAddresses){
 			try{
 				context.authenticatedUser();
@@ -453,6 +468,36 @@ public class AddressReadPlatformServiceImpl implements AddressReadPlatformServic
 			return new AddressData(country,district);
 
 		}
+	}
+	
+	@Override
+	public List<StateDetailsData> retrieveStatewithCodeDetails(final Long clientId) {
+
+		try {
+			context.authenticatedUser();
+			final StateMapper mapper = new StateMapper();
+			final String sql = "select " + mapper.schema();
+			return this.jdbcTemplate.query(sql, mapper, new Object[] {clientId});
+		} catch (final EmptyResultDataAccessException e) {
+			return null;
+		}
+	}
+
+	 private static final class StateMapper implements RowMapper<StateDetailsData> {
+		
+		public String schema() {
+			return " b.state_name as stateName,b.state_code as stateCode from b_state b, b_client_address a where a.state = b.state_name"
+					+ " and b.is_delete = 'N' and a.client_id=? ";
+
+		}
+
+		@Override
+		public StateDetailsData mapRow(final ResultSet rs, final int rowNum) throws SQLException {
+			final String stateName = rs.getString("stateName");
+			final String stateCode = rs.getString("stateCode");
+			return new StateDetailsData(stateName, stateCode);
+		}
+
 	}
 
 	

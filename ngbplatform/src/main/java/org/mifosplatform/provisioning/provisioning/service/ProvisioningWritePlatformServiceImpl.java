@@ -41,6 +41,9 @@ import org.mifosplatform.logistics.itemdetails.domain.ItemDetailsRepository;
 import org.mifosplatform.logistics.itemdetails.exception.ActivePlansFoundException;
 import org.mifosplatform.logistics.onetimesale.data.OneTimeSaleData;
 import org.mifosplatform.logistics.onetimesale.service.OneTimeSaleReadPlatformService;
+import org.mifosplatform.organisation.address.data.AddressData;
+import org.mifosplatform.organisation.address.data.StateDetailsData;
+import org.mifosplatform.organisation.address.service.AddressReadPlatformService;
 import org.mifosplatform.organisation.broadcaster.domain.Broadcaster;
 import org.mifosplatform.organisation.broadcaster.exception.BroadcatserNotFoundException;
 import org.mifosplatform.organisation.hardwareplanmapping.data.HardwarePlanData;
@@ -148,6 +151,7 @@ public class ProvisioningWritePlatformServiceImpl implements ProvisioningWritePl
 	private final ConfigurationRepository configurationRepository;
 	private final NetworkElementReadPlatformService networkElementReadPlatformService;
 	private final NetworkElementRepository networkElementRepository;
+	private final AddressReadPlatformService addressReadPlatformService;
 
 	@Autowired
 	public ProvisioningWritePlatformServiceImpl(final PlatformSecurityContext context,final ItemDetailsRepository inventoryItemDetailsRepository,
@@ -164,7 +168,7 @@ public class ProvisioningWritePlatformServiceImpl implements ProvisioningWritePl
 			final CodeValueReadPlatformService codeValueReadPlatformService, final HardwarePlanReadPlatformService hardwarePlanReadPlatformService,
 			final OneTimeSaleReadPlatformService oneTimeSaleReadPlatformService,  final ClientRepository clientRepository,
 			final ConfigurationRepository configurationRepository, final NetworkElementReadPlatformService networkElementReadPlatformService,
-			final NetworkElementRepository networkElementRepository) {
+			final NetworkElementRepository networkElementRepository,final AddressReadPlatformService addressReadPlatformService) {
 
 		this.context = context;
 		this.fromJsonHelper = fromJsonHelper;
@@ -197,6 +201,7 @@ public class ProvisioningWritePlatformServiceImpl implements ProvisioningWritePl
 		this.configurationRepository = configurationRepository;
 		this.networkElementReadPlatformService=networkElementReadPlatformService;
 		this.networkElementRepository = networkElementRepository;
+		this.addressReadPlatformService = addressReadPlatformService;
 		
 		
 		
@@ -1044,6 +1049,58 @@ public class ProvisioningWritePlatformServiceImpl implements ProvisioningWritePl
 	private String retriveRequestMessage(final List<Order> orders,ClientService clientService, Map<String,Object> provAndSpdetails,
 			JSONArray deviceDetails,Long oldOrderId,JSONArray extraJsonArray, String requestType,JsonCommand command){
 		String provisioningSystemId = provAndSpdetails.get("provisioningSystemId").toString();
+		
+		NetworkElementData provisioningData = this.networkElementReadPlatformService.retrieveNetworkElement(Long.valueOf(provisioningSystemId));
+		if("YUPPSYSTEM".equalsIgnoreCase(provisioningData.getsystemcode())){
+			JSONObject object = new JSONObject();
+			
+			object.put("request_id", "kumar-"+System.currentTimeMillis());
+			
+			Client client = this.clientRepository.findOne(clientService.getClientId());
+			object.put("rmn", "91-"+client.getPhone());
+			object.put("email", client.getEmail());
+			
+			
+			List<StateDetailsData> addressDataList =	this.addressReadPlatformService.retrieveStatewithCodeDetails(clientService.getClientId());
+			if(addressDataList!= null && addressDataList.size()>0) {
+				StateDetailsData data = addressDataList.get(0);
+				object.put("state", data.getStateCode().toUpperCase());
+			}else object.put("state", "");
+			//object.put("state", "TS");addressDataList.
+		
+			object.put("package_type", "addon");      /** package_type   hardcoded.. need to change  **/
+			object.put("partner_code","kumar");		  /** partner_code   hardcoded.. need to change  **/
+			Integer orderId;
+			String packageId ;
+			JSONArray jsonArray = this.orderInfoJsonPreparation(orders,clientService,provisioningSystemId);
+			try {
+				org.json.JSONObject jsonObject =(org.json.JSONObject)jsonArray.get(0);
+				orderId = (Integer) jsonObject.get("orderId");
+				net.sf.json.JSONArray prodArr= (net.sf.json.JSONArray)jsonObject.get("products");
+				JSONObject jsonObj =(JSONObject)prodArr.get(0);
+				packageId= (String) jsonObj.get("neProductId");
+				
+				//packageId =(String) ((org.json.JSONObject)((net.sf.json.JSONArray)jsonObject.get("products")).get(0)).get("neProductId");
+			} catch (JSONException e) {
+				throw new PlatformDataIntegrityException("invalid.request.orderId.products","invalid Request.orderId.products");
+			}
+			object.put("partner_subs_id", "kumar-"+orderId); 
+			object.put("package_id", Long.parseLong(packageId));
+			switch(requestType){
+			case ProvisioningApiConstants.REQUEST_ACTIVATION:
+				object.put("action", "add");
+				object.put("newOrderList",String.valueOf(jsonArray));
+				break;
+			case ProvisioningApiConstants.REQUEST_DISCONNECTION:
+				object.put("action", "terminate");
+				object.put("oldOrderList",String.valueOf(jsonArray));
+				break;
+			default:
+				throw new PlatformDataIntegrityException("invalid.request","invalid Request");
+			}
+			
+			return object.toString();
+		}else {		
 		Collection<MCodeData> mcodeDatas = (Collection<MCodeData>) provAndSpdetails.get("spMcode");
 		try{
 			JSONObject object = new JSONObject();
@@ -1122,6 +1179,7 @@ public class ProvisioningWritePlatformServiceImpl implements ProvisioningWritePl
 			return object.toString();
 		}catch(Exception e){
 			throw new PlatformDataIntegrityException("parse.exception.occur","Parse Exception occured"+e.getMessage());
+		}
 		}
 		
 	}
