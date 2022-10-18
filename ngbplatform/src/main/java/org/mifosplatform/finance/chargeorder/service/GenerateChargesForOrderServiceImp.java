@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.axis2.databinding.types.soapencoding.Decimal;
 import org.joda.time.LocalDate;
 import org.mifosplatform.billing.discountmaster.data.DiscountMasterData;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
@@ -23,6 +22,8 @@ import org.mifosplatform.finance.chargeorder.domain.Charge;
 import org.mifosplatform.finance.chargeorder.domain.ChargeTax;
 import org.mifosplatform.finance.chargeorder.exceptions.BillingOrderNoRecordsFoundException;
 import org.mifosplatform.finance.clientbalance.service.ClientBalanceWritePlatformService;
+import org.mifosplatform.finance.officebalance.domain.OfficeBalance;
+import org.mifosplatform.finance.officebalance.domain.OfficeBalanceRepository;
 import org.mifosplatform.finance.secondarysubscriberdues.service.SecondarySubscriberDuesWritePlatformService;
 import org.mifosplatform.infrastructure.configuration.domain.Configuration;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationConstants;
@@ -33,6 +34,8 @@ import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityExce
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
 import org.mifosplatform.infrastructure.core.service.DateUtils;
 import org.mifosplatform.organisation.office.data.OfficeData;
+import org.mifosplatform.organisation.office.domain.Office;
+import org.mifosplatform.organisation.office.domain.OfficeRepository;
 import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
 import org.mifosplatform.portfolio.client.data.ClientBillInfoData;
 import org.mifosplatform.portfolio.client.service.ClientBillInfoReadPlatformService;
@@ -67,6 +70,8 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 	private final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService;
 	private final SecondarySubscriberDuesWritePlatformService secondarySubscriberDuesWritePlatformService;
 	private final ClientReadPlatformService clientReadPlatformService;
+	private final OfficeBalanceRepository officeBalanceRepository;
+	private final OfficeRepository officeRepository;
 
 	@Autowired
 	public GenerateChargesForOrderServiceImp(final GenerateCharges generateCharges,
@@ -81,7 +86,9 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 
 			final PortfolioCommandSourceWritePlatformService commandsSourceWritePlatformService,
 			@Lazy final SecondarySubscriberDuesWritePlatformService secondarySubscriberDuesWritePlatformService,
-			final ClientReadPlatformService clientReadPlatformService) {
+			final ClientReadPlatformService clientReadPlatformService,
+			final OfficeBalanceRepository officeBalanceRepository,
+			final OfficeRepository officeRepository) {
 
 		this.generateCharges = generateCharges;
 		this.billItemRepository = billItemRepository;
@@ -96,6 +103,8 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 		this.commandsSourceWritePlatformService = commandsSourceWritePlatformService;
 		this.secondarySubscriberDuesWritePlatformService = secondarySubscriberDuesWritePlatformService;
 		this.clientReadPlatformService = clientReadPlatformService;
+		this.officeBalanceRepository = officeBalanceRepository;
+		this.officeRepository = officeRepository;
 	}
 
 	@Override
@@ -614,6 +623,7 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 		BigDecimal invoiceAmount_local = null;
 		Map<Long, BillItem> billItemMap = new HashMap<Long, BillItem>();
 
+		Office office = this.officeRepository.findOne(officeData.getId());;
 		Long orderId = null;
 
 		for (Entry<String, List<Charge>> key : mappedCharges.entrySet()) {
@@ -695,7 +705,7 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 					}
 
 				} else {
-					officeData = this.officeReadPlatformService.retriveOfficeDetail(charge.getClientId());
+					//officeData = this.officeReadPlatformService.retriveOfficeDetail(charge.getClientId());
 					if (billItemMap.containsKey(officeData.getClientId())) {
 						BigDecimal netTaxAmount_local = BigDecimal.ZERO;
 						invoiceAmount_local = BigDecimal.ZERO;
@@ -736,9 +746,12 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 				billItem.setCurrencyId(clientBillInfoData.getBillCurrency());
 				billItem.addCharges(charge);
 				if (charge.getChargeOwner() != null && charge.getChargeOwner().equalsIgnoreCase("self")) {
+					billItem.setClientId(charge.getClientId());
 					billItemMap.put(charge.getClientId(), billItem);
 				} else {
-					billItemMap.put(officeData.getClientId(), billItem);
+					office = this.officeRepository.findOne(officeData.getId());
+					billItem.setClientId(office.getClientId());
+					billItemMap.put(office.getClientId(), billItem);
 				}
 
 			}
@@ -773,27 +786,47 @@ public class GenerateChargesForOrderServiceImp implements GenerateChargesForOrde
 
 				JsonObject clientBalanceObject = new JsonObject();
 				clientBalanceObject.addProperty("id", billItem.getId());
+				OfficeBalance officeBalance = this.officeBalanceRepository.findOneByOfficeId(officeData.getId());
+				
+				if (billItem.getCharges().get(0).getChargeOwner().equalsIgnoreCase("parent")) {
+					clientBalanceObject.addProperty("clientId", office.getClientId());// office ID
+					clientBalanceObject.addProperty("amount", billItem.getInvoiceAmount());
+					clientBalanceObject.addProperty("isWalletEnable", false);
+					clientBalanceObject.addProperty("clientServiceId", orderData.get(0).getClientServiceId());
+					clientBalanceObject.addProperty("currencyId", billItem.getCurrencyId());
+					clientBalanceObject.addProperty("locale", "en");
 
-				clientBalanceObject.addProperty("clientId", billItem.getClientId());
-				clientBalanceObject.addProperty("amount", billItem.getInvoiceAmount());
-				// clientBalanceObject.addProperty("amount",invoiceAmount_local);
-				clientBalanceObject.addProperty("isWalletEnable", false);
-				clientBalanceObject.addProperty("clientServiceId", orderData.get(0).getClientServiceId());
-				clientBalanceObject.addProperty("currencyId", billItem.getCurrencyId());
-				clientBalanceObject.addProperty("locale", "en");
+					final JsonElement clientServiceElementNew = fromJsonHelper.parse(clientBalanceObject.toString());
+					JsonCommand clientBalanceCommand = new JsonCommand(null, clientServiceElementNew.toString(),
+							clientServiceElementNew, fromJsonHelper, null, null, null, null, null, null, null, null,
+							null, null, null, null);
 
-				final JsonElement clientServiceElementNew = fromJsonHelper.parse(clientBalanceObject.toString());
-				JsonCommand clientBalanceCommand = new JsonCommand(null, clientServiceElementNew.toString(),
-						clientServiceElementNew, fromJsonHelper, null, null, null, null, null, null, null, null, null,
-						null, null, null);
+					// updating office balance
+					officeBalance.updateBalance("DEBIT", billItem.getInvoiceAmount());
+					this.officeBalanceRepository.saveAndFlush(officeBalance);
+					this.chargingOrderWritePlatformService.updateClientBalance(clientBalanceCommand);
+					System.out.println("charging for parent");
+				} else if (billItem.getCharges().get(0).getChargeOwner().equalsIgnoreCase("self")) {
+					clientBalanceObject.addProperty("clientId", billItem.getClientId());
+					clientBalanceObject.addProperty("amount", billItem.getInvoiceAmount());
+					// clientBalanceObject.addProperty("amount",invoiceAmount_local);
+					clientBalanceObject.addProperty("isWalletEnable", false);
+					clientBalanceObject.addProperty("clientServiceId", orderData.get(0).getClientServiceId());
+					clientBalanceObject.addProperty("currencyId", billItem.getCurrencyId());
+					clientBalanceObject.addProperty("locale", "en");
 
-				this.chargingOrderWritePlatformService.updateClientBalance(clientBalanceCommand);
+					final JsonElement clientServiceElementNew = fromJsonHelper.parse(clientBalanceObject.toString());
+					JsonCommand clientBalanceCommand = new JsonCommand(null, clientServiceElementNew.toString(),
+							clientServiceElementNew, fromJsonHelper, null, null, null, null, null, null, null, null, null,
+							null, null, null);
 
-				System.out.println("Charging for self" + billItem.getClientId() + " Amount"
-						+ billItem.getInvoiceAmount() + " billitem id" + billItem.getId() + "order id " + orderId);
+					this.chargingOrderWritePlatformService.updateClientBalance(clientBalanceCommand);
+
+					System.out.println("Charging for self" + billItem.getClientId() + " Amount"
+							+ billItem.getInvoiceAmount() + " billitem id" + billItem.getId() + "order id " + orderId);
+				}
 				billItemList.add(entry.getValue());
 				billItemMap.clear();
-
 			}
 
 			/*

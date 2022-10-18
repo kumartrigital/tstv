@@ -188,8 +188,21 @@ public class TenantAwareBasicAuthenticationFilter extends BasicAuthenticationFil
 				ThreadLocalContextUtil.setTenant(tenant);
 				authenticateLocal(request, chain, response, username, password);
 
-			}
-			else if (path.contains("/api/v1/revpay/status") && request.getMethod().equalsIgnoreCase(GET)) {
+			} else if (path.contains("/api/v1/razorpay/orderlock") && request.getMethod().equalsIgnoreCase(POST)
+						||(path.contains("/api/v1/razorpay/orderlock") && request.getMethod().equalsIgnoreCase(GET))) {
+
+					tenant = getTenantIdentifier(request);
+					String username = "integration";
+					String password = "integration";
+
+					boolean isValid = this.licenseUpdateService.checkIfKeyIsValid(tenant.getLicensekey(), tenant);
+					if (!isValid) {
+						throw new InvalidLicenseKeyException("License key Exipired.");
+					}
+					ThreadLocalContextUtil.setTenant(tenant);
+					authenticateLocal(request, chain, response, username, password);
+
+			} else if (path.contains("/api/v1/revpay/status") && request.getMethod().equalsIgnoreCase(GET)) {
 
 				tenant = getTenantIdentifier(request);
 				String username = "integration";
