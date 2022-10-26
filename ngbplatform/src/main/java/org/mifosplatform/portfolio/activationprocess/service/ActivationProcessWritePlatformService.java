@@ -22,4 +22,6 @@ public interface ActivationProcessWritePlatformService {
  
 	CommandProcessingResult createServiceActivationWithoutDevice(JsonCommand command, Long clientId);
 
+	CommandProcessingResult createCustomerServiceActivationWithoutDevice(JsonCommand newcommand);
+
 }

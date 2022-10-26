@@ -4048,4 +4048,12 @@ public class CommandWrapperBuilder {
 		this.href = "/validatekey/"+ userId;
 		return this;
 	}
+	
+	public CommandWrapperBuilder createCustomerServiceActivationWithoutDevice() {
+		this.actionName = "CREATE";
+		this.entityName = "CUSTOMERSERVICEACTIVATIONWOD";
+		this.href = "/activationprocess/simpleactivationwod";
+		return this;
+
+	}
 }

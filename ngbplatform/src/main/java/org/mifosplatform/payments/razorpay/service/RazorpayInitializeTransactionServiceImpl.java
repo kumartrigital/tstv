@@ -44,9 +44,10 @@ public class RazorpayInitializeTransactionServiceImpl implements RazorpayInitial
 	private final static Logger logger = LoggerFactory.getLogger(RazorpayInitializeTransactionServiceImpl.class);
 	private final PaymentGatewayRepository paymentGatewayRepository;
 	private final OfficeBalanceRepository officeBalanceRepository;
-	public static final String testKey = "rzp_test_86hAcbHA9LGiKv";
-	public static final String testSecretKey = "fXutITkVOKUt7x4kDV8Sz7LO";
-
+	//public static final String testKey = "rzp_test_86hAcbHA9LGiKv";
+	//public static final String testSecretKey = "fXutITkVOKUt7x4kDV8Sz7LO";
+	public static final String liveKey = "rzp_live_nFiyS0x0PreUjo";
+	public static final String liveSecretKey = "ZJlAqAEDgh3NBKNO8FDvbtWC";
 	@Autowired
 	public RazorpayInitializeTransactionServiceImpl(PaymentGatewayRepository paymentGatewayRepository,
 			OfficeBalanceRepository officeBalanceRepository) {
@@ -59,28 +60,38 @@ public class RazorpayInitializeTransactionServiceImpl implements RazorpayInitial
 
 		try {
 			logger.info("createOrder() - start");
-			InitializeTransactionResponse response = this.initializeTransaction(initializeTransactionRequest);
+			
+			/** Amount conversion : SubUnits to Units */
+			//BigDecimal divisor = new BigDecimal(100);
+			//BigDecimal payment = (new BigDecimal(initializeTransactionRequest.getAmount())).divide(divisor);
+			
+			PaymentGateway paymentGateway = new PaymentGateway();
+			paymentGateway.setDeviceId(officeId + "");
+			paymentGateway.setAmountPaid(new BigDecimal(initializeTransactionRequest.getAmount()));
+			paymentGateway.setType("OnlinePayment");
+			/** setting tempid to PartyId **/
+			paymentGateway.setPartyId(Long.toString(System.currentTimeMillis()));
+			/** setting temp date **/
+			paymentGateway.setPaymentDate(new Date());
+			
+			PaymentGateway pg	=	paymentGatewayRepository.save(paymentGateway);
 
+			initializeTransactionRequest.setReceipt(pg.getId().toString());
+			InitializeTransactionResponse response = this.initializeTransaction(initializeTransactionRequest);
+			
 			Instant instant = Instant.ofEpochSecond(response.getCreated_at());
 			ZoneId zoneId = ZoneId.of("Asia/Kolkata");
 			Date date = Date.from(ZonedDateTime.ofInstant(instant, zoneId).toInstant());
 
-			/** Amount conversion : SubUnits to Units */
-			BigDecimal divisor = new BigDecimal(100);
-			BigDecimal payment = (new BigDecimal(initializeTransactionRequest.getAmount())).divide(divisor);
 
-			PaymentGateway paymentGateway = new PaymentGateway();
-			paymentGateway.setDeviceId(officeId + "");
-			paymentGateway.setPaymentDate(date);
-			paymentGateway.setAmountPaid(payment);
+			pg.setPaymentDate(date);
 			/** Mapping OrderId to PartyId **/
-			paymentGateway.setPartyId((response.getId()));
-			paymentGateway.setReceiptNo("RAZORPAY_" + response.getReceipt());
-			paymentGateway.setSource("RAZORPAY");
-			paymentGateway.setStatus(OrderEnum.CREATED.getValue());
-			paymentGateway.setRemarks(response.getNotes().getNotes_key_1());
-			paymentGateway.setType("OnlinePayment");
-			paymentGatewayRepository.save(paymentGateway);
+			pg.setPartyId((response.getId()));
+			pg.setReceiptNo("RAZORPAY_" + response.getReceipt());
+			pg.setSource("RAZORPAY");
+			pg.setStatus(OrderEnum.CREATED.getValue());
+			pg.setRemarks(response.getNotes().getNotes_key_1());
+			paymentGatewayRepository.save(pg);
 
 			InitializeTransactionResponseDTO responseDTO = new InitializeTransactionResponseDTO();
 			responseDTO.setAmount(response.getAmount());
@@ -91,7 +102,7 @@ public class RazorpayInitializeTransactionServiceImpl implements RazorpayInitial
 			responseDTO.setCurrency(response.getCurrency());
 			responseDTO.setEntity(response.getEntity());
 			responseDTO.setOrderId(response.getId());
-			responseDTO.setKey(testKey);
+			responseDTO.setKey(liveKey);
 			responseDTO.setNotes(response.getNotes());
 			responseDTO.setOfferId(response.getOffer_id());
 			responseDTO.setReceipt(response.getReceipt());
@@ -126,7 +137,7 @@ public class RazorpayInitializeTransactionServiceImpl implements RazorpayInitial
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			headers.set("User-agent", "Application");
-			headers.set("Authorization", getBasicAuthenticationHeader(testKey, testSecretKey));
+			headers.set("Authorization", getBasicAuthenticationHeader(liveKey, liveSecretKey));
 
 			HttpEntity<InitializeTransactionRequest> entity = new HttpEntity<InitializeTransactionRequest>(
 					initializeTransactionRequest, headers);
@@ -199,7 +210,7 @@ public class RazorpayInitializeTransactionServiceImpl implements RazorpayInitial
 			this.officeBalanceRepository.saveAndFlush(officeBalance);
 		}
 		try {
-			indexPath = new URI("https://freetv.ng/online-recharge.html");
+			indexPath = new URI("https://13.235.37.142:8877/#/profile");//("https://localhost:8877/#/profile")("https://freetv.ng/online-recharge.html");
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
@@ -213,7 +224,7 @@ public class RazorpayInitializeTransactionServiceImpl implements RazorpayInitial
 		String generated_signature;
 		try {
 			generated_signature = Signature
-					.calculateRFC2104HMAC(orderId + "|" + orderLockRequest.getRazorpayPaymentId(), testSecretKey);
+					.calculateRFC2104HMAC(orderId + "|" + orderLockRequest.getRazorpayPaymentId(), liveSecretKey);
 			if (generated_signature.equals(orderLockRequest.getRazorpaySignature())) {
 				// payment is successful
 				logger.info("verifyTransaction - end");

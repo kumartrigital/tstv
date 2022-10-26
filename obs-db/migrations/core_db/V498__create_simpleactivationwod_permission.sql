@@ -1,0 +1,1 @@
+INSERT INTO `obstenant-default`.`m_permission` (`grouping`,`code`,`entity_name`,`action_name`,`can_maker_checker`) VALUES ('Customer','CREATE_CUSTOMERSERVICEACTIVATIONWOD','CUSTOMERSERVICEACTIVATIONWOD','CREATE',0);

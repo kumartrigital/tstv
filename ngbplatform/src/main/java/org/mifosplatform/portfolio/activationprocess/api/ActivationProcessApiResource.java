@@ -165,4 +165,22 @@ public class ActivationProcessApiResource {
         return this.toApiJsonSerializer.serialize(result);
     }
     
+    /**
+     * this api is used to create a customer, add plan and active that plan to customer
+     * simpleActivationServicewithoutDevice--Siva
+     */
+    @POST
+    @Path("simpleactivationwod")
+    @Consumes({ MediaType.APPLICATION_JSON }) 
+    @Produces({ MediaType.APPLICATION_JSON })
+    public String createSimpleActivationWithoutDevice(final String apiRequestBodyAsJson) {
+    	final CommandWrapper commandRequest = new CommandWrapperBuilder() 
+                .createCustomerServiceActivationWithoutDevice() 
+                .withJson(apiRequestBodyAsJson) 
+                .build(); 
+        final CommandProcessingResult result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+
+        return this.toApiJsonSerializer.serialize(result);
+    }
+    
 }

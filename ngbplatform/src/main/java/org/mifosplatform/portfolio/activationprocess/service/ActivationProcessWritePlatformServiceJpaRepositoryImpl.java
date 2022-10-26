@@ -282,7 +282,7 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 		this.redemptionApiResource = redemptionApiResource;
 		this.voucherReadPlatformService = voucherReadPlatformService;
 		this.officeRepository = officeRepository;
-	}
+		}
 
 	private void handleDataIntegrityIssues(final JsonCommand command, final DataIntegrityViolationException dve) {
 
@@ -468,6 +468,51 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 					.logCommandSource(commandRequest);
 			logger.info("ActivationProcessWritePlatformServiceJpaRepositoryImpl.createSimpleActivation() ending");
 
+			return result;
+		} catch (DataIntegrityViolationException dve) {
+			handleDataIntegrityIssues(newcommand, dve);
+			return new CommandProcessingResult(Long.valueOf(-1));
+		} catch (JSONException dve) {
+			throw new PlatformDataIntegrityException("error.msg.client.jsonexception.", "JSON Exception Occured");
+		}
+	}
+	
+	
+	/**
+	 * This service is used to create a Customer and 
+	 * add Service to Customer without device
+	 * @Author Siva Kishore
+	 */
+	@Transactional
+	@Override
+	public CommandProcessingResult createCustomerServiceActivationWithoutDevice(JsonCommand newcommand) {
+		
+		logger.info("ActivationProcessWritePlatformServiceJpaRepositoryImpl.createCustomerServiceActivationWithoutDevice() starting");
+		try {
+			Long clientId = null;
+			JsonCommand command = convertIntoClientServicePlanJson(newcommand);
+			String jsoncommand = command.json();
+			logger.info("json payload : " + jsoncommand );
+			final JsonElement element = fromJsonHelper.parse(command.json());
+			JsonArray clientDataArray = fromJsonHelper.extractJsonArrayNamed("clientData", element);
+
+			if (clientDataArray.size() != 0) {
+				for (JsonElement clientData : clientDataArray) {
+
+					final JsonElement parsedCommand = this.fromApiJsonHelper.parse(clientData.toString());
+					final JsonCommand clientjsonCommand = new JsonCommand(null, clientData.toString(), parsedCommand,
+							fromApiJsonHelper, null, null, null, null, null, null, null, null, null, null, null, null);
+					CommandProcessingResult resultClient = clientWritePlatformService.createClient(clientjsonCommand);
+
+					JSONObject resultString = new JSONObject(resultClient);
+					clientId = resultString.getLong("clientId");
+					break;
+				}
+			} else {
+				this.throwError("Client Service");
+			}
+			final CommandProcessingResult result = this.createServiceActivationWithoutDevice(newcommand,clientId);
+			logger.info("ActivationProcessWritePlatformServiceJpaRepositoryImpl.createCustomerServiceActivationWithoutDevice() ending");
 			return result;
 		} catch (DataIntegrityViolationException dve) {
 			handleDataIntegrityIssues(newcommand, dve);
@@ -663,6 +708,174 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 			return null;
 		}
 
+	}
+	
+	private JsonCommand convertIntoClientServicePlanJson(JsonCommand newCommand) {
+
+		org.json.simple.JSONArray address1 = new org.json.simple.JSONArray();
+		org.json.simple.JSONArray client1 = new org.json.simple.JSONArray();
+		org.json.simple.JSONArray clientServiceData1 = new org.json.simple.JSONArray();
+		org.json.simple.JSONArray clientServiceDetails1 = new org.json.simple.JSONArray();
+		org.json.simple.JSONArray planData0 = new org.json.simple.JSONArray();
+
+		JSONObject activation1 = new JSONObject();
+		JSONObject clientjson1 = new JSONObject();
+		JSONObject clientServiceJson1 = new JSONObject();
+		JSONObject clientServiceDetailsJson1 = new JSONObject();
+		JSONObject addressjson1 = new JSONObject();
+		JSONObject addressjsonBilling1 = new JSONObject();
+		JSONObject planDataJson1 = new JSONObject();
+		
+		JsonCommand command = null;
+		JsonCommand planComm = null;
+		JsonCommand addressComm = null;
+		try {
+			final JsonElement element = fromJsonHelper.parse(newCommand.json());
+			JsonArray addressDataArray = fromJsonHelper.extractJsonArrayNamed("address", element);
+
+			for (JsonElement j : addressDataArray) {
+				addressComm = new JsonCommand(null, j.toString(), j, fromJsonHelper, null, null, null, null, null, null,
+						null, null, null, null, null, null);
+			}
+			String city = addressComm.stringValueOfParameterName("city");
+			AddressData addressData = addressReadPlatformService.retriveAddressByCity(city);
+			if (addressData == null) {
+				throw new AddressNoRecordsFoundException(city);
+			}
+			addressjson1.put("addressNo", addressComm.stringValueOfParameterName("addressNo"));
+			addressjson1.put("street", "");
+			addressjson1.put("city", addressComm.stringValueOfParameterName("city"));
+			addressjson1.put("state", addressComm.stringValueOfParameterName("state"));
+			addressjson1.put("country", addressData.getCountry());
+			addressjson1.put("district", addressData.getDistrict());
+			addressjson1.put("zipCode", addressComm.stringValueOfParameterName("postCode"));
+			addressjson1.put("addressType", "PRIMARY");
+			address1.add(addressjson1);
+
+			addressjsonBilling1.put("addressNo", addressComm.stringValueOfParameterName("addressNo"));
+			addressjsonBilling1.put("street", "");
+			addressjsonBilling1.put("city", addressComm.stringValueOfParameterName("city"));
+			addressjsonBilling1.put("state", addressComm.stringValueOfParameterName("state"));
+			addressjsonBilling1.put("country", addressData.getCountry());
+			addressjsonBilling1.put("district", addressData.getDistrict());
+			addressjsonBilling1.put("zipCode", addressComm.stringValueOfParameterName("postCode"));
+			addressjsonBilling1.put("addressType", "BILLING");
+			address1.add(addressjsonBilling1);
+
+			String date = formatter.format(new Date());
+
+			clientjson1.put("locale", locale);
+			clientjson1.put("dateFormat", dateFormat);
+			clientjson1.put("activationDate", date);
+			clientjson1.put("title", newCommand.stringValueOfParameterName("salutation"));
+			clientjson1.put("firstname", newCommand.stringValueOfParameterName("forename"));
+			clientjson1.put("lastname", newCommand.stringValueOfParameterName("surname"));
+			clientjson1.put("officeId", newCommand.longValueOfParameterNamed("officeId"));
+			clientjson1.put("clientCategory", 20);
+			clientjson1.put("active", true);
+
+			clientjson1.put("phone", newCommand.stringValueOfParameterName("mobile"));
+			clientjson1.put("email", newCommand.stringValueOfParameterName("email"));
+			clientjson1.put("billMode", "both");
+			clientjson1.put("flag", false);
+			clientjson1.put("entryType", "IND");
+			clientjson1.put("address", address1);
+
+			client1.add(clientjson1);
+			address1.clear();
+
+			JsonArray planarray1 = fromJsonHelper.extractJsonArrayNamed("planData", element);
+			String planCode = null;
+			PlanData planData1 = null;
+			for (JsonElement j : planarray1) {
+
+				planComm = new JsonCommand(null, j.toString(), j, fromJsonHelper, null, null, null, null, null, null,
+						null, null, null, null, null, null);
+				Plan plan = this.planRepository.findPlanCheckDeletedStatus(planComm.longValueOfParameterNamed("planCode"));
+				planData1 = this.planReadPlatformService.retrivePlan(plan.getId());
+
+			}
+
+			// PlanData planData1 = planReadPlatformService.retrivePlanByPlanCode(planCode);
+			if (planData1 == null) {
+				throw new PlanNotFundException();
+			}
+			
+			
+			
+			Long parameterId = null;
+			Long parameterValue = null;
+			JsonArray clientServiceData = fromJsonHelper.extractJsonArrayNamed("clientServiceData", element);
+			JsonCommand clientServiceDataComm = null;
+			for (JsonElement j : clientServiceData) {
+				JsonArray clientServiceDetails = fromJsonHelper.extractJsonArrayNamed("clientServiceDetails", j);
+				for (JsonElement k : clientServiceData) {
+					clientServiceDataComm = new JsonCommand(null, k.toString(), k, fromJsonHelper, null, null, null, null, null, null,
+							null, null, null, null, null, null);
+					parameterId = clientServiceDataComm.longValueOfParameterNamed("planCode");
+					parameterValue = clientServiceDataComm.longValueOfParameterNamed("planCode");
+				}
+			}
+				//Plan plan = this.planRepository.findPlanCheckDeletedStatus(planComm.longValueOfParameterNamed("planCode"));
+				//planData1 = this.planReadPlatformService.retrivePlan(plan.getId());
+			
+			
+			
+			
+			clientServiceDetailsJson1.put("status", "new");
+			clientServiceDetailsJson1.put("parameterId", parameterId); //371 for kbs
+			clientServiceDetailsJson1.put("parameterValue",parameterValue ); //2 for kbs
+			clientServiceJson1.put("clientServiceDetails", clientServiceDetailsJson1);
+			clientServiceDetails1.add(clientServiceDetailsJson1);
+			clientServiceJson1.put("clientServiceDetails", clientServiceDetails1);
+			clientServiceDetails1.clear();
+			clientServiceJson1.put("serviceId", planData1.getServiceId());
+			clientServiceData1.add(clientServiceJson1);
+
+			// plan data
+			for (JsonElement j : planarray1) {
+
+				planComm = new JsonCommand(null, j.toString(), j, fromJsonHelper, null, null, null, null, null, null,
+						null, null, null, null, null, null);
+				
+				Plan plan = this.planRepository.findPlanCheckDeletedStatus(planComm.longValueOfParameterNamed("planCode"));
+				planData1 = this.planReadPlatformService.retrivePlan(plan.getId());
+				
+				planDataJson1.put("locale", locale);
+				planDataJson1.put("dateFormat", dateFormat);
+				planDataJson1.put("planCode", plan.getId());
+				if (plan.getIsPrepaid() == 'N') {
+					planDataJson1.put("contractPeriod", Integer.parseInt("1"));
+				} else {
+					planDataJson1.put("contractPeriod", planData1.getContractPeriodId());
+				}
+				planDataJson1.put("planPoId", plan.getPlanPoid());
+				Set<PlanDetails> details = plan.getPlanDetails();
+				for (PlanDetails detail : details)
+					planDataJson1.put("dealPoId", detail.getDealPoid());
+				planDataJson1.put("planName", plan.getPlanCode());
+				planDataJson1.put("contractPeriod", 1);
+				planDataJson1.put("paytermCode", planData1.getChargeCycle());
+				planDataJson1.put("isNewplan", isNewplan);
+				planDataJson1.put("billAlign", false);
+				planDataJson1.put("autoRenew", "");
+				planDataJson1.put("start_date", date);
+				planData0.add(planDataJson1);
+				}
+			activation1.put("clientData", client1);
+			client1.clear();
+			activation1.put("clientServiceData", clientServiceData1);
+			clientServiceData1.clear();
+			activation1.put("planData", planData0);
+			planData0.clear();
+			final JsonElement activationElement = fromJsonHelper.parse(activation1.toString());
+			command = new JsonCommand(null, activation1.toString(), activationElement, fromJsonHelper, null, null, null,
+					null, null, null, null, null, null, null, null, null);
+			return command;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	private JsonElement addingclientAndclientServiceTodevice(JsonElement deviceDataElement, Long clientId,
