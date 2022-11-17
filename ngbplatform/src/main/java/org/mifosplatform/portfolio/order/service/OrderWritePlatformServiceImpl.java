@@ -916,7 +916,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			LocalDateTime chargeCodeEndDate = this.orderAssembler.calculateEndDate(
 					DateTimeUtils.getLocalDateTimeOfTenant(), chargeCodeMaster.get(0).getDurationType(),
 					chargeCodeMaster.get(0).getChargeDuration().longValue());
-			if (contractEndDate != null && chargeCodeEndDate != null) {
+			if (contractEndDate != null && chargeCodeEndDate != null && (contractEndDate.toDate()!= chargeCodeEndDate.toDate())) {
 				if (contractEndDate.toDate().before(chargeCodeEndDate.toDate())) {
 					if (plan.isPrepaid() == 'N' || plan.isPrepaid() == 'n') {
 						throw new ChargeCodeAndContractPeriodException(chargeCodeMaster.get(0).getBillFrequencyCode(),
@@ -1097,7 +1097,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			return new CommandProcessingResult(Long.valueOf(-1));
 		}
 	}
-
+	
 	private Long getUserId() {
 
 		Long userId = null;
@@ -2388,7 +2388,7 @@ public class OrderWritePlatformServiceImpl implements OrderWritePlatformService 
 			return new CommandProcessingResult(Long.valueOf(-1));
 		}
 	}
-
+	
 	@Override
 	public CommandProcessingResult createMultipleOrder(Long clientId, JsonCommand command, Order oldOrder) {
 

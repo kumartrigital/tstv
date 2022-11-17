@@ -1095,6 +1095,9 @@ public class ProvisioningWritePlatformServiceImpl implements ProvisioningWritePl
 				object.put("action", "terminate");
 				object.put("oldOrderList",String.valueOf(jsonArray));
 				break;
+			/**case ProvisioningApiConstants.REQUEST_RENEWAL_BE:
+				object.put("newOrderList",String.valueOf(this.orderInfoJsonPreparation(orders,clientService,provisioningSystemId)));
+				break; **/
 			default:
 				throw new PlatformDataIntegrityException("invalid.request","invalid Request");
 			}

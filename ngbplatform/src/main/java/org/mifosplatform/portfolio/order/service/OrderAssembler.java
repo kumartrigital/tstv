@@ -170,17 +170,17 @@ public class OrderAssembler {
 		// Calculate EndDate
 		if (plan.getIsAdvance() == 'y' || plan.getIsAdvance() == 'Y') {
 			endDate = command.localDateTimeValueOfParameterNamed("endDate");
-System.out.println("OrderAssembler.assembleOrderDetails() :" +endDate + "planId :" + plan.getId());
-			if (plan.getId()==99l) {
-				LocalDateTime date = new LocalDateTime();
-				endDate = date.plusMonths(1);
-			}
-			
-		} else {
+			System.out.println("OrderAssembler.assembleOrderDetails() :" +endDate + "planId :" + plan.getId());
+		} 
+		/**
+		else {
 			endDate = calculateEndDate(startDate, contractData.getSubscriptionType(), contractData.getUnits());
+		}**/
 
+		if(endDate == null) {
+			endDate = calculateEndDate(startDate, contractData.getSubscriptionType(), contractData.getUnits());			
 		}
-
+		
 		order = new Order(order.getClientId(), plan.getId(), orderStatus, null, order.getBillingFrequency(), startDate,
 				endDate, order.getContarctPeriod(), serviceDetails, orderprice, order.getbillAlign(),
 				UserActionStatusTypeEnum.ACTIVATION.toString(), plan.isPrepaid(), order.isAutoRenewal(),

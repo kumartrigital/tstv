@@ -44,10 +44,10 @@ public class RazorpayInitializeTransactionServiceImpl implements RazorpayInitial
 	private final static Logger logger = LoggerFactory.getLogger(RazorpayInitializeTransactionServiceImpl.class);
 	private final PaymentGatewayRepository paymentGatewayRepository;
 	private final OfficeBalanceRepository officeBalanceRepository;
-	//public static final String testKey = "rzp_test_86hAcbHA9LGiKv";
-	//public static final String testSecretKey = "fXutITkVOKUt7x4kDV8Sz7LO";
-	public static final String liveKey = "rzp_live_nFiyS0x0PreUjo";
-	public static final String liveSecretKey = "ZJlAqAEDgh3NBKNO8FDvbtWC";
+	//public static final String testKey = "rzp_test_5Y7IF9oBR1i8FC";
+	//public static final String testSecretKey = "MgwxZq6wkZH69OCZbkNLGcMh";
+	public static final String liveKey = "rzp_live_Z61ueJrCZ9tj4n";
+	public static final String liveSecretKey = "b60XiNu9Wq3GQl9IP64OM8nP";
 	@Autowired
 	public RazorpayInitializeTransactionServiceImpl(PaymentGatewayRepository paymentGatewayRepository,
 			OfficeBalanceRepository officeBalanceRepository) {

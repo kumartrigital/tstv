@@ -19,6 +19,8 @@ import org.mifosplatform.finance.chargeorder.domain.BillItemRepository;
 import org.mifosplatform.finance.chargeorder.domain.Charge;
 import org.mifosplatform.finance.chargeorder.exception.ProcessDateGreaterThanPlanEndDateException;
 import org.mifosplatform.finance.chargeorder.serialization.ChargingOrderCommandFromApiJsonDeserializer;
+import org.mifosplatform.finance.officebalance.domain.OfficeBalance;
+import org.mifosplatform.finance.officebalance.domain.OfficeBalanceRepository;
 import org.mifosplatform.infrastructure.configuration.domain.Configuration;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationConstants;
 import org.mifosplatform.infrastructure.configuration.domain.ConfigurationRepository;
@@ -27,6 +29,9 @@ import org.mifosplatform.infrastructure.core.data.CommandProcessingResult;
 import org.mifosplatform.infrastructure.core.data.CommandProcessingResultBuilder;
 import org.mifosplatform.infrastructure.core.exception.PlatformDataIntegrityException;
 import org.mifosplatform.infrastructure.core.serialization.FromJsonHelper;
+import org.mifosplatform.organisation.office.data.OfficeData;
+import org.mifosplatform.organisation.office.domain.OfficeRepository;
+import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
 import org.mifosplatform.portfolio.clientservice.domain.ClientService;
 import org.mifosplatform.portfolio.clientservice.domain.ClientServiceRepository;
 import org.mifosplatform.portfolio.order.data.OrderData;
@@ -66,6 +71,9 @@ public class ChargingCustomerOrders {
 	private final OrderRepository orderRepository;
 	private final ClientServiceRepository clientServiceRepository;
 	private final ConfigurationRepository configurationRepository;
+	private final OfficeReadPlatformService officeReadPlatformService;
+	private final OfficeBalanceRepository officeBalanceRepository;
+	private final OfficeRepository officeRepository;
 
 	@Autowired
 	public ChargingCustomerOrders(final ChargingOrderReadPlatformService chargingOrderReadPlatformService,
@@ -77,7 +85,10 @@ public class ChargingCustomerOrders {
 			final PlanRepository planRepository, final SlabRateWritePlatformService slabRateWritePlatformService,
 			final @Lazy OrderWritePlatformService orderWritePlatformService, final FromJsonHelper fromApiJsonHelper,
 			final OrderRepository orderRepository, final ClientServiceRepository clientServiceRepository,
-			final ConfigurationRepository configurationRepository) {
+			final ConfigurationRepository configurationRepository,
+			final OfficeReadPlatformService officeReadPlatformService,
+			final OfficeBalanceRepository officeBalanceRepository,
+			final OfficeRepository officeRepository) {
 
 		this.chargingOrderReadPlatformService = chargingOrderReadPlatformService;
 		this.generateChargesForOrderService = generateChargesForOrderService;
@@ -93,6 +104,9 @@ public class ChargingCustomerOrders {
 		this.orderRepository = orderRepository;
 		this.clientServiceRepository = clientServiceRepository;
 		this.configurationRepository = configurationRepository;
+		this.officeReadPlatformService = officeReadPlatformService;
+		this.officeBalanceRepository = officeBalanceRepository;
+		this.officeRepository = officeRepository;
 
 	}
 
@@ -394,21 +408,32 @@ public class ChargingCustomerOrders {
 		List<OrderData> orderData = this.orderReadPlatformService.orderDetailsForClientBalance(orderId);
 		for (BillItem billItem : billItems) {
 
-			JsonObject clientBalanceObject = new JsonObject();
-			clientBalanceObject.addProperty("clientId", clientId);
-			clientBalanceObject.addProperty("amount", billItem.getInvoiceAmount());
-			clientBalanceObject.addProperty("isWalletEnable", false);
-			clientBalanceObject.addProperty("clientServiceId", orderData.get(0).getClientServiceId());
-			clientBalanceObject.addProperty("currencyId", billItem.getCurrencyId());
-			clientBalanceObject.addProperty("locale", "en");
+			if (billItem.getCharges().get(0).getChargeOwner().equalsIgnoreCase("self")) {
+				
+				JsonObject clientBalanceObject = new JsonObject();
+				clientBalanceObject.addProperty("clientId", clientId);
+				clientBalanceObject.addProperty("amount", billItem.getInvoiceAmount());
+				clientBalanceObject.addProperty("isWalletEnable", false);
+				clientBalanceObject.addProperty("clientServiceId", orderData.get(0).getClientServiceId());
+				clientBalanceObject.addProperty("currencyId", billItem.getCurrencyId());
+				clientBalanceObject.addProperty("locale", "en");
 
-			final JsonElement clientServiceElementNew = fromJsonHelper.parse(clientBalanceObject.toString());
-			JsonCommand clientBalanceCommand = new JsonCommand(null, clientServiceElementNew.toString(),
-					clientServiceElementNew, fromJsonHelper, null, null, null, null, null, null, null, null, null, null,
-					null, null);
+				final JsonElement clientServiceElementNew = fromJsonHelper.parse(clientBalanceObject.toString());
+				JsonCommand clientBalanceCommand = new JsonCommand(null, clientServiceElementNew.toString(),
+						clientServiceElementNew, fromJsonHelper, null, null, null, null, null, null, null, null, null, null,
+						null, null);
 
-			// Update Client Balance
-			this.chargingOrderWritePlatformService.updateClientBalance(clientBalanceCommand);
+				// Update Client Balance
+				this.chargingOrderWritePlatformService.updateClientBalance(clientBalanceCommand);
+			}else if (billItem.getCharges().get(0).getChargeOwner().equalsIgnoreCase("parent")) {
+				OfficeData officeData = this.officeReadPlatformService.retriveOfficeDetail(clientId);
+				OfficeBalance officeBalance = this.officeBalanceRepository.findOneByOfficeId(officeData.getId());
+				// updating office balance
+				officeBalance.updateBalance("DEBIT", billItem.getInvoiceAmount());
+				this.officeBalanceRepository.saveAndFlush(officeBalance);
+			}
+			
+			
 		}
 		return billItems;
 
