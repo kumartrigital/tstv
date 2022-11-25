@@ -68,6 +68,7 @@ import org.mifosplatform.portfolio.order.domain.OrderLine;
 import org.mifosplatform.portfolio.order.domain.OrderRepository;
 import org.mifosplatform.portfolio.order.domain.UserActionStatusTypeEnum;
 import org.mifosplatform.portfolio.order.service.OrderReadPlatformService;
+import org.mifosplatform.portfolio.plan.data.PlanData;
 import org.mifosplatform.portfolio.plan.domain.Plan;
 import org.mifosplatform.portfolio.plan.domain.PlanRepository;
 import org.mifosplatform.portfolio.planmapping.domain.PlanMapping;
@@ -115,6 +116,8 @@ import com.google.gson.JsonObject;
 
 import net.sf.json.JSONObject;
 
+import org.mifosplatform.portfolio.plan.service.PlanReadPlatformService;
+
 @Service
 public class ProvisioningWritePlatformServiceImpl implements ProvisioningWritePlatformService {
 	private final static Logger logger = LoggerFactory.getLogger(ProvisioningWritePlatformServiceImpl.class);
@@ -152,6 +155,7 @@ public class ProvisioningWritePlatformServiceImpl implements ProvisioningWritePl
 	private final NetworkElementReadPlatformService networkElementReadPlatformService;
 	private final NetworkElementRepository networkElementRepository;
 	private final AddressReadPlatformService addressReadPlatformService;
+	private final PlanReadPlatformService planReadPlatformService;
 
 	@Autowired
 	public ProvisioningWritePlatformServiceImpl(final PlatformSecurityContext context,final ItemDetailsRepository inventoryItemDetailsRepository,
@@ -168,7 +172,8 @@ public class ProvisioningWritePlatformServiceImpl implements ProvisioningWritePl
 			final CodeValueReadPlatformService codeValueReadPlatformService, final HardwarePlanReadPlatformService hardwarePlanReadPlatformService,
 			final OneTimeSaleReadPlatformService oneTimeSaleReadPlatformService,  final ClientRepository clientRepository,
 			final ConfigurationRepository configurationRepository, final NetworkElementReadPlatformService networkElementReadPlatformService,
-			final NetworkElementRepository networkElementRepository,final AddressReadPlatformService addressReadPlatformService) {
+			final NetworkElementRepository networkElementRepository,final AddressReadPlatformService addressReadPlatformService,
+			final PlanReadPlatformService planReadPlatformService) {
 
 		this.context = context;
 		this.fromJsonHelper = fromJsonHelper;
@@ -202,6 +207,7 @@ public class ProvisioningWritePlatformServiceImpl implements ProvisioningWritePl
 		this.networkElementReadPlatformService=networkElementReadPlatformService;
 		this.networkElementRepository = networkElementRepository;
 		this.addressReadPlatformService = addressReadPlatformService;
+		this.planReadPlatformService = planReadPlatformService;
 		
 		
 		
@@ -1102,6 +1108,56 @@ public class ProvisioningWritePlatformServiceImpl implements ProvisioningWritePl
 				throw new PlatformDataIntegrityException("invalid.request","invalid Request");
 			}
 			
+			return object.toString();
+		}else if("GENIUS".equalsIgnoreCase(provisioningData.getsystemcode())){
+			JSONObject object = new JSONObject();
+			switch(requestType){
+			case ProvisioningApiConstants.REQUEST_ACTIVATION:
+				
+				object.put("RefNo", System.currentTimeMillis()+"KUMAR");
+				Client client = this.clientRepository.findOne(clientService.getClientId());
+				object.put("CustMobileNo", "91"+client.getPhone());
+				if(client.getEmail()==null) {
+					object.put("email", "info@kbs.com");
+				}else
+					object.put("email", client.getEmail());
+				object.put("IsAddon", "Y");      		  /** IsAddon   hardcoded.. need to change  **/
+				object.put("VendorCode","KUMAR");		  /** partner_code   hardcoded.. need to change  **/
+				object.put("planMrp","5");				 /** plan price   hardcoded.. need to change  **/	
+				object.put("OperatorCode","");
+				object.put("UserName","kbs_ngb");
+				Integer orderId;
+				String orderStartDate;
+				Integer planId;
+				JSONArray jsonArray = this.orderInfoJsonPreparation(orders,clientService,provisioningSystemId);
+				try {
+					org.json.JSONObject jsonObject =(org.json.JSONObject)jsonArray.get(0);
+					orderId = (Integer) jsonObject.get("orderId");
+					planId = (Integer) jsonObject.get("planId");
+					orderStartDate= (String) jsonObject.get("orderStartDate");
+					
+					SimpleDateFormat simpleDateFormat=new SimpleDateFormat("dd/MM/yyyy");
+				    Date currentdate=simpleDateFormat.parse(orderStartDate);
+				    SimpleDateFormat simpleDateFormat1=new SimpleDateFormat("dd-MM-yyyy");
+				    String date = simpleDateFormat1.format(currentdate);
+				    object.put("StartDate",date);
+					//packageId =(String) ((org.json.JSONObject)((net.sf.json.JSONArray)jsonObject.get("products")).get(0)).get("neProductId");
+				} catch (ParseException e) {
+					throw new PlatformDataIntegrityException("invalid.date.format","invalid.date.format.parseexception");
+				} catch (JSONException e) {
+					throw new PlatformDataIntegrityException("invalid.request.orderId.products","invalid Request.orderId.products");
+				}
+			    PlanData planData = this.planReadPlatformService.retrivePlan(planId.longValue());
+			    object.put("ISPPlanName",planData.getplanDescription());
+				object.put("Plan",planData.getPlanCode());
+				object.put("newOrderList",String.valueOf(jsonArray));
+			    
+				break;
+			case ProvisioningApiConstants.REQUEST_FETCHPLANS:
+				break;
+			default:
+				throw new PlatformDataIntegrityException("invalid.request","invalid Request");
+			}		
 			return object.toString();
 		}else {		
 		Collection<MCodeData> mcodeDatas = (Collection<MCodeData>) provAndSpdetails.get("spMcode");
