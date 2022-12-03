@@ -5,6 +5,7 @@
  */
 package org.mifosplatform.portfolio.activationprocess.service;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -23,6 +24,7 @@ import org.mifosplatform.billing.chargecode.data.ChargeCodeData;
 import org.mifosplatform.billing.chargecode.domain.ChargeCodeRepository;
 import org.mifosplatform.billing.chargecode.service.ChargeCodeReadPlatformService;
 import org.mifosplatform.billing.planprice.domain.PriceRepository;
+import org.mifosplatform.billing.planprice.service.PriceReadPlatformService;
 import org.mifosplatform.billing.selfcare.domain.SelfCare;
 import org.mifosplatform.billing.selfcare.domain.SelfCareTemporary;
 import org.mifosplatform.billing.selfcare.domain.SelfCareTemporaryRepository;
@@ -34,6 +36,7 @@ import org.mifosplatform.commands.domain.CommandWrapper;
 import org.mifosplatform.commands.service.CommandWrapperBuilder;
 import org.mifosplatform.commands.service.PortfolioCommandSourceWritePlatformService;
 import org.mifosplatform.crm.service.CrmServices;
+import org.mifosplatform.finance.officebalance.data.OfficeBalanceData;
 import org.mifosplatform.infrastructure.codes.domain.CodeValue;
 import org.mifosplatform.infrastructure.codes.domain.CodeValueRepository;
 import org.mifosplatform.infrastructure.codes.service.CodeReadPlatformService;
@@ -71,6 +74,7 @@ import org.mifosplatform.organisation.message.service.MessagePlatformEmailServic
 import org.mifosplatform.organisation.office.domain.Office;
 import org.mifosplatform.organisation.office.domain.OfficeRepository;
 import org.mifosplatform.organisation.office.exception.OfficeNotFoundException;
+import org.mifosplatform.organisation.office.service.OfficeReadPlatformService;
 import org.mifosplatform.organisation.redemption.api.RedemptionApiResource;
 import org.mifosplatform.organisation.voucher.data.VoucherData;
 import org.mifosplatform.organisation.voucher.exception.NoVoucherFoundUnderThisOfficeException;
@@ -81,10 +85,12 @@ import org.mifosplatform.portfolio.activationprocess.exception.MobileNumberLengt
 import org.mifosplatform.portfolio.activationprocess.serialization.ActivationProcessCommandFromApiJsonDeserializer;
 import org.mifosplatform.portfolio.client.api.ClientsApiResource;
 import org.mifosplatform.portfolio.client.data.ClientBillInfoData;
+import org.mifosplatform.portfolio.client.data.ClientData;
 import org.mifosplatform.portfolio.client.domain.Client;
 import org.mifosplatform.portfolio.client.domain.ClientRepository;
 import org.mifosplatform.portfolio.client.service.ClientBillInfoReadPlatformService;
 import org.mifosplatform.portfolio.client.service.ClientIdentifierWritePlatformService;
+import org.mifosplatform.portfolio.client.service.ClientReadPlatformService;
 import org.mifosplatform.portfolio.client.service.ClientWritePlatformService;
 import org.mifosplatform.portfolio.clientservice.api.ClientServiceApiResource;
 import org.mifosplatform.portfolio.clientservice.service.ClientServiceWriteplatformService;
@@ -169,6 +175,9 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 	private final RedemptionApiResource redemptionApiResource;
 	private final VoucherReadPlatformService voucherReadPlatformService;
 	private final OfficeRepository officeRepository;
+	private final PriceReadPlatformService priceReadPlatformService;
+	private final ClientReadPlatformService clientReadPlatformService;
+	private final OfficeReadPlatformService officeReadPlatformService;
 	static JSONObject activation = new JSONObject();
 	static org.json.simple.JSONArray address = new org.json.simple.JSONArray();
 	static org.json.simple.JSONArray client = new org.json.simple.JSONArray();
@@ -236,7 +245,10 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 			final InviewWritePlatformService inviewWritePlatformService, final FromJsonHelper fromApiJsonHelper,
 			final ItemDetailsReadPlatformService itemDetailsReadPlatformService,
 			final RedemptionApiResource redemptionApiResource,
-			final VoucherReadPlatformService voucherReadPlatformService, final OfficeRepository officeRepository) {
+			final VoucherReadPlatformService voucherReadPlatformService, final OfficeRepository officeRepository,
+			final PriceReadPlatformService priceReadPlatformService,
+			final ClientReadPlatformService clientReadPlatformService,
+			final OfficeReadPlatformService officeReadPlatformService) {
 
 		this.context = context;
 		this.itemRepository = itemRepository;
@@ -282,6 +294,9 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 		this.redemptionApiResource = redemptionApiResource;
 		this.voucherReadPlatformService = voucherReadPlatformService;
 		this.officeRepository = officeRepository;
+		this.priceReadPlatformService = priceReadPlatformService;
+		this.clientReadPlatformService = clientReadPlatformService;
+		this.officeReadPlatformService = officeReadPlatformService;
 		}
 
 	private void handleDataIntegrityIssues(final JsonCommand command, final DataIntegrityViolationException dve) {
@@ -1908,14 +1923,46 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 		Set<String> substances = null;
 		System.out.println(command.json());
 		try {
+			
+			final JsonElement element = fromJsonHelper.parse(command.json());
+			JsonArray planDataArray = fromJsonHelper.extractJsonArrayNamed("planData", element);
+			if (planDataArray.size() != 0) {
+				for (JsonElement planDataElement : planDataArray) {
+					JsonObject planData = planDataElement.getAsJsonObject();
+					Long planId = planData.get("planCode").getAsLong();
+					
+					ClientData clientData = clientReadPlatformService.retrieveOne(clientId);
+					Long officeId = clientData.getOfficeId();
+					List<ServiceData> serviceDataList = priceReadPlatformService.retrieveServiceDetails(planId);
+					if(!serviceDataList.isEmpty()) {
+						for(ServiceData data : serviceDataList) {
+							BigDecimal price = (data.getPrice().negate());
+							if(data.getChargeOwner().equalsIgnoreCase("self")) {
+								if(clientData.getBalanceAmount().compareTo(price)>0) {
+									throw new PlatformDataIntegrityException("error.msg.client.balance.not.sufficient", "client.balance.not.sufficient");
+								}
+							}else if(data.getChargeOwner().equalsIgnoreCase("parent")) {
+								OfficeBalanceData officeBalanceData = officeReadPlatformService.retriveOfficebalanceDetail(officeId);
+								if(officeBalanceData.getBalanceAmount().compareTo(price)>0) {
+									throw new PlatformDataIntegrityException("error.msg.office.balance.not.sufficient", "office.balance.not.sufficient");
+								}
+							}
+						}
+					}else {
+						this.throwError("Client Service");
+					}
+				}
+			} else {
+				this.throwError("Plan");
+			}
+			
 			CommandProcessingResult result = this.crmServices.createClientSimpleActivation(command);
 			if (result != null) {
 				clientServicePoId = result.getResourceIdentifier();
 				substances = result.getSubstances();
 			}
 
-			final JsonElement element = fromJsonHelper.parse(command.json());
-
+			
 			JsonArray clientServiceDataArray = fromJsonHelper.extractJsonArrayNamed("clientServiceData", element);
 			if (clientServiceDataArray.size() != 0) {
 				for (JsonElement clientServiceData : clientServiceDataArray) {
@@ -1935,7 +1982,7 @@ public class ActivationProcessWritePlatformServiceJpaRepositoryImpl implements A
 				this.throwError("Client Service");
 			}
 
-			JsonArray planDataArray = fromJsonHelper.extractJsonArrayNamed("planData", element);
+			
 			if (planDataArray.size() != 0) {
 				for (JsonElement planDataElement : planDataArray) {
 					JsonObject planData = planDataElement.getAsJsonObject();

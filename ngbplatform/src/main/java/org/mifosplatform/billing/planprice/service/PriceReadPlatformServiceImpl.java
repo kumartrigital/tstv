@@ -70,7 +70,7 @@ public class PriceReadPlatformServiceImpl implements PriceReadPlatformService {
 		context.authenticatedUser();
 
 		String sql = "SELECT sm.id AS id,sm.product_description AS product_description,sm.product_code AS product_code,p.plan_code AS planCode,pm.product_id AS product_id,p.is_prepaid as isprepaid,pr.chargeOwner as chargeOwner,"
-				+ " c.billfrequency_code as billingfreq ,p.currencyId as currencyId,mc.code as currencyCode FROM b_plan_detail pm,  b_product sm, b_plan_master p left join b_plan_pricing pr on pr.plan_id = p.id"
+				+ " c.billfrequency_code as billingfreq ,p.currencyId as currencyId,mc.code as currencyCode, pr.price as price FROM b_plan_detail pm,  b_product sm, b_plan_master p left join b_plan_pricing pr on pr.plan_id = p.id"
 				+ " left join b_charge_codes c ON c.charge_code = pr.charge_code left join m_currency mc ON mc.id = p.currencyId WHERE pm.product_id = sm.id AND p.id = pm.plan_id "
 				+ " AND sm.is_deleted = 'n' AND pm.plan_id = ? group by pm.product_id";
 
@@ -92,11 +92,12 @@ public class PriceReadPlatformServiceImpl implements PriceReadPlatformService {
 			final Long currencyId = rs.getLong("currencyId");
 			final String currencyCode = rs.getString("currencyCode");
 			final String chargeOwner = rs.getString("chargeOwner");
+			final BigDecimal price = rs.getBigDecimal("price");
 			
 			
 			return new ServiceData(id, null, planCode, billingfreq,
 					productCode, productDescription, null, null, null,
-					isprepaid,currencyId,currencyCode,null,null,chargeOwner);
+					isprepaid,currencyId,currencyCode,null,null,chargeOwner,price);
 
 		}
 	}

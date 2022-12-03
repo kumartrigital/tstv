@@ -131,6 +131,21 @@ dependencies {
     compile files('src/main/resources/addexternalbeesmart.jar')
     compile files('src/main/resources/pentaho-reporting-engine-classic-core-3.9.1.1.jar')
     compile files('src/main/resources/pentaho-reporting-engine-wizard-xul-3.9.1-GA.jar')
+    compile files('src/main/resources/pentaho-reporting-engine-classic-extensions-3.9.1-GA.jar')
+    compile files('src/main/resources/pentaho-reporting-engine-classic-extensions-scripting-3.9.1-GA.jar')
+	compile files('src/main/resources/pentaho-reporting-engine-wizard-core-3.9.1-GA.jar')
+	
+	compile files('src/main/resources/libbase-1.2.8.jar')
+ 	compile files('src/main/resources/libdocbundle-1.2.8.jar')
+ 	compile files('src/main/resources/libfonts-1.2.8.jar')
+ 	compile files('src/main/resources/libformat-1.2.8.jar')
+ 	compile files('src/main/resources/libformula-1.2.8.jar')
+ 	compile files('src/main/resources/libloader-1.2.8.jar')
+ 	compile files('src/main/resources/librepository-1.2.8.jar')
+ 	compile files('src/main/resources/libserializer-1.2.8.jar')
+	compile files('src/main/resources/libsparkline-1.2.8.jar')
+ 	compile files('src/main/resources/libxml-1.2.8.jar')
+	         
 	providedCompile(
 				[group: 'javax.servlet', name: 'servlet-api', version: '2.5'],
 			)
@@ -181,12 +196,12 @@ dependencies {
 	            [group: 'org.apache.tomcat', name: 'tomcat-jdbc', version: '7.0.34'],
 
 	          //  [group: 'pentaho-reporting-engine', name: 'pentaho-reporting-engine-classic-core', version: '3.9.1.1'],
-	            [group: 'pentaho-reporting-engine', name: 'pentaho-reporting-engine-classic-extensions', version: '3.9.1-GA'],
-	            [group: 'pentaho-reporting-engine', name: 'pentaho-reporting-engine-classic-extensions-scripting', version: '3.9.1-GA'],
-				[group: 'pentaho-reporting-engine', name: 'pentaho-reporting-engine-wizard-core', version: '3.9.1-GA'],
+	          //  [group: 'pentaho-reporting-engine', name: 'pentaho-reporting-engine-classic-extensions', version: '3.9.1-GA'],
+	          //  [group: 'pentaho-reporting-engine', name: 'pentaho-reporting-engine-classic-extensions-scripting', version: '3.9.1-GA'],
+			//	[group: 'pentaho-reporting-engine', name: 'pentaho-reporting-engine-wizard-core', version: '3.9.1-GA'],
 	          //  [group: 'pentaho-report-designer', name: 'pentaho-reporting-engine-wizard-xul', version: '3.9.1-GA'],
 
-	            [group: 'pentaho-library', name: 'libbase', version: '1.2.8'],
+	          /**  [group: 'pentaho-library', name: 'libbase', version: '1.2.8'],
  	        	[group: 'pentaho-library',name: 'libdocbundle', version: '1.2.8'],
  	        	[group: 'pentaho-library',name: 'libfonts', version: '1.2.8'],
  	        	[group: 'pentaho-library',name: 'libformat', version: '1.2.8'],
@@ -195,7 +210,7 @@ dependencies {
  	        	[group: 'pentaho-library',name: 'librepository', version: '1.2.8'],
  	        	[group: 'pentaho-library',name: 'libserializer', version: '1.2.8'],
  	        	[group: 'pentaho-library',name: 'libsparkline', version: '1.2.8'],
- 	        	[group: 'pentaho-library',name: 'libxml', version: '1.2.8'],
+ 	        	[group: 'pentaho-library',name: 'libxml', version: '1.2.8'], **/
                 [group: 'net.sf.jasperreports',name: 'jasperreports', version: '4.1.2'],
 				[group: 'commons-digester',name:'commons-digester', version: '1.6'],				
 				[group: 'commons-beanutils',name:'commons-beanutils', version: '1.5.3'],

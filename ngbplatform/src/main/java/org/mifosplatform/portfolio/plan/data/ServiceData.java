@@ -111,6 +111,36 @@ public class ServiceData {
 
 	}
 	
+	public ServiceData(final Long id,final Long planId,final String planCode,final String chargeCode,final  String productCode,
+			final String productDescription,final String chargeDescription, final String priceRegion,final String serviceType,final String isPrepaid,
+			final Long currencyId,final String currencyCode,String serviceCode,String serviceDescription, final String chargeOwner,final BigDecimal price) {
+		
+		this.id = id;
+		this.planId = planId;
+		this.discountId = null;
+		this.productCode = productCode;
+		this.planDescription = null;
+		this.planCode = planCode;
+		this.chargeCode = chargeCode;
+		this.chargeDescription=chargeDescription;
+		this.chargeVariant = null;
+		this.price = price;
+		this.productDescription = productDescription;
+		this.priceregion=priceRegion;
+		this.serviceType=serviceType;
+		this.isPrepaid=isPrepaid;
+		this.contractId=null;
+		this.duration=null;
+		this.billingFrequency=null;
+		this.currencyId=currencyId;
+		this.currencyCode=currencyCode;
+		this.serviceCode=serviceCode;
+		this.serviceDescription=serviceDescription;
+		this.chargeOwner=chargeOwner;
+		
+
+	}
+	
 	public ServiceData(final Long id,final  String productCode,final String productDescription,final String image,Long serviceId,String serviceCode) {
 		
 		this.id = id;
