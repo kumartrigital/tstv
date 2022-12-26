@@ -4053,6 +4053,7 @@ public class CommandWrapperBuilder {
 		this.actionName = "CREATE";
 		this.entityName = "CUSTOMERSERVICEACTIVATIONWOD";
 		this.href = "/activationprocess/simpleactivationwod";
+		this.entityId = null;
 		return this;
 
 	}

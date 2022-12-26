@@ -53,7 +53,7 @@ private static final class PartnerMapper implements RowMapper<PartnersData> {
 		public String schema() {
 			return " o.id as infoId, "+ NAMEDECORATEDBASEON_HIERARCHY
 					+ "AS nameDecorated,a.partner_currency as currency,a.credit_limit as creditLimit,a.is_collective as isCollective,o.name as partnerName,"
-					+ "o.id as officeId,o.parent_id as parentId,o.external_id AS externalId,o.opening_date AS openingDate,o.po_id as poId,o.settlement_poId as settlementPoId,parent.id AS parentId,"
+					+ "o.id as officeId,o.parent_id as parentId,o.external_id AS externalId,o.opening_date AS openingDate,o.po_id as poId,o.settlement_po_id as settlementPoId,parent.id AS parentId,"
 					+ "parent.name AS parentName,od.business_type as businessType,o.office_type as officeType,o.commision_model as AccountType,a.contact_name as contactName, ad.city as city,ad.district as district, ad.state as state,"
 					+ "ad.country as country,ad.email_id as email,ad.phone_number as phoneNumber,ad.office_number as officeNumber,0 as userId,'loginname' as loginName,"
 					+ "IFNULL(ob.balance_amount,0) as balanceAmount,ad.company_logo as companyLogo from m_office o left join m_office AS parent on parent.id = o.parent_id " 

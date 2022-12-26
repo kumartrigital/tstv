@@ -98,6 +98,8 @@ public interface ClientReadPlatformService {
 
 	ClientData retrieveOneByClientId(String columnName, String columnValue);
 
+	ClientData dealerUserinformation(Long officeId);
+
 
 
 	

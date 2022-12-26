@@ -605,6 +605,22 @@ public class ClientsApiResource {
 		return this.toApiJsonSerializer.serialize("success");
 	}
 
+	@GET
+	@Path("dealerdashboard")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	public String retriveDealerDashboardInformnation(@Context final UriInfo uriInfo) {
+		
+		  this.context.authenticatedUser().validateHasReadPermission(ClientApiConstants
+		  .CLIENT_RESOURCE_NAME);
+		 
+		AppUser logedInUser = this.context.authenticatedUser();
+		ClientData clientData = this.clientReadPlatformService.dealerUserinformation(logedInUser.getOffice().getId());
+		final ApiRequestJsonSerializationSettings settings = apiRequestParameterHelper
+				.process(uriInfo.getQueryParameters());
+		return this.toApiJsonSerializer.serialize(settings, clientData, RESPONSE_DATA_PARAMETERS);
+
+	}
 	
 	
 

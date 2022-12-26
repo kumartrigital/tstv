@@ -2,11 +2,15 @@ package org.mifosplatform.workflow.eventaction.data;
 
 public class ActionDetaislData {
 	
-	private final Long id;
-	private final String procedureName;
-	private final String actionName;
-	private final String isSynchronous;
-	private final String eventName;
+	private Long id;
+	private String procedureName;
+	private String actionName;
+	private String isSynchronous;
+	private String eventName;
+
+	public ActionDetaislData() {
+	}
+
 
 	public ActionDetaislData(Long id, String procedureName, String actionName, String isSynchronous,String eventName) {
             
@@ -17,6 +21,7 @@ public class ActionDetaislData {
 		this.eventName=eventName;
 
 	}
+
 
 	/**
 	 * @return the id

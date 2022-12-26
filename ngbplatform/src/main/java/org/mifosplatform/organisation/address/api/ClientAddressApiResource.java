@@ -308,4 +308,23 @@ public class ClientAddressApiResource {
 		return this.toApiJsonSerializer.serialize(serviceMasterDatas);
 	}
 	
+	@GET
+	@Path("/citydetails")
+	@Consumes({MediaType.APPLICATION_JSON})
+	@Produces({MediaType.APPLICATION_JSON})
+	public String getCityDetails() {
+		final List<String> citiesData = this.addressReadPlatformService.retrieveCityDetails();
+		return this.toApiJsonSerializer.serialize(citiesData);
+	}
+	
+	@GET
+	@Path("/statedetails")
+	@Consumes({MediaType.APPLICATION_JSON})
+	@Produces({MediaType.APPLICATION_JSON})
+	public String getStateDetails() {
+		final List<String> statesData = this.addressReadPlatformService.retrieveStateDetails();
+		return this.toApiJsonSerializer.serialize(statesData);
+	}
+	
+	
 }

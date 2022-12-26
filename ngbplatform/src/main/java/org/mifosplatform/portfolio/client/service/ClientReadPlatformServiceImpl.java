@@ -1481,6 +1481,46 @@ public class ClientReadPlatformServiceImpl implements ClientReadPlatformService 
 		
 	}
 	
+	@Override
+	public ClientData dealerUserinformation(Long officeId) {
+
+		try {
+			DealerUserinformationMapper dealerUserinformationMapper = new DealerUserinformationMapper();
+
+			String sql = null;
+			// it is for tstv allowing super user to show the dashboard without hierarchy
+			// restriction
+			sql = "SELECT " + dealerUserinformationMapper.Schema(officeId);
+			return jdbcTemplate.queryForObject(sql, dealerUserinformationMapper, new Object[] {});
+		} catch (EmptyResultDataAccessException ex) {
+			return null;
+		}
+
+	}
+	
+     private static final class DealerUserinformationMapper implements RowMapper<ClientData> {
+		
+		public String Schema(Long officeId) {
+			return " m.client_active as `clientActive`,m.client_inactive as c_inactive ,m.provision_pending as `provisionPending`"
+					+ ", (select count(*) from b_paymentgateway where key_id=m.office_id) as c_onlinepayment "
+					+ " from m_office_statistics m where office_id="+officeId+"" ;
+		}
+
+		@Override
+		public ClientData mapRow(final ResultSet rs, final int rowNum) throws SQLException {
+			final String c_active = rs.getString("clientActive");
+			final String c_inactive = rs.getString("c_inactive");
+			final String provisionPending = rs.getString("provisionPending");
+			final String c_onlinepayment = rs.getString("c_onlinepayment");
+			ClientData clientData = ClientData.searchClient(null);
+			clientData.setC_active(c_active);
+			clientData.setC_inactive(c_inactive);
+			clientData.setProvision_pending(provisionPending);
+			clientData.setC_onlinepayment(c_onlinepayment);
+			return clientData;
+		}
+	}
+	
 	private static final class UserdeviceinformationMapper implements RowMapper<ClientData> {
 
 		public String Schema(String hierarchy) {

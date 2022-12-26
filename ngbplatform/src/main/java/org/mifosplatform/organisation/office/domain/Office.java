@@ -90,7 +90,7 @@ public class Office extends AbstractPersistable<Long> {
 	@Column(name = "po_id", length = 20)
     private String poId;
 	
-	@Column(name = "settlement_poId", length = 20)
+	@Column(name = "settlement_po_id", length = 20)
     private String settlementpoId;
 	
 	@Column(name = "pancard_no", nullable = false, length = 20)

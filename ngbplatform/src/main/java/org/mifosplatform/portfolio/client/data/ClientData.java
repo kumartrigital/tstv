@@ -99,7 +99,16 @@ final public class ClientData implements Comparable<ClientData> {
 	private String currencyCode;
 	private String voucher_stock;
 	private String provision_pending;
+	private String c_onlinepayment;
 	
+	public String getC_onlinepayment() {
+		return c_onlinepayment;
+	}
+
+	public void setC_onlinepayment(String c_onlinepayment) {
+		this.c_onlinepayment = c_onlinepayment;
+	}
+
 	public String getCurrencyCode() {
 		return currencyCode;
 	}

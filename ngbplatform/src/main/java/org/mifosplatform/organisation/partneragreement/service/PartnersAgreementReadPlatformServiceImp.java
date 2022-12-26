@@ -104,7 +104,7 @@ public class PartnersAgreementReadPlatformServiceImp<AgreementDataMapper> implem
 		}*/
 		
 		public String schema() {
-			return " o.id as orderId, mo.id as officeId,mo.po_id as poId, mo.settlement_poId as settlementPoId,pm.id as planId,pm.plan_code as planCode, "+
+			return " o.id as orderId, mo.id as officeId,mo.po_id as poId, mo.settlement_po_id as settlementPoId,pm.id as planId,pm.plan_code as planCode, "+
 				   " pm.plan_description as planDescription,pm.plan_poid as planPoId,pd.deal_poid as dealPoId, "+
 				   " o.order_no as packageId,o.start_date as startDate,o.end_date as endDate "+
 				   " from b_orders o join m_office mo on mo.client_id = o.client_id join b_plan_master pm ON o.plan_id = pm.id "+

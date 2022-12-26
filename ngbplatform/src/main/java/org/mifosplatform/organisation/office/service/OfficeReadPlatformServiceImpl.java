@@ -145,7 +145,7 @@ public class OfficeReadPlatformServiceImpl implements OfficeReadPlatformService 
 					+ "od.state as state,od.city as city,od.country as country,od.phone_number as phoneNumber,od.office_number as officeNumber, "
 					+ "od.email_id as email,od.address_name as addressName,od.contact_person as contactPerson,od.zip as zip,od.business_type as businessType,"
 					+ "od.district as district,o.pancard_no as pancardNo,o.company_reg_no as companyRegNo,o.commision_model as commisionModel,"
-					+ "o.gst_reg_no as gstRegNo, o.po_id as poId, o.payment_type as paymentType,	o.Subscriber_dues as subsciberDues,cv.code_value as dasType,o.settlement_poId as settlementPoId, " 
+					+ "o.gst_reg_no as gstRegNo, o.po_id as poId, o.payment_type as paymentType,	o.Subscriber_dues as subsciberDues,cv.code_value as dasType,o.settlement_po_id as settlementPoId, " 
 					+ "o.client_id as clientId,cs.id as clientServiceId,c.po_id as clientPoId,cs.client_service_poid as clientServicePoId "
 					+ "FROM m_office o LEFT JOIN m_office AS parent ON parent.id = o.parent_id "
 					+ "Left join m_office_balance b on o.id = b.office_id  Left join b_office_address od ON o.id = od.office_id  Left join m_code_value cv on " 
